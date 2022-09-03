@@ -40,4 +40,15 @@ public:
      **/
     static bool CheckedCondition(const bool bCondition, const FString Text, const int Line, const char* Function);
 
+    /**
+     * @public Template for string name from ENum
+     * @example GetEnumValueAsString<EVictoryEnum>("EVictoryEnum", VictoryEnum)));
+     **/
+    template<typename TEnum>
+    static FORCEINLINE FString GetEnumValueAsString(const FString& Name, TEnum Value)
+    {
+        const UEnum* enumPtr = FindObject<UEnum>(ANY_PACKAGE, *Name, true);
+        if (!enumPtr) return FString("Invalid");
+        return enumPtr->GetDisplayNameTextByIndex(static_cast<int32>(Value)).ToString();
+    }
 };

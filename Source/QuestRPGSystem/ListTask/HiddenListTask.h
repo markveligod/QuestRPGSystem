@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Engine/DataAsset.h"
+#include "ListTaskBase.h"
 #include "HiddenListTask.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class QUESTRPGSYSTEM_API UHiddenListTask : public UDataAsset
+class QUESTRPGSYSTEM_API UHiddenListTask : public UListTaskBase
 {
 	GENERATED_BODY()
 	

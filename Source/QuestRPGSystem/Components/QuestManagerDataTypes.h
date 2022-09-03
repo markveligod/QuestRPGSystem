@@ -61,10 +61,10 @@ struct FDataTask
 };
 
 /**
- * @sturct Data List task for processing
+ * @sturct Data List task for processing to visible
  **/
 USTRUCT(BlueprintType)
-struct FDataListTask
+struct FDataVisibleListTask
 {
     GENERATED_BODY()
 
@@ -73,8 +73,8 @@ struct FDataListTask
     TArray<FDataTask> ArrayDataTask;
     
     // Active current visible task
-    UPROPERTY(BlueprintReadOnly, Category = "Settings Data List Task")
-    class UVisibleListTask* ActiveVisibleListTask{nullptr};
+    UPROPERTY(BlueprintReadOnly, Category = "Settings Data List Task", meta = (AllowedClasses = "VisibleListTask"))
+    FSoftObjectPath PathToVisibleListTask{};
 
     UPROPERTY(BlueprintReadOnly, Category = "Settings Data List Task")
     bool bListTaskComplete{false};
@@ -95,9 +95,17 @@ struct FDataQuest
     // Name quest from table
     UPROPERTY(BlueprintReadOnly, Category = "Settings Quest")
     FName NameQuestTable{};
-
-    // Active current visible task
+    
+    // Name quest from table
     UPROPERTY(BlueprintReadOnly, Category = "Settings Quest")
-    TArray<FDataListTask> ArrayDataListTask;
+    bool bIsTargetQuest{false};
+
+    // Array data to visible list task
+    UPROPERTY(BlueprintReadOnly, Category = "Settings Quest")
+    TArray<FDataVisibleListTask> ArrayDataListTask;
+
+    // Active visible list task
+    UPROPERTY()
+    class UVisibleListTask* ActiveVisibleListTask{nullptr};
 };
 
