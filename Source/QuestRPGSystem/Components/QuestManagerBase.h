@@ -58,10 +58,22 @@ public:
      **/
     void PushReplicateID(const uint32 ID);
 
+private:
+
+    UFUNCTION()
+    void OnRep_AddDataQuest();
+
 #pragma endregion
 
 #pragma region FindData
 
+public:
+
+    /**
+     **/
+    UFUNCTION(BlueprintCallable, Category = "FindData")
+    const FDataQuest& GetFreezeDataQuestFromName(const FName& NameQuest) const;
+    
 protected:
 
     /**
@@ -71,6 +83,11 @@ protected:
      **/
     UListTaskBase* FindListTaskFromID(const uint32 ID) const;
 
+    /**
+     * @protected 
+     **/
+    FDataQuest& GetDataQuestFromName(const FName& NameQuest);
+
 #pragma endregion
 
 #pragma region DataQuestManager
@@ -78,7 +95,7 @@ protected:
 protected:
 
     // @protected Current array data quest
-    UPROPERTY(Replicated)
+    UPROPERTY(Replicated, ReplicatedUsing = OnRep_AddDataQuest)
     TArray<FDataQuest> ArrayDataQuest;
 
     // @protected Data quest table
@@ -86,7 +103,24 @@ protected:
     UDataTable* DataQuestTable;
 
     TQueue<uint32> QueuePushReplicateObject;
-    
+
+    FDataQuest EmptyDataQuest;
+
+#pragma endregion
+
+#pragma region Signature
+
+    UPROPERTY(BlueprintAssignable)
+    FStartQuestSignature OnStartQuest;
+
+    UPROPERTY(BlueprintAssignable)
+    FUpdateQuestSignature OnUpdateQuest;
+
+    UPROPERTY(BlueprintAssignable)
+    FCompleteQuestSignature OnCompleteQuest;
+
+    UPROPERTY(BlueprintAssignable)
+    FSwitchQuestSignature OnSwitchQuest;
 
 #pragma endregion
     

@@ -53,6 +53,11 @@ bool UTaskBase::CompleteTask()
     return true;
 }
 
+bool UTaskBase::IsValidTask()
+{
+    return true;
+}
+
 #pragma endregion
 
 #pragma region Action

@@ -5,6 +5,7 @@
 #include "Components/QuestManager.h"
 #include "Librarys/QuestLibrary.h"
 #include "Net/UnrealNetwork.h"
+#include "Task/TaskBase.h"
 
 #pragma region LogListTask
 
@@ -25,13 +26,46 @@ UListTaskBase::UListTaskBase()
     
 }
 
-bool UListTaskBase::RunListTask(APlayerController* PlayerController, UQuestManager* QuestManager)
+bool UListTaskBase::InitListTask(APlayerController* PlayerController, UQuestManager* QuestManager)
 {
     if (!CHECK_COND(PlayerController != nullptr, "Player controller is nullptr")) return false;
+    if (!CHECK_COND(PlayerController->HasAuthority(), "Player controller is not authority")) return false;
     if (!CHECK_COND(QuestManager != nullptr, "Parent quest manager is nullptr")) return false;
+    if (!CHECK_COND(StatusListTask == EStatusListTask::None, FString::Printf(TEXT("Status list task is: [%s] not equal None"),
+        *UEnum::GetValueAsString(StatusListTask)))) return false;
+
+    for (UTaskBase* Task : ArrayTask)
+    {
+        if (!CHECK_COND(Task != nullptr, "Task is nullptr")) return false;
+        if (!CHECK_COND(Task->IsValidTask(), "Task is not valid")) return false;
+    }
 
     OwnerController = PlayerController;
     ParentQuestManager = QuestManager;
+    StatusListTask = EStatusListTask::Init;
+    return true;
+}
+
+bool UListTaskBase::RunListTask()
+{
+    if (!CHECK_COND(StatusListTask == EStatusListTask::Init, FString::Printf(TEXT("Status list task is: [%s] not equal Init"),
+        *UEnum::GetValueAsString(StatusListTask)))) return false;
+
+    switch (TypeRunListTask)
+    {
+        case ETypeRunListTask::StepByStep:
+        {
+            break;
+        }
+        case ETypeRunListTask::AllSameTime:
+        {
+            break;
+        }
+        case ETypeRunListTask::TransferListTask:
+        {
+            break;
+        }
+    }
     StatusListTask = EStatusListTask::Run;
     return true;
 }

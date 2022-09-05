@@ -84,6 +84,18 @@ void UQuestManagerBase::PushReplicateID(const uint32 ID)
     QueuePushReplicateObject.Enqueue(ID);
 }
 
+void UQuestManagerBase::OnRep_AddDataQuest()
+{
+    for (const FDataQuest& DataQuest : ArrayDataQuest)
+    {
+        if (DataQuest.StatusQuest == EStatusQuest::Init)
+        {
+            OnStartQuest.Broadcast(DataQuest.NameQuestTable);
+        }
+        LOG_QM(ELogVerb::Display, FString::Printf(TEXT("Data quest: [%s]"), *DataQuest.ToString()));
+    }
+}
+
 #pragma endregion
 
 #pragma region FindData
@@ -96,6 +108,26 @@ UListTaskBase* UQuestManagerBase::FindListTaskFromID(const uint32 ID) const
     });
 
     return FindElem ? FindElem->ActiveVisibleListTask : nullptr;
+}
+
+const FDataQuest& UQuestManagerBase::GetFreezeDataQuestFromName(const FName& NameQuest) const
+{
+    const auto FindElem = ArrayDataQuest.FindByPredicate([NameQuest](const FDataQuest& DataQuest)
+    {
+        return DataQuest.NameQuestTable.IsEqual(NameQuest);
+    });
+
+    return FindElem ? *FindElem : EmptyDataQuest;
+}
+
+FDataQuest& UQuestManagerBase::GetDataQuestFromName(const FName& NameQuest)
+{
+    const auto FindElem = ArrayDataQuest.FindByPredicate([NameQuest](const FDataQuest& DataQuest)
+    {
+        return DataQuest.NameQuestTable.IsEqual(NameQuest);
+    });
+
+    return FindElem ? *FindElem : EmptyDataQuest;
 }
 
 #pragma endregion

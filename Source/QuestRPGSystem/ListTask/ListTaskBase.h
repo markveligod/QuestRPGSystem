@@ -38,12 +38,18 @@ public:
     UListTaskBase();
 
     /**
-     * @public Run list task to process task. this function override
+     * @public Init list task to process task. this function override
      * @param1 APlayerController*
      * @param2 UQuestManager*
      * @return bool
      **/
-    virtual bool RunListTask(APlayerController* PlayerController, UQuestManager* QuestManager);
+    virtual bool InitListTask(APlayerController* PlayerController, UQuestManager* QuestManager);
+
+    /**
+     * @public Run list task to process task. this function override
+     * @return bool
+     **/
+    virtual bool RunListTask();
 
     /**
      * @public Return the space this function should be called.   Checks to see if this function should
@@ -74,18 +80,34 @@ public:
 
 #pragma region ActionBase
 
+
+
+#pragma endregion
+
+#pragma region DataListTask
+
 public:
 
     /**
      * @public  Getting constant data array task
      * @return TArray<UTaskBase*>
      **/
-    UFUNCTION(BlueprintCallable, Category = "ActionBase")
+    UFUNCTION(BlueprintCallable, Category = "DataListTask")
     const TArray<UTaskBase*>& GetArrayTask() { return ArrayTask; }
 
-#pragma endregion
+    /**
+     * @public  Getting status list task
+     * @return EStatusListTask
+     **/
+    UFUNCTION(BlueprintCallable, Category = "DataListTask")
+    const EStatusListTask& GetStatusListTask() const { return StatusListTask; }
 
-#pragma region DataListTask
+    /**
+     * @public  Getting type run list task
+     * @return ETypeRunListTask
+     **/
+    UFUNCTION(BlueprintCallable, Category = "DataListTask")
+    const ETypeRunListTask& GetTypeRunListTask() const { return TypeRunListTask; }
 
 protected:
 
@@ -110,4 +132,11 @@ protected:
     UQuestManager* ParentQuestManager{nullptr};
 
 #pragma endregion
+
+#pragma region Signature
+    
+    FUpdateListTaskSignature OnUpdateListTask;
+
+#pragma endregion
+    
 };

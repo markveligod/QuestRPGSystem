@@ -64,10 +64,42 @@ public:
      **/
     virtual bool CompleteTask();
 
+    /**
+     * @public Call on server side for check valid task. this override function.
+     * @return bool
+     **/
+    virtual bool IsValidTask();
+
 #pragma endregion
 
 #pragma region DataTask
 
+public:
+
+    /**
+     * @public Get task description
+     * @return FText
+     **/
+    FORCEINLINE FText GetTaskDescription() const { return TaskDescription; }
+
+    /**
+     * @public Get state bLandMarkUpdate
+     * @return bool
+     **/
+    FORCEINLINE bool IsLandMarkUpdate() const { return bLandMarkUpdate; }
+
+    /**
+     * @public Get Task Specific Settings
+     * @return FTaskSpecificSettings
+     **/
+    FORCEINLINE const FTaskSpecificSettings& GetTaskSpecificSettings() { return TaskSpecificSettings; }
+
+    /**
+     * @public Get StatusTask
+     * @return EStatusTask
+     **/
+    FORCEINLINE EStatusTask GetStatusTask() const { return StatusTask; }
+    
 protected:
 
     // @protected Task description
@@ -76,7 +108,7 @@ protected:
 
     // @protected Notification of the quest update at the start of a current task
     UPROPERTY(EditDefaultsOnly, Category = "Settings Task", meta = (DisplayPriority = 1))
-    bool bIsLandMarkUpdate{true};
+    bool bLandMarkUpdate{true};
 
     // @protected Task specific settings
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings Task")

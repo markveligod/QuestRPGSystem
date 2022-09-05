@@ -3,9 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/QuestManagerDataTypes.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "QuestLibrary.generated.h"
 
+class UListTaskBase;
 // Custom verb to logging
 UENUM()
 enum class ELogVerb: uint8
@@ -51,4 +53,27 @@ public:
         if (!enumPtr) return FString("Invalid");
         return enumPtr->GetDisplayNameTextByIndex(static_cast<int32>(Value)).ToString();
     }
+
+    /**
+     * @private Creates a class of type UListTaskBase in memory
+     * @param1 UObject* Owner
+     * @param2 FSoftObjectPath PathToListTask
+     * @return UListTaskBase*
+     **/
+    static UListTaskBase* CreateListTaskFromPath(UObject* Owner, const FSoftObjectPath& PathListTask);
+
+    /**
+     * @private Fill data info tasks
+     * @param1 UListTaskBase*
+     * @return TArray<FDataInfoTask>
+     **/
+    static TArray<FDataInfoTask> FillDataInfoTasksFromListTask(UListTaskBase* ListTask);
+
+    /**
+     * @public Check client
+     * @param1 AActor*
+     * @return bool
+     **/
+    UFUNCTION(BlueprintPure, Category = "QuestLibrary")
+    static bool CheckIsClient(const AActor* InActor);
 };
