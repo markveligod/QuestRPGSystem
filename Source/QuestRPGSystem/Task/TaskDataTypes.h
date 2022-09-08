@@ -72,6 +72,9 @@ struct FTaskSpecificSettings
 {
     GENERATED_BODY()
 
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    TArray<FVector> ArrPointPositionForMap;
+    
     // Allow for adding additional text to the description
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     bool bEnableHaveSubDescription{false};

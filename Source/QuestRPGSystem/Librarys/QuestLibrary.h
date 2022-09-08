@@ -3,10 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/QuestManagerDataTypes.h"
+#include "QuestRPGSystem/Components/QuestManagerDataTypes.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "QuestLibrary.generated.h"
 
+class UTaskBase;
 class UListTaskBase;
 // Custom verb to logging
 UENUM()

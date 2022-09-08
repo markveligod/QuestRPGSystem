@@ -45,6 +45,13 @@ enum class EStatusQuest: uint8
     CompleteFail
 };
 
+UENUM()
+enum class EStatePoint: uint8
+{
+    Draw,
+    Remove
+};
+
 /**
  * @sturct Data quest for Table
  **/
@@ -66,8 +73,12 @@ struct FDataQuestTable : public FTableRowBase
     ETypeQuest TypeQuest{ETypeQuest::Story};
 
     // Start visible list task
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings Quest", meta = (AllowedClasses = "VisibleListTask"))
-    FSoftObjectPath StartVisibleListTask;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings Quest", meta = (MetaClass = "ListTaskBase"))
+    FSoftClassPath StartVisibleListTask;
+
+    // Array Hidden list task
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings Quest", meta = (MetaClass = "ListTaskBase"))
+    TArray<FSoftClassPath> ArrayHiddenListTask;
 };
 
 /**
@@ -105,6 +116,7 @@ struct FDataInfoTask
 
     void operator=(const FDataInfoTask& Other)
     {
+        this->TaskID = Other.TaskID;
         this->TaskDescription = Other.TaskDescription;
         this->bStatusTask = Other.bStatusTask;
         this->bHideTaskDescription = Other.bHideTaskDescription;
@@ -140,7 +152,7 @@ struct FDataVisibleListTask
     TArray<FDataInfoTask> ArrayDataTask;
     
     // Active current visible task
-    UPROPERTY(BlueprintReadOnly, meta = (AllowedClasses = "VisibleListTask"))
+    UPROPERTY(BlueprintReadOnly, meta = (AllowedClasses = "ListTaskBase"))
     FSoftObjectPath PathToVisibleListTask{};
 
     UPROPERTY(BlueprintReadOnly)
@@ -154,6 +166,59 @@ struct FDataVisibleListTask
     }
 
     void operator=(const FDataVisibleListTask& Other)
+    {
+        this->ArrayDataTask = Other.ArrayDataTask;
+        this->PathToVisibleListTask = Other.PathToVisibleListTask;
+        this->bListTaskComplete = Other.bListTaskComplete;
+    }
+
+    FString ToString() const
+    {
+        return FString::Printf(TEXT("Path to Visible list task: [%s] | Array Data task: [%i] | List task complete: [%i]"),
+            *PathToVisibleListTask.ToString(), ArrayDataTask.Num(), bListTaskComplete);
+    }
+
+    bool operator==(const FDataVisibleListTask& Other) const
+    {
+        return this->PathToVisibleListTask == Other.PathToVisibleListTask;
+    }
+
+    bool operator!=(const FDataVisibleListTask& Other) const
+    {
+        return !(this->PathToVisibleListTask == Other.PathToVisibleListTask);
+    }
+};
+
+/**
+ * @sturct Data List task for processing to hidden
+ **/
+USTRUCT(BlueprintType)
+struct FDataHiddenListTask
+{
+    GENERATED_BODY()
+
+    // Block of tasks that have been initialized
+    UPROPERTY(BlueprintReadOnly)
+    TArray<FDataInfoTask> ArrayDataTask;
+    
+    // Active current visible task
+    UPROPERTY(BlueprintReadOnly, meta = (AllowedClasses = "ListTaskBase"))
+    FSoftObjectPath PathToVisibleListTask{};
+
+    UPROPERTY(BlueprintReadOnly)
+    bool bListTaskComplete{false};
+
+    UPROPERTY()
+    class UListTaskBase* ActiveHiddenListTask{nullptr};
+
+    FDataHiddenListTask(){}
+    FDataHiddenListTask(const FSoftObjectPath& NewPathToListTask):PathToVisibleListTask(NewPathToListTask) {}
+    FDataHiddenListTask(const FDataHiddenListTask& Other)
+    {
+        *this = Other;
+    }
+
+    void operator=(const FDataHiddenListTask& Other)
     {
         this->ArrayDataTask = Other.ArrayDataTask;
         this->PathToVisibleListTask = Other.PathToVisibleListTask;
@@ -203,7 +268,11 @@ struct FDataQuest
 
     // Active visible list task
     UPROPERTY()
-    class UVisibleListTask* ActiveVisibleListTask{nullptr};
+    class UListTaskBase* ActiveVisibleListTask{nullptr};
+
+    // Array Hidden list task
+    UPROPERTY()
+    TArray<FDataHiddenListTask> ArrayHiddenListTasks;
 
     FDataQuest(){}
     explicit FDataQuest(const FName& NewNameQuest): NameQuestTable(NewNameQuest){}
@@ -224,4 +293,156 @@ struct FDataQuest
         return !(NameQuestTable.IsEqual(Other.NameQuestTable));
     }
 };
+
+/**
+ * @struct Data for drawing a point in the navigation system
+ **/
+USTRUCT(BlueprintType)
+struct FTaskPoint
+{
+    GENERATED_BODY()
+
+    // Pointer on actor
+    UPROPERTY(BlueprintReadOnly)
+    AActor* TargetActor{nullptr};
+
+    // A backup option for installing a point
+    UPROPERTY(BlueprintReadOnly)
+    FVector AlternatePos{FVector::ZeroVector};
+
+    // Static object or not
+    UPROPERTY(BlueprintReadOnly)
+    bool bStaticActor{false};
+
+    // Deviation of the marker along the Z axis
+    UPROPERTY(BlueprintReadOnly)
+    float MarkDeviation{0.0f};
+
+    // Quest Type
+    UPROPERTY(BlueprintReadOnly)
+    ETypeQuest QuestType{ETypeQuest::Story};
+
+    // Tag for identification
+    UPROPERTY(BlueprintReadOnly)
+    FString Tag{};
+
+    // Quest name
+    UPROPERTY(BlueprintReadOnly)
+    FText Head{};
+
+    // Task description
+    UPROPERTY(BlueprintReadOnly)
+    FText Description{};
+
+    // Name map
+    UPROPERTY(BlueprintReadOnly)
+    FName NameMap{};
+
+    // Target quest or not
+    UPROPERTY(BlueprintReadOnly)
+    bool IsTargetQuest{false};
+
+    // Is the pointer to the marker disabled
+    UPROPERTY(BlueprintReadOnly)
+    bool IsDetective{false};
+
+    // Search radius
+    UPROPERTY(BlueprintReadOnly)
+    float RadiusSearch{0.0f};
+
+    // Enable general zone
+    UPROPERTY(BlueprintReadOnly)
+    bool bEnableZone{false};
+
+    // The central point of the zone
+    UPROPERTY(BlueprintReadOnly)
+    FVector CenterZone{};
+
+    // Radius zone
+    UPROPERTY(BlueprintReadOnly)
+    float RadiusZone{0.0f};
+
+    FString ToString() const
+    {
+        FString L_Result;
+        L_Result.Append("Target Actor: " + (this->TargetActor != nullptr ? this->TargetActor->GetName() : "None") + "|");
+        L_Result.Append("AlternatePos: " + this->AlternatePos.ToString() + "|");
+        L_Result.Append("bStaticActor: " + FString::FromInt(this->bStaticActor) + "|");
+        L_Result.Append("MarkDeviation: " + FString::SanitizeFloat(this->MarkDeviation) + "|");
+        L_Result.Append("QuestType: " + UEnum::GetValueAsString(this->QuestType) + "|");
+        L_Result.Append("Tag: " + this->Tag + "|");
+        L_Result.Append("Head: " + this->Head.ToString() + "|");
+        L_Result.Append("Description: " + this->Description.ToString() + "|");
+        L_Result.Append("NameMap: " + this->NameMap.ToString() + "|");
+        L_Result.Append("IsTargetQuest: " + FString::FromInt(this->IsTargetQuest) + "|");
+        L_Result.Append("IsDetective: " + FString::FromInt(this->IsDetective) + "|");
+        L_Result.Append("RadiusSearch: " + FString::SanitizeFloat(this->RadiusSearch) + "|");
+        L_Result.Append("bEnableZone: " + FString::FromInt(this->bEnableZone) + "|");
+        L_Result.Append("CenterZone: " + this->CenterZone.ToString() + "|");
+        L_Result.Append("RadiusZone: " + FString::SanitizeFloat(this->RadiusZone));
+
+        return L_Result;
+    }
+};
+
+/**
+ * @struct Data for send a quest point in the navigation system
+ **/
+USTRUCT(BlueprintType)
+struct FQuestPointMap
+{
+    GENERATED_BODY()
+
+    // Quest type
+    UPROPERTY(BlueprintReadOnly)
+    ETypeQuest QuestType{ETypeQuest::Story};
+
+    // Tag
+    UPROPERTY(BlueprintReadOnly)
+    FString Tag{};  // GetParentQuest()->GetQuestName();
+
+    // Quest name
+    UPROPERTY(BlueprintReadOnly)
+    FText Head{};  // GetParentQuest()->GetQuestName();
+
+    // TaskDescription
+    UPROPERTY(BlueprintReadOnly)
+    FText Description{};  // TaskDescription(Last target)
+
+    // GetMapName
+    UPROPERTY(BlueprintReadOnly)
+    FName NameMap{};  // Имя карты
+
+    // Is target
+    UPROPERTY(BlueprintReadOnly)
+    bool IsTargetQuest{false};  // Нужно ли отображать этот квест (целевой или нет).
+
+    // 
+    UPROPERTY(BlueprintReadOnly)
+    TArray<FTaskPoint> ArrTaskPoint;
+
+    FString ToString() const
+    {
+        FString Result;
+        Result.Append("Quest Type: " + UEnum::GetValueAsString(this->QuestType) + "|");
+        Result.Append("Tag: " + this->Tag + "|");
+        Result.Append("Head: " + this->Head.ToString() + "|");
+        Result.Append("Description: " + this->Description.ToString() + "|");
+        Result.Append("Name map: " + this->NameMap.ToString() + "|");
+        Result.Append("Is target quest: " + FString::FromInt(this->IsTargetQuest));
+        for (int32 i = 0; i < ArrTaskPoint.Num(); i++)
+        {
+            if (ArrTaskPoint.IsValidIndex(i))
+            {
+                Result.Append("Index Task point #" + FString::FromInt(i) + " " + ArrTaskPoint[i].ToString());
+            }
+        }
+
+        return Result;
+    }
+};
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FSendTaskPointSignature, FString, QuestName, FTaskPoint, TaskPoint, EStatePoint, StatePoint);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSendQuestPointMapSignature, FQuestPointMap, QuestPointMap);
 

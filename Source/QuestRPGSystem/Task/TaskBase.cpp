@@ -10,9 +10,8 @@
 void UTaskBase::Print_LogTask(const ELogVerb LogVerb, const FString Text, const int Line, const char* Function) const
 {
     if (!OwnerController || !OwnerListTask) return;
-    const FString StrNetMode = UQuestLibrary::GetEnumValueAsString("ENetMode", OwnerController->GetNetMode());
-    UQuestLibrary::Print_Log(LogVerb, FString::Printf(TEXT("NetMode: [%s] | OwnerController: [%s] | OwnerListTask: [%s] | Name: [%s] | %s"),
-        *StrNetMode, *OwnerController->GetName(), *OwnerListTask->GetName(), *GetName(), *Text), Line, Function);
+    UQuestLibrary::Print_Log(LogVerb, FString::Printf(TEXT("NetMode: [%i] | OwnerController: [%s] | OwnerListTask: [%s] | Name: [%s] | %s"),
+        OwnerController->GetNetMode(), *OwnerController->GetName(), *OwnerListTask->GetName(), *GetName(), *Text), Line, Function);
 }
 
 #pragma endregion
@@ -60,7 +59,7 @@ bool UTaskBase::IsValidTask()
 
 #pragma endregion
 
-#pragma region Action
+#pragma region ActionBase
 
 void UTaskBase::ChangeStatusTask(const EStatusTask& NewStatus)
 {
@@ -74,6 +73,36 @@ void UTaskBase::ChangeStatusTask(const EStatusTask& NewStatus)
     LOG_TASK(ELogVerb::Display, FString::Printf(TEXT("New status task: [%s]"), *UEnum::GetValueAsString(NewStatus)));
     StatusTask = NewStatus;
     OnUpdateTask.Broadcast(this);
+}
+
+TArray<FTaskPoint> UTaskBase::GenerateTaskPointForMissMap()
+{
+    TArray<FTaskPoint> Result;
+
+    for (int32 i = 0; i < TaskSpecificSettings.ArrPointPositionForMap.Num(); ++i)
+    {
+        const FVector& Pos = TaskSpecificSettings.ArrPointPositionForMap[i];
+        FTaskPoint TaskPoint;
+        TaskPoint.AlternatePos = Pos;
+        TaskPoint.bStaticActor = true;
+        TaskPoint.MarkDeviation = TaskSpecificSettings.TargetMarkDeviation;
+        TaskPoint.Tag = GetName() + FString::FromInt(i);
+        TaskPoint.Description = TaskDescription;
+        TaskPoint.IsDetective = TaskSpecificSettings.bEnableCompassSearch;
+        TaskPoint.RadiusSearch = TaskSpecificSettings.RadiusSearch;
+        TaskPoint.bEnableZone = TaskSpecificSettings.bEnableZone;
+        TaskPoint.CenterZone = TaskSpecificSettings.CenterZone;
+        TaskPoint.RadiusZone = TaskSpecificSettings.RadiusZone;
+    }
+    return Result;
+}
+
+void UTaskBase::ClientDrawPoint_Implementation(const FVector& Position)
+{
+    if (OwnerController)
+    {
+        DrawDebugSphere(OwnerController->GetWorld(), Position, 50.0f, 12, FColor::Yellow, false, 1.0f, 0, 2.0f);
+    }
 }
 
 #pragma endregion

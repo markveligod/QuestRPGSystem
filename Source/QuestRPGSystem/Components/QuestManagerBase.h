@@ -11,13 +11,15 @@
 #define LOG_QM(LogVerb, Text) Print_LogQuestManager(LogVerb, Text, __LINE__, __FUNCTION__)
 
 class UListTaskBase;
-UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+UCLASS()
 class QUESTRPGSYSTEM_API UQuestManagerBase : public UActorComponent
 {
     GENERATED_BODY()
 
 #pragma region LogQuestManager
 
+protected:
+    
     /**
      * @public Write a log to quest manager
      **/
@@ -54,14 +56,45 @@ public:
 
     /**
      * @public Adds a unique ID of the task list object to the queue
-     * @param1 ID
+     * @param1 FName
      **/
-    void PushReplicateID(const uint32 ID);
+    void PushReplicateID(const FName& QuestName);
 
-private:
+protected:
 
-    UFUNCTION()
-    void OnRep_AddDataQuest();
+    /**
+     * @protected Update Info data quest from active list task
+     * @param1 FName
+     **/
+    void UpdateInfoDataQuest(const FName& NameQuest);
+
+    /**
+     * @protected Client notify start quest
+     * @param1 FName name quest
+     **/
+    UFUNCTION(Client, Reliable)
+    void ClientSendNotifyStartQuest(const FName& NameQuest);
+
+    /**
+     * @protected Client notify update quest
+     * @param1 FName name quest
+     **/
+    UFUNCTION(Client, Reliable)
+    void ClientSendNotifyUpdateQuest(const FName& NameQuest);
+
+    /**
+     * @protected Client notify complete quest
+     * @param1 FName name quest
+     **/
+    UFUNCTION(Client, Reliable)
+    void ClientSendNotifyCompleteQuest(const FName& NameQuest);
+
+    /**
+     * @protected Client notify switch quest
+     * @param1 FName name quest
+     **/
+    UFUNCTION(Client, Reliable)
+    void ClientSendNotifySwitchQuest(const FName& NameQuest);
 
 #pragma endregion
 
@@ -70,6 +103,9 @@ private:
 public:
 
     /**
+     * @public Get constant data quest from Name quest
+     * @param1 FName NameQuest
+     * @return const FDataQuest&
      **/
     UFUNCTION(BlueprintCallable, Category = "FindData")
     const FDataQuest& GetFreezeDataQuestFromName(const FName& NameQuest) const;
@@ -84,9 +120,32 @@ protected:
     UListTaskBase* FindListTaskFromID(const uint32 ID) const;
 
     /**
-     * @protected 
+     * @protected Get data quest from unique ID UObject Active list task
+     * @param1 uint32
+     * @return FDataQuest&
+     **/
+    FDataQuest& FindDataQuestFromID(const uint32 ID) ;
+
+    /**
+     * @public Get non-constant data quest from Name quest
+     * @param1 FName NameQuest
+     * @return FDataQuest&
      **/
     FDataQuest& GetDataQuestFromName(const FName& NameQuest);
+
+    /**
+     * @public Get non-constant data quest from Active list task
+     * @param1 UListTaskBase*
+     * @return FDataQuest&
+     **/
+    FDataQuest& GetDataQuestFromListTask(const UListTaskBase* ListTask);
+
+    /**
+     * @public Get non-constant DataVisibleListTask from Active list task
+     * @param1 UListTaskBase*
+     * @return FDataVisibleListTask&
+     **/
+    FDataVisibleListTask& GetDataVisibleListFromListTask(const FName& NameQuest, const UListTaskBase* ListTask);
 
 #pragma endregion
 
@@ -95,7 +154,7 @@ protected:
 protected:
 
     // @protected Current array data quest
-    UPROPERTY(Replicated, ReplicatedUsing = OnRep_AddDataQuest)
+    UPROPERTY(Replicated)
     TArray<FDataQuest> ArrayDataQuest;
 
     // @protected Data quest table
@@ -105,6 +164,7 @@ protected:
     TQueue<uint32> QueuePushReplicateObject;
 
     FDataQuest EmptyDataQuest;
+    FDataVisibleListTask EmptyDataVisibleListTask;
 
 #pragma endregion
 
@@ -121,6 +181,12 @@ protected:
 
     UPROPERTY(BlueprintAssignable)
     FSwitchQuestSignature OnSwitchQuest;
+
+    UPROPERTY(BlueprintAssignable)
+    FSendTaskPointSignature OnSendTaskPoint;
+
+    UPROPERTY(BlueprintAssignable)
+    FSendQuestPointMapSignature OnSendQuestPointMap;
 
 #pragma endregion
     

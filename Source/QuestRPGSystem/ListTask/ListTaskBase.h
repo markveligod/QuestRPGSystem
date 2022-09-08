@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "ListTaskDataTypes.h"
-#include "Engine/DataAsset.h"
 #include "Librarys/QuestLibrary.h"
 #include "ListTaskBase.generated.h"
 
@@ -16,8 +15,8 @@ class UTaskBase;
 /**
  * @class Base list task data asset
  */
-UCLASS(Abstract)
-class QUESTRPGSYSTEM_API UListTaskBase : public UDataAsset
+UCLASS(Blueprintable, Abstract)
+class QUESTRPGSYSTEM_API UListTaskBase : public UObject
 {
     GENERATED_BODY()
 
@@ -52,7 +51,19 @@ public:
     virtual bool RunListTask();
 
     /**
-     * @public Return the space this function should be called.   Checks to see if this function should
+     * @public Complete list task. this function override
+     * @return bool
+     **/
+    virtual bool CompleteListTask();
+
+    /**
+     * @public Reset list task. this function override
+     * @return bool
+     **/
+    virtual bool ResetListTask();
+
+    /**
+     * @public Return the space this function should be called. Checks to see if this function should
      * be called locally, remotely, or simply absorbed under the given conditions
      *
      * @param Function function to call
@@ -76,11 +87,91 @@ public:
     /** @public IsSupportedForNetworking means an object can be referenced over the network */
     virtual bool IsSupportedForNetworking() const override { return true; }
 
+#if WITH_EDITOR
+
+    virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+
+#endif
+
 #pragma endregion
 
 #pragma region ActionBase
 
+public:
 
+    /**
+     * @public Get next list task
+     * @return FSoftObjectPath
+     **/
+    virtual FSoftObjectPath GetNextListTask() const;
+
+    /**
+     * @public Destroy list task
+     **/
+    void DestroyListTask();
+
+    /**
+     * @public Generate info for points task
+     * @return TArray<FTaskPoint>
+     **/
+    TArray<FTaskPoint> RequestGeneratePointsTaskForMissMap();
+
+protected:
+
+    /**
+     * @protected Task Initialization Handler. Call function only on the server side.
+     * @param1 UTaskBase*
+     **/
+    void ProcessTasks(UTaskBase* Task);
+
+    /**
+     * @protected Task Initialization Handler. Call function only on the server side.
+     * @param1 UTaskBase*
+     **/
+    void NextInitTask();
+
+    /**
+     * @protected Register event update task. Call function only on the server side. This function override.
+     * @param1 UTaskBase*
+     **/
+    virtual void RegisterUpdateTask(UTaskBase* Task);
+
+    /**
+     * @protected Find index last not complete task
+     * @return int32
+     **/
+    int32 FindIndexLastNonCompleteTask() const;
+
+    /**
+     * @protected Find index some complete task
+     * @return int32
+     **/
+    int32 FindIndexFirstCompleteTask() const;
+
+    /**
+     * @protected Checking whether all tasks are completed
+     * @return bool
+     **/
+    bool IsAllTaskComplete() const;
+
+    /**
+     * @protected Checking that at least one of the main tasks has been completed
+     * @return bool
+     **/
+    bool IsSomeTaskComplete() const;
+
+    /**
+     * @protected Change state for list task
+     * @param1 EStatusListTask
+     **/
+    void ChangeStateListTask(EStatusListTask NewState);
+
+private:
+
+    /**
+     * @public Reset all task
+     **/
+    void ResetAllTask();
 
 #pragma endregion
 
@@ -109,12 +200,56 @@ public:
     UFUNCTION(BlueprintCallable, Category = "DataListTask")
     const ETypeRunListTask& GetTypeRunListTask() const { return TypeRunListTask; }
 
+    /**
+     * @public Get path world action
+     * @return FSoftObjectPath
+     **/
+    UFUNCTION(BlueprintCallable, Category = "DataListTask")
+    const FSoftObjectPath& GetPathActionWorld() const { return ActionWorld; }
+
+    /**
+     * @public Get type list task visible or hidden
+     * @return ETypeListTask
+     **/
+    UFUNCTION(BlueprintCallable, Category = "DataListTask")
+    const ETypeListTask& GetTypeListTask() const { return TypeListTask; }
+
 protected:
 
-    // @protected Type run list task
+    // @protected Type list task
     UPROPERTY(Replicated, EditAnywhere, Category = "Settings List task")
+    ETypeListTask TypeListTask{ETypeListTask::Visible};
+
+    // @protected Active to World
+    UPROPERTY(Replicated, EditAnywhere, Category = "Settings List task", meta = (AllowedClasses = "World"))
+    FSoftObjectPath ActionWorld{};
+
+#pragma region VisibleData
+    
+    // @protected Type run list task
+    UPROPERTY(Replicated, EditAnywhere, Category = "Settings List task", meta = (EditCondition = "TypeListTask == ETypeListTask::Visible", EditConditionHides))
     ETypeRunListTask TypeRunListTask{ETypeRunListTask::StepByStep};
 
+    // @protected Type run list task
+    UPROPERTY(Replicated, EditAnywhere, Category = "Settings List task", meta = (EditCondition = "TypeRunListTask == ETypeRunListTask::TransferListTask && TypeListTask == ETypeListTask::Visible", EditConditionHides))
+    TArray<FDataTransferToNextBlock> ArrayIndexTransferToNextBlocks;
+
+    // @protected Next path block
+    UPROPERTY(Replicated, EditAnywhere, Category = "Settings List task", meta = (MetaClass = "ListTaskBase", EditCondition = "TypeRunListTask != ETypeRunListTask::TransferListTask && TypeListTask == ETypeListTask::Visible", EditConditionHides))
+    FSoftClassPath NextPathBlock;
+
+#pragma endregion 
+
+#pragma region HiddenData
+
+    UPROPERTY(Replicated, EditAnywhere, Category = "Settings List task", meta = (EditCondition = "TypeListTask == ETypeListTask::Hidden", EditConditionHides))
+    ERunHiddenListTask RunHiddenListTask{ERunHiddenListTask::AddToQuest};
+
+    UPROPERTY(Replicated, EditAnywhere, Category = "Settings List task", meta = (EditCondition = "TypeListTask == ETypeListTask::Hidden", EditConditionHides))
+    EActionHiddenListTask ActionHiddenListTask{EActionHiddenListTask::Nothing};
+
+#pragma endregion
+    
     // @protected Set array task for action process
     UPROPERTY(Replicated, EditAnywhere, Instanced, Category = "Settings List task")
     TArray<UTaskBase*> ArrayTask;
@@ -134,6 +269,8 @@ protected:
 #pragma endregion
 
 #pragma region Signature
+
+public:
     
     FUpdateListTaskSignature OnUpdateListTask;
 

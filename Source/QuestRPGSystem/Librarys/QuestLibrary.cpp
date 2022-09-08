@@ -34,7 +34,8 @@ bool UQuestLibrary::CheckedCondition(const bool bCondition, const FString Text, 
 UListTaskBase* UQuestLibrary::CreateListTaskFromPath(UObject* Owner, const FSoftObjectPath& PathListTask)
 {
     if (!CHECK_COND(PathListTask.IsValid(), "Path list task is none")) return nullptr;
-    return LoadObject<UListTaskBase>(Owner, *(PathListTask.ToString()));
+    UClass* CDO = LoadClass<UListTaskBase>(Owner, *(PathListTask.ToString()));
+    return NewObject<UListTaskBase>(Owner, CDO);
 }
 
 TArray<FDataInfoTask> UQuestLibrary::FillDataInfoTasksFromListTask(UListTaskBase* ListTask)
@@ -49,9 +50,9 @@ TArray<FDataInfoTask> UQuestLibrary::FillDataInfoTasksFromListTask(UListTaskBase
         UTaskBase* Task = ArrayTasks[i];
         FDataInfoTask TempDataInfoTask;
         TempDataInfoTask.TaskDescription = Task->GetTaskDescription();
-        TempDataInfoTask.bStatusTask = false;
+        TempDataInfoTask.bStatusTask = Task->GetStatusTask() == EStatusTask::Complete;
         TempDataInfoTask.bHideTaskDescription = Task->GetTaskSpecificSettings().bEnableHideTaskDescription;
-        TempDataInfoTask.TaskID = FString::Printf(TEXT("Index: [%i] | List Task Class: [%s] | Task Class: [%s]"),
+        TempDataInfoTask.TaskID = FString::Printf(TEXT("Index: [%i] | List Task Path: [%s] | Task Class: [%s]"),
             i, *ListTask->GetClass()->GetName(), *Task->GetClass()->GetName());
         ResultDataInfoTask.Add(TempDataInfoTask);
     }

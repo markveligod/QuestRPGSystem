@@ -2,9 +2,8 @@
 
 
 #include "Components/QuestManagerBase.h"
-
 #include "Engine/ActorChannel.h"
-#include "ListTask/VisibleListTask.h"
+#include "ListTask/ListTaskBase.h"
 #include "Net/UnrealNetwork.h"
 
 #pragma region LogQuestManager
@@ -12,9 +11,8 @@
 void UQuestManagerBase::Print_LogQuestManager(const ELogVerb LogVerb, const FString Text, const int Line, const char* Function) const
 {
     if (!GetOwner()) return;
-    const FString StrNetMode = UQuestLibrary::GetEnumValueAsString("ENetMode", GetOwner()->GetNetMode());
-    UQuestLibrary::Print_Log(LogVerb, FString::Printf(TEXT("NetMode: [%s] | Owner: [%s] | Name: [%s] | %s"),
-        *StrNetMode, *GetOwner()->GetName(), *GetName(), *Text), Line, Function);
+    UQuestLibrary::Print_Log(LogVerb, FString::Printf(TEXT("NetMode: [%i] | Owner: [%s] | Name: [%s] | %s"),
+        GetOwner()->GetNetMode(), *GetOwner()->GetName(), *GetName(), *Text), Line, Function);
 }
 
 #pragma endregion
@@ -34,7 +32,7 @@ void UQuestManagerBase::BeginPlay()
 {
     Super::BeginPlay();
 
-    if (CHECK_COND(GetOwner() != nullptr, "Owner is nullptr")) return;
+    if (!CHECK_COND(GetOwner() != nullptr, "Owner is nullptr")) return;
 }
 
 // Called every frame
@@ -77,23 +75,47 @@ bool UQuestManagerBase::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* B
 
 #pragma region ActionBase
 
-void UQuestManagerBase::PushReplicateID(const uint32 ID)
+void UQuestManagerBase::PushReplicateID(const FName& QuestName)
 {
     if (!CHECK_COND(GetOwner()->HasAuthority(), "Function called on client ???")) return;
 
-    QueuePushReplicateObject.Enqueue(ID);
+    const FDataQuest& DataQuest = GetFreezeDataQuestFromName(QuestName);
+    if (!CHECK_COND(DataQuest != EmptyDataQuest, "Data quest is empty")) return;
+    if (!CHECK_COND(DataQuest.ActiveVisibleListTask != nullptr, "Active visible list task is nullptr")) return;
+
+    QueuePushReplicateObject.Enqueue(DataQuest.ActiveVisibleListTask->GetUniqueID());
 }
 
-void UQuestManagerBase::OnRep_AddDataQuest()
+void UQuestManagerBase::UpdateInfoDataQuest(const FName& NameQuest)
 {
-    for (const FDataQuest& DataQuest : ArrayDataQuest)
-    {
-        if (DataQuest.StatusQuest == EStatusQuest::Init)
-        {
-            OnStartQuest.Broadcast(DataQuest.NameQuestTable);
-        }
-        LOG_QM(ELogVerb::Display, FString::Printf(TEXT("Data quest: [%s]"), *DataQuest.ToString()));
-    }
+    FDataQuest& DataQuest = GetDataQuestFromName(NameQuest);
+    if (!CHECK_COND(DataQuest != EmptyDataQuest, "Empty data quest")) return;
+    if (!CHECK_COND(DataQuest.ActiveVisibleListTask != nullptr, "Active visible list task is nullptr")) return;
+
+    FDataVisibleListTask& DataVisibleListTask = GetDataVisibleListFromListTask(NameQuest, DataQuest.ActiveVisibleListTask);
+    if (!CHECK_COND(DataVisibleListTask != EmptyDataVisibleListTask, "Data visible list task is empty")) return;
+
+    DataVisibleListTask.ArrayDataTask = UQuestLibrary::FillDataInfoTasksFromListTask(DataQuest.ActiveVisibleListTask);
+}
+
+void UQuestManagerBase::ClientSendNotifyStartQuest_Implementation(const FName& NameQuest)
+{
+    OnStartQuest.Broadcast(NameQuest);
+}
+
+void UQuestManagerBase::ClientSendNotifyUpdateQuest_Implementation(const FName& NameQuest)
+{
+    OnUpdateQuest.Broadcast(NameQuest);
+}
+
+void UQuestManagerBase::ClientSendNotifyCompleteQuest_Implementation(const FName& NameQuest)
+{
+    OnCompleteQuest.Broadcast(NameQuest);
+}
+
+void UQuestManagerBase::ClientSendNotifySwitchQuest_Implementation(const FName& NameQuest)
+{
+    OnSwitchQuest.Broadcast(NameQuest);
 }
 
 #pragma endregion
@@ -108,6 +130,16 @@ UListTaskBase* UQuestManagerBase::FindListTaskFromID(const uint32 ID) const
     });
 
     return FindElem ? FindElem->ActiveVisibleListTask : nullptr;
+}
+
+FDataQuest& UQuestManagerBase::FindDataQuestFromID(const uint32 ID)
+{
+    const auto FindElem = ArrayDataQuest.FindByPredicate([ID](const FDataQuest& DataQuest)
+    {
+        return DataQuest.ActiveVisibleListTask->GetUniqueID() == ID;
+    });
+
+    return FindElem ? *FindElem : EmptyDataQuest;
 }
 
 const FDataQuest& UQuestManagerBase::GetFreezeDataQuestFromName(const FName& NameQuest) const
@@ -128,6 +160,28 @@ FDataQuest& UQuestManagerBase::GetDataQuestFromName(const FName& NameQuest)
     });
 
     return FindElem ? *FindElem : EmptyDataQuest;
+}
+
+FDataQuest& UQuestManagerBase::GetDataQuestFromListTask(const UListTaskBase* ListTask)
+{
+    const auto FindElem = ArrayDataQuest.FindByPredicate([ListTask](const FDataQuest& DataQuest)
+    {
+        return DataQuest.ActiveVisibleListTask == ListTask;
+    });
+
+    return FindElem ? *FindElem : EmptyDataQuest;
+}
+
+FDataVisibleListTask& UQuestManagerBase::GetDataVisibleListFromListTask(const FName& NameQuest, const UListTaskBase* ListTask)
+{
+    FDataQuest& DataQuest = GetDataQuestFromName(NameQuest);
+    if (!CHECK_COND(DataQuest != EmptyDataQuest, "Data quest is empty")) return EmptyDataVisibleListTask;
+    const auto FindElem = DataQuest.ArrayDataListTask.FindByPredicate([ListTask](const FDataVisibleListTask& VisibleListTask)
+    {
+        return VisibleListTask.PathToVisibleListTask.GetAssetPathString() == ListTask->GetClass()->GetPathName() && VisibleListTask.bListTaskComplete == false;
+    });
+
+    return FindElem ? *FindElem : EmptyDataVisibleListTask;
 }
 
 #pragma endregion

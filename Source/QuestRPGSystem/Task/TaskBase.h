@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "TaskDataTypes.h"
-#include "Librarys/QuestLibrary.h"
+#include "QuestRPGSystem/Librarys/QuestLibrary.h"
 #include "TaskBase.generated.h"
 
 class UListTaskBase;
@@ -14,7 +14,7 @@ class UListTaskBase;
 /**
  * @class Task base
  */
-UCLASS()
+UCLASS(EditInlineNew, Abstract, HideCategories = "Trash")
 class QUESTRPGSYSTEM_API UTaskBase : public UObject
 {
     GENERATED_BODY()
@@ -83,10 +83,10 @@ public:
     FORCEINLINE FText GetTaskDescription() const { return TaskDescription; }
 
     /**
-     * @public Get state bLandMarkUpdate
+     * @public Get state bNotifyUpdate
      * @return bool
      **/
-    FORCEINLINE bool IsLandMarkUpdate() const { return bLandMarkUpdate; }
+    FORCEINLINE bool IsNotifyUpdate() const { return bNotifyUpdate; }
 
     /**
      * @public Get Task Specific Settings
@@ -99,21 +99,31 @@ public:
      * @return EStatusTask
      **/
     FORCEINLINE EStatusTask GetStatusTask() const { return StatusTask; }
-    
-protected:
 
+    /**
+     * @public Get state edit task
+     * @return bool
+     **/
+    FORCEINLINE bool IsEditTask() const { return bEditTask; }
+
+protected:
+    
+    // @protected Parameter for disabling task settings
+    UPROPERTY(VisibleAnywhere, Category = "Trash")
+    bool bEditTask = true;
+    
     // @protected Task description
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings Task", meta = (DisplayPriority = "0"))
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings Task", meta = (DisplayPriority = "0", EditCondition = "bEditTask", EditConditionHides))
     FText TaskDescription{};
 
     // @protected Notification of the quest update at the start of a current task
-    UPROPERTY(EditDefaultsOnly, Category = "Settings Task", meta = (DisplayPriority = 1))
-    bool bLandMarkUpdate{true};
+    UPROPERTY(EditDefaultsOnly, Category = "Settings Task", meta = (DisplayPriority = 1, EditCondition = "bEditTask", EditConditionHides))
+    bool bNotifyUpdate{true};
 
     // @protected Task specific settings
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings Task")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings Task", meta = (EditCondition = "bEditTask", EditConditionHides))
     FTaskSpecificSettings TaskSpecificSettings{};
-
+    
     // @protected Status task
     EStatusTask StatusTask{EStatusTask::NoneInit};
 
@@ -127,7 +137,7 @@ protected:
 
 #pragma endregion
 
-#pragma region Action
+#pragma region ActionBase
 
 public:
 
@@ -136,6 +146,24 @@ public:
      * @param1 EStatusTask
      **/
     void ChangeStatusTask(const EStatusTask& NewStatus);
+
+    /**
+     * @public Checking whether the tasks are completed
+     * @return bool
+     **/
+    bool IsTaskComplete() const { return StatusTask == EStatusTask::Complete; }
+
+    /**
+     * @public Generate task point for miss map
+     * @return bool
+     **/
+    TArray<FTaskPoint> GenerateTaskPointForMissMap();
+
+protected:
+
+    // TODO временная функция для тестов
+    UFUNCTION(Client, Reliable)
+    void ClientDrawPoint(const FVector& Position);
 
 #pragma endregion
 
