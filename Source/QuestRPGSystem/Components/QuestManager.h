@@ -48,13 +48,21 @@ public:
     UFUNCTION(Server, Reliable, WithValidation, BlueprintCallable, Category = "API_Action")
     void ServerChangeTargetQuest(const FName QuestName);
 
+    /**
+     * @public Add a new task sheet to the quest
+     * @param1 FName
+     * @param2 FSoftClassPath&
+     **/
+    UFUNCTION(Server, Reliable, WithValidation, BlueprintCallable, Category = "API_Action")
+    void ServerAddHiddenListTask(const FName& QuestName, const FSoftClassPath& HiddenListTaskPath);
+
 protected:
 
     /**
      * @protected Complete quest. Call on side server.
      * @param1 FName
      **/
-    virtual void CompleteQuest(const FName& QuestName);
+    virtual void CompleteQuest(const FName QuestName);
 
 private:
 
@@ -94,12 +102,39 @@ private:
      * @param1 FName Name quest
      **/
     void RejectQuest(const FName& QuestName);
+    
+    /**
+     * @protected Force next visible list task
+     * @param1 FName
+     * @param2 FSoftObjectPath
+     **/
+    void InitNextVisibleListTask(const FName QuestName, const FSoftObjectPath NextVisibleLTPath);
 
 #pragma endregion
 
 #pragma region HiddenListTaskProcess
 
-    void CheckedHiddenListTask(const FName& QuestName);
+protected:
+
+    /**
+     * @protected Check initialize hidden list task
+     * @param1 FName
+     **/
+    void CheckedInitHiddenListTask(const FName& QuestName);
+
+    /**
+     * @protected Check to run hidden list task
+     * @param1 FName
+     **/
+    void CheckedRunHiddenListTask(const FName& QuestName);
+
+private:
+    
+    /**
+     * @protected Register update hidden list task
+     * @param1 UListTaskBase*
+     **/
+    void RegisterUpdateHiddenListTask(UListTaskBase* HiddenLT);
 
 #pragma endregion
     

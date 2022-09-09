@@ -5,6 +5,7 @@
 #include "Engine/ActorChannel.h"
 #include "ListTask/ListTaskBase.h"
 #include "Net/UnrealNetwork.h"
+#include "Json.h"
 
 #pragma region LogQuestManager
 
@@ -84,6 +85,92 @@ void UQuestManagerBase::PushReplicateID(const FName& QuestName)
     if (!CHECK_COND(DataQuest.ActiveVisibleListTask != nullptr, "Active visible list task is nullptr")) return;
 
     QueuePushReplicateObject.Enqueue(DataQuest.ActiveVisibleListTask->GetUniqueID());
+}
+
+FString UQuestManagerBase::GetJSONFromArrayDataQuest()
+{
+    const TSharedPtr<FJsonObject> rootObj = MakeShareable(new FJsonObject());
+
+    TArray<TSharedPtr<FJsonValue>> arrRootObj;
+    for (const auto& DataQuest : ArrayDataQuest)
+    {
+        const TSharedPtr<FJsonObject> TempObjectDataQuest = MakeShareable(new FJsonObject());
+        TempObjectDataQuest->SetStringField("StatusQuest", UEnum::GetValueAsString(DataQuest.StatusQuest));
+        TempObjectDataQuest->SetStringField("NameQuestTable", DataQuest.NameQuestTable.ToString());
+        TempObjectDataQuest->SetBoolField("bIsTargetQuest", DataQuest.bIsTargetQuest);
+
+        // Visible list task
+        TArray<TSharedPtr<FJsonValue>> arrVisibleListTaskObj;
+        for (const auto& DataVisibleListTask : DataQuest.ArrayDataListTask)
+        {
+            const TSharedPtr<FJsonObject> TempObjectVisibleListTask = MakeShareable(new FJsonObject());
+            TempObjectVisibleListTask->SetStringField("PathToVisibleListTask", DataVisibleListTask.PathToVisibleListTask.ToString());
+            TempObjectVisibleListTask->SetBoolField("bListTaskComplete", DataVisibleListTask.bListTaskComplete);
+
+            TArray<TSharedPtr<FJsonValue>> arrTaskObj;
+            for (const auto& TaskInfo : DataVisibleListTask.ArrayDataTask)
+            {
+                const TSharedPtr<FJsonObject> TempObjectTaskInfo = MakeShareable(new FJsonObject());
+                TempObjectTaskInfo->SetStringField("TaskID", TaskInfo.TaskID);
+                TempObjectTaskInfo->SetStringField("TaskDescription", TaskInfo.TaskDescription.ToString());
+                TempObjectTaskInfo->SetBoolField("bStatusTask", TaskInfo.bStatusTask);
+                TempObjectTaskInfo->SetBoolField("bHideTaskDescription", TaskInfo.bHideTaskDescription);
+
+                TSharedPtr<FJsonValueObject> TempValueTaskInfo = MakeShareable(new FJsonValueObject(TempObjectTaskInfo));
+                arrTaskObj.Add(TempValueTaskInfo);
+            }
+            TempObjectVisibleListTask->SetArrayField("Array Task info", arrTaskObj);
+
+            TSharedPtr<FJsonValueObject> TempValueDataLT = MakeShareable(new FJsonValueObject(TempObjectVisibleListTask));
+            arrVisibleListTaskObj.Add(TempValueDataLT);
+        }
+
+        // Hidden list task
+        TArray<TSharedPtr<FJsonValue>> arrHiddenListTaskObj;
+        for (const auto& DataHiddenListTask : DataQuest.ArrayHiddenListTasks)
+        {
+            const TSharedPtr<FJsonObject> TempObjectHiddenListTask = MakeShareable(new FJsonObject());
+            TempObjectHiddenListTask->SetStringField("PathToHiddenListTask", DataHiddenListTask.PathToHiddenListTask.ToString());
+            TempObjectHiddenListTask->SetBoolField("bListTaskComplete", DataHiddenListTask.bListTaskComplete);
+
+            TArray<TSharedPtr<FJsonValue>> arrTaskObj;
+            for (const auto& TaskInfo : DataHiddenListTask.ArrayDataTask)
+            {
+                const TSharedPtr<FJsonObject> TempObjectTaskInfo = MakeShareable(new FJsonObject());
+                TempObjectTaskInfo->SetStringField("TaskID", TaskInfo.TaskID);
+                TempObjectTaskInfo->SetStringField("TaskDescription", TaskInfo.TaskDescription.ToString());
+                TempObjectTaskInfo->SetBoolField("bStatusTask", TaskInfo.bStatusTask);
+                TempObjectTaskInfo->SetBoolField("bHideTaskDescription", TaskInfo.bHideTaskDescription);
+
+                TSharedPtr<FJsonValueObject> TempValueTaskInfo = MakeShareable(new FJsonValueObject(TempObjectTaskInfo));
+                arrTaskObj.Add(TempValueTaskInfo);
+            }
+            TempObjectHiddenListTask->SetArrayField("Array Task info", arrTaskObj);
+
+            TSharedPtr<FJsonValueObject> TempValueDataLT = MakeShareable(new FJsonValueObject(TempObjectHiddenListTask));
+            arrHiddenListTaskObj.Add(TempValueDataLT);
+        }
+
+        TempObjectDataQuest->SetArrayField("Array Visible List Task", arrVisibleListTaskObj);
+        TempObjectDataQuest->SetArrayField("Array Hidden List Task", arrHiddenListTaskObj);
+
+        TSharedPtr<FJsonValueObject> TempValueObject = MakeShareable(new FJsonValueObject(TempObjectDataQuest));
+        arrRootObj.Add(TempValueObject);
+    }
+    rootObj->SetArrayField("Array Data Quest", arrRootObj);
+
+    FString Result;
+    const TSharedRef<TJsonWriter<TCHAR>> jsonWriter = TJsonWriterFactory<TCHAR>::Create(&Result);
+    FJsonSerializer::Serialize(rootObj.ToSharedRef(), jsonWriter);
+
+    return Result;
+}
+
+void UQuestManagerBase::AddNewArrayDataQuest(const TArray<FDataQuest>& NewData)
+{
+    if (!CHECK_COND(GetOwner()->HasAuthority(), "Function called on client ???")) return;
+
+    ArrayDataQuest = NewData;
 }
 
 void UQuestManagerBase::UpdateInfoDataQuest(const FName& NameQuest)
@@ -172,6 +259,19 @@ FDataQuest& UQuestManagerBase::GetDataQuestFromListTask(const UListTaskBase* Lis
     return FindElem ? *FindElem : EmptyDataQuest;
 }
 
+FDataQuest& UQuestManagerBase::GetDataQuestFromHiddenLT(const UListTaskBase* ListTask)
+{
+    for (auto& DataQuest : ArrayDataQuest)
+    {
+        for (const auto& DataHiddenLT : DataQuest.ArrayHiddenListTasks)
+        {
+            if (DataHiddenLT.ActiveHiddenListTask == ListTask)
+                return DataQuest;
+        }
+    }
+    return EmptyDataQuest;
+}
+
 FDataVisibleListTask& UQuestManagerBase::GetDataVisibleListFromListTask(const FName& NameQuest, const UListTaskBase* ListTask)
 {
     FDataQuest& DataQuest = GetDataQuestFromName(NameQuest);
@@ -182,6 +282,20 @@ FDataVisibleListTask& UQuestManagerBase::GetDataVisibleListFromListTask(const FN
     });
 
     return FindElem ? *FindElem : EmptyDataVisibleListTask;
+}
+
+FDataHiddenListTask& UQuestManagerBase::GetDataHiddenListFromListTask(const FName& NameQuest, const UListTaskBase* ListTask)
+{
+    FDataQuest& DataQuest = GetDataQuestFromName(NameQuest);
+    if (!CHECK_COND(DataQuest != EmptyDataQuest, "Data quest is empty")) return EmptyDataHiddenListTask;
+
+    for (auto& DataHiddenLT : DataQuest.ArrayHiddenListTasks)
+    {
+        if (DataHiddenLT.ActiveHiddenListTask == ListTask)
+            return DataHiddenLT;
+    }
+
+    return EmptyDataHiddenListTask;
 }
 
 #pragma endregion

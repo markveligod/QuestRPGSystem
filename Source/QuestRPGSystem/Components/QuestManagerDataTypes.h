@@ -203,7 +203,7 @@ struct FDataHiddenListTask
     
     // Active current visible task
     UPROPERTY(BlueprintReadOnly, meta = (AllowedClasses = "ListTaskBase"))
-    FSoftObjectPath PathToVisibleListTask{};
+    FSoftObjectPath PathToHiddenListTask{};
 
     UPROPERTY(BlueprintReadOnly)
     bool bListTaskComplete{false};
@@ -212,7 +212,7 @@ struct FDataHiddenListTask
     class UListTaskBase* ActiveHiddenListTask{nullptr};
 
     FDataHiddenListTask(){}
-    FDataHiddenListTask(const FSoftObjectPath& NewPathToListTask):PathToVisibleListTask(NewPathToListTask) {}
+    FDataHiddenListTask(const FSoftObjectPath& NewPathToListTask):PathToHiddenListTask(NewPathToListTask) {}
     FDataHiddenListTask(const FDataHiddenListTask& Other)
     {
         *this = Other;
@@ -221,24 +221,24 @@ struct FDataHiddenListTask
     void operator=(const FDataHiddenListTask& Other)
     {
         this->ArrayDataTask = Other.ArrayDataTask;
-        this->PathToVisibleListTask = Other.PathToVisibleListTask;
+        this->PathToHiddenListTask = Other.PathToHiddenListTask;
         this->bListTaskComplete = Other.bListTaskComplete;
     }
 
     FString ToString() const
     {
         return FString::Printf(TEXT("Path to Visible list task: [%s] | Array Data task: [%i] | List task complete: [%i]"),
-            *PathToVisibleListTask.ToString(), ArrayDataTask.Num(), bListTaskComplete);
+            *PathToHiddenListTask.ToString(), ArrayDataTask.Num(), bListTaskComplete);
     }
 
     bool operator==(const FDataVisibleListTask& Other) const
     {
-        return this->PathToVisibleListTask == Other.PathToVisibleListTask;
+        return this->PathToHiddenListTask == Other.PathToVisibleListTask;
     }
 
     bool operator!=(const FDataVisibleListTask& Other) const
     {
-        return !(this->PathToVisibleListTask == Other.PathToVisibleListTask);
+        return !(this->PathToHiddenListTask == Other.PathToVisibleListTask);
     }
 };
 

@@ -50,7 +50,7 @@ protected:
 
 #pragma endregion
 
-#pragma region Action
+#pragma region ActionBase
 
 public:
 
@@ -59,6 +59,27 @@ public:
      * @param1 FName
      **/
     void PushReplicateID(const FName& QuestName);
+
+    /**
+     * @public Get array data quest
+     * @return TArray<FDataQuest>&
+     **/
+    UFUNCTION(BlueprintCallable, Category = "ActionBase")
+    const TArray<FDataQuest>& GetArrayDataQuest() { return ArrayDataQuest; }
+
+    /**
+     * @public Get array data quest
+     * @return TArray<FDataQuest>&
+     **/
+    UFUNCTION(BlueprintCallable, Category = "ActionBase")
+    FString GetJSONFromArrayDataQuest();
+
+    /**
+     * @public Add array new data quest
+     * @param1 TArray<FDataQuest>&
+     **/
+    UFUNCTION(BlueprintCallable, Category = "ActionBase")
+    void AddNewArrayDataQuest(const TArray<FDataQuest>& NewData);
 
 protected:
 
@@ -141,11 +162,27 @@ protected:
     FDataQuest& GetDataQuestFromListTask(const UListTaskBase* ListTask);
 
     /**
-     * @public Get non-constant DataVisibleListTask from Active list task
+     * @public Get non-constant data quest from Hidden list task
      * @param1 UListTaskBase*
+     * @return FDataQuest&
+     **/
+    FDataQuest& GetDataQuestFromHiddenLT(const UListTaskBase* ListTask);
+
+    /**
+     * @public Get non-constant DataVisibleListTask from Active list task
+     * @param1 FName
+     * @param2 UListTaskBase*
      * @return FDataVisibleListTask&
      **/
     FDataVisibleListTask& GetDataVisibleListFromListTask(const FName& NameQuest, const UListTaskBase* ListTask);
+
+    /**
+     * @public Get non-constant DataHiddenListTask from Active list task
+     * @param1 FName
+     * @param2 UListTaskBase*
+     * @return FDataHiddenListTask&
+     **/
+    FDataHiddenListTask& GetDataHiddenListFromListTask(const FName& NameQuest, const UListTaskBase* ListTask);
 
 #pragma endregion
 
@@ -165,6 +202,7 @@ protected:
 
     FDataQuest EmptyDataQuest;
     FDataVisibleListTask EmptyDataVisibleListTask;
+    FDataHiddenListTask EmptyDataHiddenListTask;
 
 #pragma endregion
 

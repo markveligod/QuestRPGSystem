@@ -183,69 +183,85 @@ public:
      * @public  Getting constant data array task
      * @return TArray<UTaskBase*>
      **/
-    UFUNCTION(BlueprintCallable, Category = "DataListTask")
     const TArray<UTaskBase*>& GetArrayTask() { return ArrayTask; }
 
     /**
      * @public  Getting status list task
      * @return EStatusListTask
      **/
-    UFUNCTION(BlueprintCallable, Category = "DataListTask")
     const EStatusListTask& GetStatusListTask() const { return StatusListTask; }
 
     /**
      * @public  Getting type run list task
      * @return ETypeRunListTask
      **/
-    UFUNCTION(BlueprintCallable, Category = "DataListTask")
     const ETypeRunListTask& GetTypeRunListTask() const { return TypeRunListTask; }
 
     /**
      * @public Get path world action
      * @return FSoftObjectPath
      **/
-    UFUNCTION(BlueprintCallable, Category = "DataListTask")
     const FSoftObjectPath& GetPathActionWorld() const { return ActionWorld; }
 
     /**
      * @public Get type list task visible or hidden
      * @return ETypeListTask
      **/
-    UFUNCTION(BlueprintCallable, Category = "DataListTask")
     const ETypeListTask& GetTypeListTask() const { return TypeListTask; }
+
+    /**
+     * @public Get run hidden list task
+     * @return ERunHiddenListTask
+     **/
+    const ERunHiddenListTask& GetRunHiddenListTask() const { return RunHiddenListTask; }
+
+    /**
+     * @public Get action hidden list task
+     * @return EActionHiddenListTask
+     **/
+    const EActionHiddenListTask& GetActionHiddenListTask() const { return ActionHiddenListTask; }
+
+    /**
+     * @public Get to init visible block
+     * @return FSoftObjectPath
+     **/
+    const FSoftObjectPath& GetToInitVisibleBlock() const { return InitVisiblePathBlock; }
 
 protected:
 
     // @protected Type list task
-    UPROPERTY(Replicated, EditAnywhere, Category = "Settings List task")
+    UPROPERTY(EditAnywhere, Category = "Settings List task")
     ETypeListTask TypeListTask{ETypeListTask::Visible};
 
     // @protected Active to World
-    UPROPERTY(Replicated, EditAnywhere, Category = "Settings List task", meta = (AllowedClasses = "World"))
+    UPROPERTY(EditAnywhere, Category = "Settings List task", meta = (AllowedClasses = "World"))
     FSoftObjectPath ActionWorld{};
 
 #pragma region VisibleData
     
     // @protected Type run list task
-    UPROPERTY(Replicated, EditAnywhere, Category = "Settings List task", meta = (EditCondition = "TypeListTask == ETypeListTask::Visible", EditConditionHides))
+    UPROPERTY(EditAnywhere, Category = "Settings List task", meta = (EditCondition = "TypeListTask == ETypeListTask::Visible", EditConditionHides))
     ETypeRunListTask TypeRunListTask{ETypeRunListTask::StepByStep};
 
     // @protected Type run list task
-    UPROPERTY(Replicated, EditAnywhere, Category = "Settings List task", meta = (EditCondition = "TypeRunListTask == ETypeRunListTask::TransferListTask && TypeListTask == ETypeListTask::Visible", EditConditionHides))
+    UPROPERTY(EditAnywhere, Category = "Settings List task", meta = (EditCondition = "TypeRunListTask == ETypeRunListTask::TransferListTask && TypeListTask == ETypeListTask::Visible", EditConditionHides))
     TArray<FDataTransferToNextBlock> ArrayIndexTransferToNextBlocks;
 
     // @protected Next path block
-    UPROPERTY(Replicated, EditAnywhere, Category = "Settings List task", meta = (MetaClass = "ListTaskBase", EditCondition = "TypeRunListTask != ETypeRunListTask::TransferListTask && TypeListTask == ETypeListTask::Visible", EditConditionHides))
+    UPROPERTY(EditAnywhere, Category = "Settings List task", meta = (MetaClass = "ListTaskBase", EditCondition = "TypeRunListTask != ETypeRunListTask::TransferListTask && TypeListTask == ETypeListTask::Visible", EditConditionHides))
     FSoftClassPath NextPathBlock;
 
 #pragma endregion 
 
 #pragma region HiddenData
 
-    UPROPERTY(Replicated, EditAnywhere, Category = "Settings List task", meta = (EditCondition = "TypeListTask == ETypeListTask::Hidden", EditConditionHides))
+    UPROPERTY(EditAnywhere, Category = "Settings List task", meta = (EditCondition = "TypeListTask == ETypeListTask::Hidden", EditConditionHides))
     ERunHiddenListTask RunHiddenListTask{ERunHiddenListTask::AddToQuest};
 
-    UPROPERTY(Replicated, EditAnywhere, Category = "Settings List task", meta = (EditCondition = "TypeListTask == ETypeListTask::Hidden", EditConditionHides))
+    UPROPERTY(EditAnywhere, Category = "Settings List task", meta = (EditCondition = "TypeListTask == ETypeListTask::Hidden && RunHiddenListTask == ERunHiddenListTask::InitToRunListTask", EditConditionHides))
+    FSoftClassPath InitVisiblePathBlock;
+    
+    UPROPERTY(EditAnywhere, Category = "Settings List task", meta = (EditCondition = "TypeListTask == ETypeListTask::Hidden", EditConditionHides))
     EActionHiddenListTask ActionHiddenListTask{EActionHiddenListTask::Nothing};
 
 #pragma endregion

@@ -99,9 +99,10 @@ TArray<FTaskPoint> UTaskBase::GenerateTaskPointForMissMap()
 
 void UTaskBase::ClientDrawPoint_Implementation(const FVector& Position)
 {
-    if (OwnerController)
+    if (OwnerController && OwnerListTask)
     {
-        DrawDebugSphere(OwnerController->GetWorld(), Position, 50.0f, 12, FColor::Yellow, false, 1.0f, 0, 2.0f);
+        FColor TempColor = OwnerListTask->GetTypeListTask() == ETypeListTask::Visible ? FColor::Yellow : FColor::Orange;
+        DrawDebugSphere(OwnerController->GetWorld(), Position, 50.0f, 12, TempColor, false, 1.0f, 0, 2.0f);
     }
 }
 

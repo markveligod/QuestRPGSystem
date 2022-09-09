@@ -39,6 +39,11 @@ bool UListTaskBase::InitListTask(APlayerController* PlayerController, UQuestMana
         if (!CHECK_COND(Task->IsValidTask(), "Task is not valid")) return false;
     }
 
+    if (TypeListTask == ETypeListTask::Hidden)
+    {
+        TypeRunListTask = ETypeRunListTask::StepByStep;
+    }
+    
     OwnerController = PlayerController;
     ParentQuestManager = QuestManager;
     ChangeStateListTask(EStatusListTask::Init);
@@ -124,13 +129,11 @@ bool UListTaskBase::CallRemoteFunction(UFunction* Function, void* Parms, FOutPar
 void UListTaskBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    
-    DOREPLIFETIME_CONDITION(UListTaskBase, TypeRunListTask, COND_OwnerOnly);
+
     DOREPLIFETIME_CONDITION(UListTaskBase, ArrayTask, COND_OwnerOnly);
     DOREPLIFETIME_CONDITION(UListTaskBase, StatusListTask, COND_OwnerOnly);
     DOREPLIFETIME_CONDITION(UListTaskBase, OwnerController, COND_OwnerOnly);
     DOREPLIFETIME_CONDITION(UListTaskBase, ParentQuestManager, COND_OwnerOnly);
-    DOREPLIFETIME_CONDITION(UListTaskBase, NextPathBlock, COND_OwnerOnly);
 }
 
 #if WITH_EDITOR
@@ -312,6 +315,8 @@ void UListTaskBase::RegisterUpdateTask(UTaskBase* Task)
         FTimerHandle TimerHandle;
         OwnerController->GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::NextInitTask, 0.1f, false);
     }
+
+    OnUpdateListTask.Broadcast(this);
 }
 
 int32 UListTaskBase::FindIndexLastNonCompleteTask() const
