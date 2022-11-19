@@ -26,6 +26,8 @@ UQuestManagerBase::UQuestManagerBase()
     // Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
     // off to improve performance if you don't need them.
     PrimaryComponentTick.bCanEverTick = true;
+
+    SetIsReplicatedByDefault(true);
 }
 
 // Called when the game starts
@@ -61,11 +63,7 @@ bool UQuestManagerBase::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* B
         if (const auto ListTask = FindListTaskFromID(TempUniqID))
         {
             LOG_QM(ELogVerb::Display, FString::Printf(TEXT("List Task: [%s] replicated by ID: %lu"), *ListTask->GetName(), TempUniqID));
-
             WroteSomething |= Channel->ReplicateSubobject(ListTask, *Bunch, *RepFlags);
-
-            TArray<UTaskBase*> Tasks = ListTask->GetArrayTask();
-            WroteSomething |= Channel->ReplicateSubobjectList(Tasks, *Bunch, *RepFlags);
         }
     }
 
@@ -81,10 +79,10 @@ void UQuestManagerBase::PushReplicateID(const FName& QuestName)
     if (!CHECK_COND(GetOwner()->HasAuthority(), "Function called on client ???")) return;
 
     const FDataQuest& DataQuest = GetFreezeDataQuestFromName(QuestName);
-    if (!CHECK_COND(DataQuest != EmptyDataQuest, "Data quest is empty")) return;
-    if (!CHECK_COND(DataQuest.ActiveVisibleListTask != nullptr, "Active visible list task is nullptr")) return;
+    if (!CHECK_COND(!DataQuest.IsEmpty(), "Data quest is empty")) return;
+    if (!CHECK_COND(DataQuest.ActiveListTask != nullptr, "Active list task is nullptr")) return;
 
-    QueuePushReplicateObject.Enqueue(DataQuest.ActiveVisibleListTask->GetUniqueID());
+    QueuePushReplicateObject.Enqueue(DataQuest.ActiveListTask->GetUniqueID());
 }
 
 FString UQuestManagerBase::GetJSONFromArrayDataQuest()
@@ -104,7 +102,7 @@ FString UQuestManagerBase::GetJSONFromArrayDataQuest()
         for (const auto& DataVisibleListTask : DataQuest.ArrayDataListTask)
         {
             const TSharedPtr<FJsonObject> TempObjectVisibleListTask = MakeShareable(new FJsonObject());
-            TempObjectVisibleListTask->SetStringField("PathToVisibleListTask", DataVisibleListTask.PathToVisibleListTask.ToString());
+            TempObjectVisibleListTask->SetStringField("PathToListTask", DataVisibleListTask.PathToListTask.ToString());
             TempObjectVisibleListTask->SetBoolField("bListTaskComplete", DataVisibleListTask.bListTaskComplete);
 
             TArray<TSharedPtr<FJsonValue>> arrTaskObj;
@@ -114,7 +112,6 @@ FString UQuestManagerBase::GetJSONFromArrayDataQuest()
                 TempObjectTaskInfo->SetStringField("TaskID", TaskInfo.TaskID);
                 TempObjectTaskInfo->SetStringField("TaskDescription", TaskInfo.TaskDescription.ToString());
                 TempObjectTaskInfo->SetBoolField("bStatusTask", TaskInfo.bStatusTask);
-                TempObjectTaskInfo->SetBoolField("bHideTaskDescription", TaskInfo.bHideTaskDescription);
 
                 TSharedPtr<FJsonValueObject> TempValueTaskInfo = MakeShareable(new FJsonValueObject(TempObjectTaskInfo));
                 arrTaskObj.Add(TempValueTaskInfo);
@@ -124,35 +121,8 @@ FString UQuestManagerBase::GetJSONFromArrayDataQuest()
             TSharedPtr<FJsonValueObject> TempValueDataLT = MakeShareable(new FJsonValueObject(TempObjectVisibleListTask));
             arrVisibleListTaskObj.Add(TempValueDataLT);
         }
-
-        // Hidden list task
-        TArray<TSharedPtr<FJsonValue>> arrHiddenListTaskObj;
-        for (const auto& DataHiddenListTask : DataQuest.ArrayHiddenListTasks)
-        {
-            const TSharedPtr<FJsonObject> TempObjectHiddenListTask = MakeShareable(new FJsonObject());
-            TempObjectHiddenListTask->SetStringField("PathToHiddenListTask", DataHiddenListTask.PathToHiddenListTask.ToString());
-            TempObjectHiddenListTask->SetBoolField("bListTaskComplete", DataHiddenListTask.bListTaskComplete);
-
-            TArray<TSharedPtr<FJsonValue>> arrTaskObj;
-            for (const auto& TaskInfo : DataHiddenListTask.ArrayDataTask)
-            {
-                const TSharedPtr<FJsonObject> TempObjectTaskInfo = MakeShareable(new FJsonObject());
-                TempObjectTaskInfo->SetStringField("TaskID", TaskInfo.TaskID);
-                TempObjectTaskInfo->SetStringField("TaskDescription", TaskInfo.TaskDescription.ToString());
-                TempObjectTaskInfo->SetBoolField("bStatusTask", TaskInfo.bStatusTask);
-                TempObjectTaskInfo->SetBoolField("bHideTaskDescription", TaskInfo.bHideTaskDescription);
-
-                TSharedPtr<FJsonValueObject> TempValueTaskInfo = MakeShareable(new FJsonValueObject(TempObjectTaskInfo));
-                arrTaskObj.Add(TempValueTaskInfo);
-            }
-            TempObjectHiddenListTask->SetArrayField("Array Task info", arrTaskObj);
-
-            TSharedPtr<FJsonValueObject> TempValueDataLT = MakeShareable(new FJsonValueObject(TempObjectHiddenListTask));
-            arrHiddenListTaskObj.Add(TempValueDataLT);
-        }
-
-        TempObjectDataQuest->SetArrayField("Array Visible List Task", arrVisibleListTaskObj);
-        TempObjectDataQuest->SetArrayField("Array Hidden List Task", arrHiddenListTaskObj);
+        
+        TempObjectDataQuest->SetArrayField("Array List Task", arrVisibleListTaskObj);
 
         TSharedPtr<FJsonValueObject> TempValueObject = MakeShareable(new FJsonValueObject(TempObjectDataQuest));
         arrRootObj.Add(TempValueObject);
@@ -175,34 +145,59 @@ void UQuestManagerBase::AddNewArrayDataQuest(const TArray<FDataQuest>& NewData)
 
 void UQuestManagerBase::UpdateInfoDataQuest(const FName& NameQuest)
 {
-    FDataQuest& DataQuest = GetDataQuestFromName(NameQuest);
-    if (!CHECK_COND(DataQuest != EmptyDataQuest, "Empty data quest")) return;
-    if (!CHECK_COND(DataQuest.ActiveVisibleListTask != nullptr, "Active visible list task is nullptr")) return;
+    const FDataQuest& DataQuest = GetDataQuestFromName(NameQuest);
+    if (!CHECK_COND(!DataQuest.IsEmpty(), "Empty data quest")) return;
+    if (!CHECK_COND(DataQuest.ActiveListTask != nullptr, "Active visible list task is nullptr")) return;
 
-    FDataVisibleListTask& DataVisibleListTask = GetDataVisibleListFromListTask(NameQuest, DataQuest.ActiveVisibleListTask);
-    if (!CHECK_COND(DataVisibleListTask != EmptyDataVisibleListTask, "Data visible list task is empty")) return;
-
-    DataVisibleListTask.ArrayDataTask = UQuestLibrary::FillDataInfoTasksFromListTask(DataQuest.ActiveVisibleListTask);
+    // TODO: Доделать поиск данных по заполнению информации об тасках
+    // FDataListTask& DataListTask = DataQuest.GetActive;
+    // if (!CHECK_COND(!DataListTask.IsEmpty(), "Data visible list task is empty")) return;
+    //
+    // DataListTask.ArrayDataTask = UQuestLibrary::FillDataInfoTasksFromListTask(DataQuest.ActiveListTask);
 }
 
 void UQuestManagerBase::ClientSendNotifyStartQuest_Implementation(const FName& NameQuest)
 {
-    OnStartQuest.Broadcast(NameQuest);
+    SendNotifyStartQuest(NameQuest);
 }
 
 void UQuestManagerBase::ClientSendNotifyUpdateQuest_Implementation(const FName& NameQuest)
 {
-    OnUpdateQuest.Broadcast(NameQuest);
+    SendNotifyUpdateQuest(NameQuest);
 }
 
 void UQuestManagerBase::ClientSendNotifyCompleteQuest_Implementation(const FName& NameQuest)
 {
-    OnCompleteQuest.Broadcast(NameQuest);
+    SendNotifyCompleteQuest(NameQuest);
 }
 
 void UQuestManagerBase::ClientSendNotifySwitchQuest_Implementation(const FName& NameQuest)
 {
+    SendNotifySwitchQuest(NameQuest);
+}
+
+void UQuestManagerBase::SendNotifyStartQuest(const FName& NameQuest)
+{
+    OnStartQuest.Broadcast(NameQuest);
+    SendNotifyStartQuest_Event(NameQuest);
+}
+
+void UQuestManagerBase::SendNotifyUpdateQuest(const FName& NameQuest)
+{
+    OnUpdateQuest.Broadcast(NameQuest);
+    SendNotifyUpdateQuest_Event(NameQuest);
+}
+
+void UQuestManagerBase::SendNotifyCompleteQuest(const FName& NameQuest)
+{
+    OnCompleteQuest.Broadcast(NameQuest);
+    SendNotifyCompleteQuest_Event(NameQuest);
+}
+
+void UQuestManagerBase::SendNotifySwitchQuest(const FName& NameQuest)
+{
     OnSwitchQuest.Broadcast(NameQuest);
+    SendNotifySwitchQuest_Event(NameQuest);
 }
 
 #pragma endregion
@@ -213,30 +208,49 @@ UListTaskBase* UQuestManagerBase::FindListTaskFromID(const uint32 ID) const
 {
     const auto FindElem = ArrayDataQuest.FindByPredicate([ID](const FDataQuest& DataQuest)
     {
-        return DataQuest.ActiveVisibleListTask->GetUniqueID() == ID;
+        return DataQuest.ActiveListTask && DataQuest.ActiveListTask->GetUniqueID() == ID;
     });
 
-    return FindElem ? FindElem->ActiveVisibleListTask : nullptr;
+    return FindElem ? FindElem->ActiveListTask : nullptr;
 }
 
 FDataQuest& UQuestManagerBase::FindDataQuestFromID(const uint32 ID)
 {
     const auto FindElem = ArrayDataQuest.FindByPredicate([ID](const FDataQuest& DataQuest)
     {
-        return DataQuest.ActiveVisibleListTask->GetUniqueID() == ID;
+        return DataQuest.ActiveListTask && DataQuest.ActiveListTask->GetUniqueID() == ID;
     });
 
     return FindElem ? *FindElem : EmptyDataQuest;
 }
 
-const FDataQuest& UQuestManagerBase::GetFreezeDataQuestFromName(const FName& NameQuest) const
+int32 UQuestManagerBase::GetIndexQuestFromName(const FName& InQuestName)
 {
-    const auto FindElem = ArrayDataQuest.FindByPredicate([NameQuest](const FDataQuest& DataQuest)
+    return ArrayDataQuest.IndexOfByPredicate([InQuestName](const FDataQuest& Data)
     {
-        return DataQuest.NameQuestTable.IsEqual(NameQuest);
+        return Data.NameQuestTable.IsEqual(InQuestName);
     });
+}
 
-    return FindElem ? *FindElem : EmptyDataQuest;
+const FDataQuest& UQuestManagerBase::GetFreezeDataQuestFromIndex(const int32& InIndex)
+{
+    if (ArrayDataQuest.IsValidIndex(InIndex))
+    {
+        return ArrayDataQuest[InIndex];
+    }
+    return EmptyDataQuest;
+}
+
+const FDataQuest& UQuestManagerBase::GetFreezeDataQuestFromName(const FName& InQuestName)
+{
+    return GetFreezeDataQuestFromIndex(GetIndexQuestFromName(InQuestName));
+}
+
+FDataQuestTable UQuestManagerBase::GetDataQuestTableFromName(const FName& NameQuest) const
+{
+    if (!CHECK_COND(DataQuestTable != nullptr, "Data quest table is nullptr")) return FDataQuestTable();
+    FDataQuestTable* QuestFromTable = DataQuestTable->FindRow<FDataQuestTable>(NameQuest, "");
+    return QuestFromTable ? *QuestFromTable : FDataQuestTable();
 }
 
 FDataQuest& UQuestManagerBase::GetDataQuestFromName(const FName& NameQuest)
@@ -251,51 +265,24 @@ FDataQuest& UQuestManagerBase::GetDataQuestFromName(const FName& NameQuest)
 
 FDataQuest& UQuestManagerBase::GetDataQuestFromListTask(const UListTaskBase* ListTask)
 {
+    if (!ListTask) return EmptyDataQuest;
     const auto FindElem = ArrayDataQuest.FindByPredicate([ListTask](const FDataQuest& DataQuest)
     {
-        return DataQuest.ActiveVisibleListTask == ListTask;
+        return DataQuest.ActiveListTask == ListTask;
     });
 
     return FindElem ? *FindElem : EmptyDataQuest;
 }
 
-FDataQuest& UQuestManagerBase::GetDataQuestFromHiddenLT(const UListTaskBase* ListTask)
+FDataQuest& UQuestManagerBase::GetDataQuestFromPathListTask(const FSoftObjectPath* InListTaskPath)
 {
-    for (auto& DataQuest : ArrayDataQuest)
+    if (InListTaskPath->IsNull()) return EmptyDataQuest;
+    const auto FindElem = ArrayDataQuest.FindByPredicate([InListTaskPath](const FDataQuest& DataQuest)
     {
-        for (const auto& DataHiddenLT : DataQuest.ArrayHiddenListTasks)
-        {
-            if (DataHiddenLT.ActiveHiddenListTask == ListTask)
-                return DataQuest;
-        }
-    }
-    return EmptyDataQuest;
-}
-
-FDataVisibleListTask& UQuestManagerBase::GetDataVisibleListFromListTask(const FName& NameQuest, const UListTaskBase* ListTask)
-{
-    FDataQuest& DataQuest = GetDataQuestFromName(NameQuest);
-    if (!CHECK_COND(DataQuest != EmptyDataQuest, "Data quest is empty")) return EmptyDataVisibleListTask;
-    const auto FindElem = DataQuest.ArrayDataListTask.FindByPredicate([ListTask](const FDataVisibleListTask& VisibleListTask)
-    {
-        return VisibleListTask.PathToVisibleListTask.GetAssetPathString() == ListTask->GetClass()->GetPathName() && VisibleListTask.bListTaskComplete == false;
+        return DataQuest.ActiveListTask && DataQuest.ActiveListTask->GetClass()->GetName() == InListTaskPath->GetAssetName();
     });
 
-    return FindElem ? *FindElem : EmptyDataVisibleListTask;
-}
-
-FDataHiddenListTask& UQuestManagerBase::GetDataHiddenListFromListTask(const FName& NameQuest, const UListTaskBase* ListTask)
-{
-    FDataQuest& DataQuest = GetDataQuestFromName(NameQuest);
-    if (!CHECK_COND(DataQuest != EmptyDataQuest, "Data quest is empty")) return EmptyDataHiddenListTask;
-
-    for (auto& DataHiddenLT : DataQuest.ArrayHiddenListTasks)
-    {
-        if (DataHiddenLT.ActiveHiddenListTask == ListTask)
-            return DataHiddenLT;
-    }
-
-    return EmptyDataHiddenListTask;
+    return FindElem ? *FindElem : EmptyDataQuest;
 }
 
 #pragma endregion

@@ -202,34 +202,6 @@ void UListTaskBase::DestroyListTask()
     MarkAsGarbage();
 }
 
-TArray<FTaskPoint> UListTaskBase::RequestGeneratePointsTaskForMissMap()
-{
-    TArray<FTaskPoint> ArrayTaskPoint;
-    switch (TypeRunListTask)
-    {
-        case ETypeRunListTask::StepByStep:
-        {
-            const int32 Index = FindIndexLastNonCompleteTask();
-            if (Index != INDEX_NONE)
-            {
-                ArrayTaskPoint = ArrayTask[Index]->GenerateTaskPointForMissMap();
-            }
-            break;
-        }
-        case ETypeRunListTask::AllSameTime:
-        {
-
-            break;
-        }
-        case ETypeRunListTask::TransferListTask:
-        {
-
-            break;
-        }
-    }
-    return ArrayTaskPoint;
-}
-
 void UListTaskBase::ProcessTasks(UTaskBase* Task)
 {
     if (!CHECK_COND(Task != nullptr, "Task is nullptr")) return;
@@ -338,7 +310,7 @@ int32 UListTaskBase::FindIndexFirstCompleteTask() const
         if (!ArrayTask.IsValidIndex(i)) continue;
         const UTaskBase* Task = ArrayTask[i];
         if (!Task) continue;
-        if (Task->IsEditTask() && Task->IsTaskComplete()) return i;
+        if (Task->IsEditBaseSettingsTask() && Task->IsTaskComplete()) return i;
     }
     return INDEX_NONE;
 }
@@ -358,7 +330,7 @@ bool UListTaskBase::IsSomeTaskComplete() const
     const auto FindElem = ArrayTask.FindByPredicate([](const UTaskBase* Task)
     {
         if (!Task) return false;
-        return Task->IsEditTask() && Task->IsTaskComplete();
+        return Task->IsEditBaseSettingsTask() && Task->IsTaskComplete();
     });
     return FindElem != nullptr;
 }

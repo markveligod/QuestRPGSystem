@@ -75,28 +75,6 @@ void UTaskBase::ChangeStatusTask(const EStatusTask& NewStatus)
     OnUpdateTask.Broadcast(this);
 }
 
-TArray<FTaskPoint> UTaskBase::GenerateTaskPointForMissMap()
-{
-    TArray<FTaskPoint> Result;
-
-    for (int32 i = 0; i < TaskSpecificSettings.ArrPointPositionForMap.Num(); ++i)
-    {
-        const FVector& Pos = TaskSpecificSettings.ArrPointPositionForMap[i];
-        FTaskPoint TaskPoint;
-        TaskPoint.AlternatePos = Pos;
-        TaskPoint.bStaticActor = true;
-        TaskPoint.MarkDeviation = TaskSpecificSettings.TargetMarkDeviation;
-        TaskPoint.Tag = GetName() + FString::FromInt(i);
-        TaskPoint.Description = TaskDescription;
-        TaskPoint.IsDetective = TaskSpecificSettings.bEnableCompassSearch;
-        TaskPoint.RadiusSearch = TaskSpecificSettings.RadiusSearch;
-        TaskPoint.bEnableZone = TaskSpecificSettings.bEnableZone;
-        TaskPoint.CenterZone = TaskSpecificSettings.CenterZone;
-        TaskPoint.RadiusZone = TaskSpecificSettings.RadiusZone;
-    }
-    return Result;
-}
-
 void UTaskBase::ClientDrawPoint_Implementation(const FVector& Position)
 {
     if (OwnerController && OwnerListTask)

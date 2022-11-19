@@ -56,27 +56,29 @@ public:
 
     /**
      * @public Adds a unique ID of the task list object to the queue
-     * @param1 FName
      **/
     void PushReplicateID(const FName& QuestName);
 
     /**
      * @public Get array data quest
-     * @return TArray<FDataQuest>&
      **/
     UFUNCTION(BlueprintCallable, Category = "ActionBase")
     const TArray<FDataQuest>& GetArrayDataQuest() { return ArrayDataQuest; }
 
     /**
      * @public Get array data quest
-     * @return TArray<FDataQuest>&
      **/
     UFUNCTION(BlueprintCallable, Category = "ActionBase")
     FString GetJSONFromArrayDataQuest();
 
     /**
+     * @public Setup array data quest from JSON string
+     **/
+    UFUNCTION(BlueprintCallable, Category = "ActionBase")
+    void SetupNewArrayDataQuestFromJSON(const FString& JSONString) {}
+
+    /**
      * @public Add array new data quest
-     * @param1 TArray<FDataQuest>&
      **/
     UFUNCTION(BlueprintCallable, Category = "ActionBase")
     void AddNewArrayDataQuest(const TArray<FDataQuest>& NewData);
@@ -85,37 +87,76 @@ protected:
 
     /**
      * @protected Update Info data quest from active list task
-     * @param1 FName
      **/
     void UpdateInfoDataQuest(const FName& NameQuest);
 
     /**
      * @protected Client notify start quest
-     * @param1 FName name quest
      **/
     UFUNCTION(Client, Reliable)
     void ClientSendNotifyStartQuest(const FName& NameQuest);
 
     /**
      * @protected Client notify update quest
-     * @param1 FName name quest
      **/
     UFUNCTION(Client, Reliable)
     void ClientSendNotifyUpdateQuest(const FName& NameQuest);
 
     /**
      * @protected Client notify complete quest
-     * @param1 FName name quest
      **/
     UFUNCTION(Client, Reliable)
     void ClientSendNotifyCompleteQuest(const FName& NameQuest);
 
     /**
      * @protected Client notify switch quest
-     * @param1 FName name quest
      **/
     UFUNCTION(Client, Reliable)
     void ClientSendNotifySwitchQuest(const FName& NameQuest);
+
+    /**
+     * @protected notify start quest
+     **/
+    virtual void SendNotifyStartQuest(const FName& NameQuest);
+
+    /**
+     * @protected notify update quest
+     **/
+    virtual void SendNotifyUpdateQuest(const FName& NameQuest);
+
+    /**
+     * @protected notify complete quest
+     **/
+    virtual void SendNotifyCompleteQuest(const FName& NameQuest);
+
+    /**
+     * @protected notify switch quest
+     **/
+    virtual void SendNotifySwitchQuest(const FName& NameQuest);
+
+    /**
+     * @protected notify start quest event
+     **/
+    UFUNCTION(BlueprintImplementableEvent)
+    void SendNotifyStartQuest_Event(const FName& NameQuest);
+
+    /**
+     * @protected notify update quest event
+     **/
+    UFUNCTION(BlueprintImplementableEvent)
+    void SendNotifyUpdateQuest_Event(const FName& NameQuest);
+
+    /**
+     * @protected notify complete quest event
+     **/
+    UFUNCTION(BlueprintImplementableEvent)
+    void SendNotifyCompleteQuest_Event(const FName& NameQuest);
+
+    /**
+     * @protected notify switch quest event
+     **/
+    UFUNCTION(BlueprintImplementableEvent)
+    void SendNotifySwitchQuest_Event(const FName& NameQuest);
 
 #pragma endregion
 
@@ -124,65 +165,55 @@ protected:
 public:
 
     /**
-     * @public Get constant data quest from Name quest
-     * @param1 FName NameQuest
-     * @return const FDataQuest&
+     * @public Get index from Array quest data
      **/
     UFUNCTION(BlueprintCallable, Category = "FindData")
-    const FDataQuest& GetFreezeDataQuestFromName(const FName& NameQuest) const;
+    int32 GetIndexQuestFromName(const FName& InQuestName);
+
+    /**
+     * @public Get constant data quest from index
+     **/
+    UFUNCTION(BlueprintCallable, Category = "FindData")
+    const FDataQuest& GetFreezeDataQuestFromIndex(const int32& InIndex);
+
+    /**
+     * @public Get constant data quest from Name quest
+     **/
+    UFUNCTION(BlueprintCallable, Category = "FindData")
+    const FDataQuest& GetFreezeDataQuestFromName(const FName& InQuestName);
+
+    /**
+     * @public Get dat quest table from name
+     **/
+    UFUNCTION(BlueprintCallable, Category = "FindData")
+    FDataQuestTable GetDataQuestTableFromName(const FName& NameQuest) const;
     
 protected:
 
     /**
      * @protected Get class UListTaskBase from unique ID UObject
-     * @param1 uint32
-     * @return UListTaskBase*
      **/
     UListTaskBase* FindListTaskFromID(const uint32 ID) const;
 
     /**
      * @protected Get data quest from unique ID UObject Active list task
-     * @param1 uint32
-     * @return FDataQuest&
      **/
-    FDataQuest& FindDataQuestFromID(const uint32 ID) ;
+    FDataQuest& FindDataQuestFromID(const uint32 ID);
 
     /**
-     * @public Get non-constant data quest from Name quest
-     * @param1 FName NameQuest
-     * @return FDataQuest&
+     * @protected Get non-constant data quest from Name quest
      **/
     FDataQuest& GetDataQuestFromName(const FName& NameQuest);
 
     /**
-     * @public Get non-constant data quest from Active list task
-     * @param1 UListTaskBase*
-     * @return FDataQuest&
+     * @protected Get non-constant data quest from Active list task
      **/
     FDataQuest& GetDataQuestFromListTask(const UListTaskBase* ListTask);
 
     /**
-     * @public Get non-constant data quest from Hidden list task
-     * @param1 UListTaskBase*
-     * @return FDataQuest&
+     * @protected Get non-constant data quest from Active list task path
      **/
-    FDataQuest& GetDataQuestFromHiddenLT(const UListTaskBase* ListTask);
-
-    /**
-     * @public Get non-constant DataVisibleListTask from Active list task
-     * @param1 FName
-     * @param2 UListTaskBase*
-     * @return FDataVisibleListTask&
-     **/
-    FDataVisibleListTask& GetDataVisibleListFromListTask(const FName& NameQuest, const UListTaskBase* ListTask);
-
-    /**
-     * @public Get non-constant DataHiddenListTask from Active list task
-     * @param1 FName
-     * @param2 UListTaskBase*
-     * @return FDataHiddenListTask&
-     **/
-    FDataHiddenListTask& GetDataHiddenListFromListTask(const FName& NameQuest, const UListTaskBase* ListTask);
+    FDataQuest& GetDataQuestFromPathListTask(const FSoftObjectPath* InListTaskPath);
 
 #pragma endregion
 
@@ -200,9 +231,11 @@ protected:
 
     TQueue<uint32> QueuePushReplicateObject;
 
+    // @protected Constant empty data quest
     FDataQuest EmptyDataQuest;
-    FDataVisibleListTask EmptyDataVisibleListTask;
-    FDataHiddenListTask EmptyDataHiddenListTask;
+
+    // @protected Constant empty data list task
+    FDataListTask EmptyDataListTask;
 
 #pragma endregion
 
@@ -219,12 +252,6 @@ protected:
 
     UPROPERTY(BlueprintAssignable)
     FSwitchQuestSignature OnSwitchQuest;
-
-    UPROPERTY(BlueprintAssignable)
-    FSendTaskPointSignature OnSendTaskPoint;
-
-    UPROPERTY(BlueprintAssignable)
-    FSendQuestPointMapSignature OnSendQuestPointMap;
 
 #pragma endregion
     

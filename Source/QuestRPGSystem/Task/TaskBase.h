@@ -12,12 +12,14 @@ class UListTaskBase;
 #define LOG_TASK(LogVerb, Text) Print_LogTask(LogVerb, Text, __LINE__, __FUNCTION__)
 
 /**
- * @class Task base
+ * @class Basic class settings for the implementation of the approach to the implementation of the task entity
  */
 UCLASS(EditInlineNew, Abstract, HideCategories = "Trash")
 class QUESTRPGSYSTEM_API UTaskBase : public UObject
 {
     GENERATED_BODY()
+
+friend class UListTaskBase;
 
 #pragma region LogTask
 
@@ -33,6 +35,7 @@ protected:
 #pragma region Default
 
 public:
+    
     // Construct
     UTaskBase()
     {
@@ -104,26 +107,26 @@ public:
      * @public Get state edit task
      * @return bool
      **/
-    FORCEINLINE bool IsEditTask() const { return bEditTask; }
+    FORCEINLINE bool IsEditBaseSettingsTask() const { return bEditBaseSettingsTask; }
 
 protected:
     
     // @protected Parameter for disabling task settings
     UPROPERTY(VisibleAnywhere, Category = "Trash")
-    bool bEditTask = true;
-    
+    bool bEditBaseSettingsTask = true;
+
     // @protected Task description
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings Task", meta = (DisplayPriority = "0", EditCondition = "bEditTask", EditConditionHides))
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings Task", meta = (DisplayPriority = "0", EditCondition = "bEditBaseSettingsTask", EditConditionHides))
     FText TaskDescription{};
 
     // @protected Notification of the quest update at the start of a current task
-    UPROPERTY(EditDefaultsOnly, Category = "Settings Task", meta = (DisplayPriority = 1, EditCondition = "bEditTask", EditConditionHides))
+    UPROPERTY(EditDefaultsOnly, Category = "Settings Task", meta = (DisplayPriority = 1, EditCondition = "bEditBaseSettingsTask", EditConditionHides))
     bool bNotifyUpdate{true};
 
     // @protected Task specific settings
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings Task", meta = (EditCondition = "bEditTask", EditConditionHides))
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings Task", meta = (EditCondition = "bEditBaseSettingsTask", EditConditionHides))
     FTaskSpecificSettings TaskSpecificSettings{};
-    
+
     // @protected Status task
     EStatusTask StatusTask{EStatusTask::NoneInit};
 
@@ -153,15 +156,9 @@ public:
      **/
     bool IsTaskComplete() const { return StatusTask == EStatusTask::Complete; }
 
-    /**
-     * @public Generate task point for miss map
-     * @return bool
-     **/
-    TArray<FTaskPoint> GenerateTaskPointForMissMap();
-
 protected:
 
-    // TODO временная функция для тестов
+    // TODO Temp function for test
     UFUNCTION(Client, Reliable)
     void ClientDrawPoint(const FVector& Position);
 
@@ -169,10 +166,11 @@ protected:
 
 #pragma region Signature
 
-public:
+private:
     
     // @public Notify for paren list task
     FUpdateTaskSignature OnUpdateTask;
 
 #pragma endregion
+    
 };

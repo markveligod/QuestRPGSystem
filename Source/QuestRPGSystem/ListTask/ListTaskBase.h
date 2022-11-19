@@ -110,12 +110,6 @@ public:
      **/
     void DestroyListTask();
 
-    /**
-     * @public Generate info for points task
-     * @return TArray<FTaskPoint>
-     **/
-    TArray<FTaskPoint> RequestGeneratePointsTaskForMissMap();
-
 protected:
 
     /**
@@ -227,6 +221,12 @@ public:
      **/
     const FSoftObjectPath& GetToInitVisibleBlock() const { return InitVisiblePathBlock; }
 
+    /**
+     * @public Get to next visible block from hidden
+     * @return FSoftObjectPath
+     **/
+    const FSoftObjectPath& GetNextVisibleBlockFromHidden() const { return NextVisiblePathBlockFromHidden; }
+
 protected:
 
     // @protected Type list task
@@ -258,11 +258,14 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Settings List task", meta = (EditCondition = "TypeListTask == ETypeListTask::Hidden", EditConditionHides))
     ERunHiddenListTask RunHiddenListTask{ERunHiddenListTask::AddToQuest};
 
-    UPROPERTY(EditAnywhere, Category = "Settings List task", meta = (EditCondition = "TypeListTask == ETypeListTask::Hidden && RunHiddenListTask == ERunHiddenListTask::InitToRunListTask", EditConditionHides))
+    UPROPERTY(EditAnywhere, Category = "Settings List task", meta = (MetaClass = "ListTaskBase", EditCondition = "TypeListTask == ETypeListTask::Hidden && RunHiddenListTask == ERunHiddenListTask::InitToRunListTask", EditConditionHides))
     FSoftClassPath InitVisiblePathBlock;
     
     UPROPERTY(EditAnywhere, Category = "Settings List task", meta = (EditCondition = "TypeListTask == ETypeListTask::Hidden", EditConditionHides))
     EActionHiddenListTask ActionHiddenListTask{EActionHiddenListTask::Nothing};
+
+    UPROPERTY(EditAnywhere, Category = "Settings List task", meta = (MetaClass = "ListTaskBase", EditCondition = "TypeListTask == ETypeListTask::Hidden && ActionHiddenListTask == EActionHiddenListTask::ForceTransferToNextBlock", EditConditionHides))
+    FSoftClassPath NextVisiblePathBlockFromHidden;
 
 #pragma endregion
     
