@@ -158,6 +158,16 @@ protected:
     UFUNCTION(BlueprintImplementableEvent)
     void SendNotifySwitchQuest_Event(const FName& NameQuest);
 
+    /**
+      * @protected Destruction of an active list of tasks for a specific quest
+     **/
+    void DestroyActiveListTaskFromQuestName(const FName& NameQuest);
+
+    /**
+      * @protected Destruction of an active list of tasks for all quest
+     **/
+    void DestroyActiveListTaskForAllQuest();
+
 #pragma endregion
 
 #pragma region FindData
@@ -211,9 +221,14 @@ protected:
     FDataQuest& GetDataQuestFromListTask(const UListTaskBase* ListTask);
 
     /**
-     * @protected Get non-constant data quest from Active list task path
+     * @protected Get non-constant data quest from list task path
      **/
-    FDataQuest& GetDataQuestFromPathListTask(const FSoftObjectPath* InListTaskPath);
+    FDataQuest& GetDataQuestFromPathListTask(const FSoftObjectPath& InListTaskPath);
+
+    /**
+     * @protected Get non-constant data list task from list task path
+     **/
+    FDataListTask& GetDataListTaskFromPathListTask(const FSoftObjectPath& InListTaskPath);
 
 #pragma endregion
 

@@ -32,13 +32,14 @@ void UQuestManager::ServerAddQuest_Implementation(const FName& QuestName)
     if (!CHECK_COND(QuestFromTable != nullptr, "Data quest from table is not found")) return;
 
     FDataQuest DataQuest(QuestName);
+    DataQuest.StatusQuest = EStatusQuest::Init;
+    
     DataQuest.ArrayDataListTask.Add(FDataListTask(QuestFromTable->StartListTask));
     ArrayDataQuest.AddUnique(DataQuest);
 
-    FTimerHandle TimerHandle;
     FTimerDelegate TimerDelegate;
     TimerDelegate.BindUObject(this, &ThisClass::StartInitQuest, QuestName);
-    GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, 0.1f, false);
+    GetWorld()->GetTimerManager().SetTimerForNextTick(TimerDelegate);
 }
 
 bool UQuestManager::ServerAddQuest_Validate(const FName& QuestName)
@@ -86,14 +87,14 @@ bool UQuestManager::ServerChangeTargetQuest_Validate(const FName QuestName)
     return true;
 }
 
-void UQuestManager::CompleteQuest(const FName QuestName)
+void UQuestManager::CompleteQuest(const FName QuestName, const bool bSuccessComplete)
 {
     LOG_QM(ELogVerb::Display, FString::Printf(TEXT("QuestName: [%s]"), *QuestName.ToString()));
 
     FDataQuest& DataQuest = GetDataQuestFromName(QuestName);
     if (!CHECK_COND(DataQuest != EmptyDataQuest, "Data quest is empty")) return;
 
-    FDataQuestTable* QuestFromTable = DataQuestTable->FindRow<FDataQuestTable>(QuestName, "");
+    const FDataQuestTable* QuestFromTable = DataQuestTable->FindRow<FDataQuestTable>(QuestName, "");
     if (!CHECK_COND(QuestFromTable != nullptr, "Data quest from table is not found")) return;
 
     for (auto& DataVisibleLT : DataQuest.ArrayDataListTask)
@@ -101,14 +102,8 @@ void UQuestManager::CompleteQuest(const FName QuestName)
         DataVisibleLT.bListTaskComplete = true;
     }
 
-    if (DataQuest.ActiveListTask)
-    {
-        DataQuest.ActiveListTask->DestroyListTask();
-        DataQuest.ActiveListTask = nullptr;
-    }
-
-    // TODO: имплементировать статус завершения квеста
-    // DataQuest.StatusQuest = QuestFromTable->TypeQuest == ETypeQuest::Event ? EStatusQuest::CompleteFail : EStatusQuest::CompleteSuccess;
+    DestroyActiveListTaskFromQuestName(QuestName);
+    DataQuest.StatusQuest = bSuccessComplete ? EStatusQuest::CompleteSuccess : EStatusQuest::CompleteFail;
     ClientSendNotifyCompleteQuest(QuestName);
 }
 
@@ -122,7 +117,6 @@ void UQuestManager::StartInitQuest(const FName QuestName)
     if (!CHECK_COND(DataQuest != EmptyDataQuest, "Data quest is empty")) return;
     if (!CHECK_COND(DataQuest.ArrayDataListTask.Num() == 1, "This is a broken set with more than 1 visible list task")) return;
 
-    DataQuest.StatusQuest = EStatusQuest::Init;
     ClientSendNotifyStartQuest(DataQuest.NameQuestTable);
 
     StartInitListTask(DataQuest.NameQuestTable);
@@ -173,10 +167,9 @@ void UQuestManager::RegisterUpdateListTask(UListTaskBase* ListTask)
     if (ListTask->GetStatusListTask() == EStatusListTask::Complete)
     {
         ListTask->OnUpdateListTask.RemoveAll(this);
-        FTimerHandle TimerHandle;
         FTimerDelegate TimerDelegate;
         TimerDelegate.BindUObject(this, &ThisClass::NextListTask, DataQuest.NameQuestTable);
-        GetOwner()->GetWorldTimerManager().SetTimer(TimerHandle, TimerDelegate, 0.1f, false);
+        GetWorld()->GetTimerManager().SetTimerForNextTick(TimerDelegate);
     }
 }
 
@@ -186,19 +179,26 @@ void UQuestManager::NextListTask(const FName QuestName)
 
     if (!CHECK_COND(!QuestName.IsNone(), "Quest name is none")) return;
     FDataQuest& DataQuest = GetDataQuestFromName(QuestName);
+    if (!CHECK_COND(!DataQuest.IsEmpty(), "Data quest is empty")) return;
+
     if (DataQuest.ActiveListTask == nullptr)
     {
-        CompleteQuest(QuestName);
+        CompleteQuest(QuestName, false);
         return;
     }
 
     const FSoftObjectPath NextPath = DataQuest.ActiveListTask->GetNextListTask();
-    if (NextPath == FSoftObjectPath())
+    if (!NextPath.IsValid())
     {
-        CompleteQuest(QuestName);
+        CompleteQuest(QuestName, false);
         return;
     }
-    InitNextVisibleListTask(QuestName, NextPath);
+    
+    FDataListTask& DataListTask = GetDataListTaskFromPathListTask(DataQuest.ActiveListTask);
+    DataListTask.bListTaskComplete = true;
+    DestroyActiveListTaskFromQuestName(QuestName);
+    
+    InitListTask(DataQuest, NextPath);
 }
 
 void UQuestManager::NotifyUpdateQuest(const FName& QuestName)
@@ -210,55 +210,42 @@ void UQuestManager::NotifyUpdateQuest(const FName& QuestName)
     ClientSendNotifyUpdateQuest(QuestName);
 }
 
-void UQuestManager::InitNextVisibleListTask(const FName QuestName, const FSoftObjectPath NextVisibleLTPath)
+void UQuestManager::InitListTask(FDataQuest& DataQuest, const FSoftObjectPath& NextLTPath)
 {
-    FDataQuest& DataQuest = GetDataQuestFromName(QuestName);
-    if (!CHECK_COND(DataQuest != EmptyDataQuest, "Data quest is empty")) return;
-    if (!CHECK_COND(NextVisibleLTPath.IsValid(), "Next visible list task is none")) return;
-    if (!CHECK_COND(DataQuest.ActiveListTask != nullptr, "Active visible list task is nullptr")) return;
-
-    // TODO: отрефакторить эту часть
-    // FDataListTask& DataListTask = GetDataVisibleListFromListTask(QuestName, DataQuest.ActiveVisibleListTask);
-    // DataListTask.bListTaskComplete = true;
-
-    DataQuest.ActiveListTask->OnUpdateListTask.RemoveAll(this);
-    DataQuest.ActiveListTask->DestroyListTask();
-    DataQuest.ActiveListTask = nullptr;
-
-    UListTaskBase* NextVisibleBlock = Cast<UListTaskBase>(UQuestLibrary::CreateListTaskFromPath(GetOwner(), NextVisibleLTPath));
+    UListTaskBase* NextVisibleBlock = Cast<UListTaskBase>(UQuestLibrary::CreateListTaskFromPath(GetOwner(), NextLTPath));
     if (!NextVisibleBlock)
     {
-        CompleteQuest(QuestName);
+        CompleteQuest(DataQuest.NameQuestTable, false);
         return;
     }
 
     if (NextVisibleBlock->GetTypeListTask() != ETypeListTask::Visible)
     {
-        CompleteQuest(QuestName);
+        CompleteQuest(DataQuest.NameQuestTable, false);
         return;
     }
 
     const bool bStatusInitListTask = NextVisibleBlock->InitListTask(Cast<APlayerController>(GetOwner()), this);
     if (!bStatusInitListTask)
     {
-        CompleteQuest(QuestName);
+        CompleteQuest(DataQuest.NameQuestTable, false);
         return;
     }
 
     const bool bStatusRunListTask = NextVisibleBlock->RunListTask();
     if (!bStatusRunListTask)
     {
-        CompleteQuest(QuestName);
+        CompleteQuest(DataQuest.NameQuestTable, false);
         return;
     }
 
-    FDataListTask NewDataVisibleListTask(NextVisibleLTPath);
+    FDataListTask NewDataVisibleListTask(NextLTPath);
     NewDataVisibleListTask.ArrayDataTask = UQuestLibrary::FillDataInfoTasksFromListTask(NextVisibleBlock);
     NextVisibleBlock->OnUpdateListTask.AddUObject(this, &ThisClass::RegisterUpdateListTask);
     DataQuest.ArrayDataListTask.Add(NewDataVisibleListTask);
     DataQuest.ActiveListTask = NextVisibleBlock;
 
-    NotifyUpdateQuest(QuestName);
+    NotifyUpdateQuest(DataQuest.NameQuestTable);
 }
 
 #pragma endregion

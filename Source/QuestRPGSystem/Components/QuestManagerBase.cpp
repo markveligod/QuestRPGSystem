@@ -148,12 +148,11 @@ void UQuestManagerBase::UpdateInfoDataQuest(const FName& NameQuest)
     const FDataQuest& DataQuest = GetDataQuestFromName(NameQuest);
     if (!CHECK_COND(!DataQuest.IsEmpty(), "Empty data quest")) return;
     if (!CHECK_COND(DataQuest.ActiveListTask != nullptr, "Active visible list task is nullptr")) return;
-
-    // TODO: Доделать поиск данных по заполнению информации об тасках
-    // FDataListTask& DataListTask = DataQuest.GetActive;
-    // if (!CHECK_COND(!DataListTask.IsEmpty(), "Data visible list task is empty")) return;
-    //
-    // DataListTask.ArrayDataTask = UQuestLibrary::FillDataInfoTasksFromListTask(DataQuest.ActiveListTask);
+    
+    FDataListTask& DataListTask = GetDataListTaskFromPathListTask(DataQuest.ActiveListTask);
+    if (!CHECK_COND(!DataListTask.IsEmpty(), "Data visible list task is empty")) return;
+    
+    DataListTask.ArrayDataTask = UQuestLibrary::FillDataInfoTasksFromListTask(DataQuest.ActiveListTask);
 }
 
 void UQuestManagerBase::ClientSendNotifyStartQuest_Implementation(const FName& NameQuest)
@@ -224,6 +223,32 @@ FDataQuest& UQuestManagerBase::FindDataQuestFromID(const uint32 ID)
     return FindElem ? *FindElem : EmptyDataQuest;
 }
 
+void UQuestManagerBase::DestroyActiveListTaskFromQuestName(const FName& NameQuest)
+{
+    FDataQuest& DataQuest = GetDataQuestFromName(NameQuest);
+    if (!CHECK_COND(!DataQuest.IsEmpty(), "Data quest is empty")) return;
+
+    if (DataQuest.ActiveListTask)
+    {
+        DataQuest.ActiveListTask->OnUpdateListTask.RemoveAll(this);
+        DataQuest.ActiveListTask->DestroyListTask();
+        DataQuest.ActiveListTask = nullptr;
+    }
+}
+
+void UQuestManagerBase::DestroyActiveListTaskForAllQuest()
+{
+    for (auto& DataQuest : ArrayDataQuest)
+    {
+        if (DataQuest.ActiveListTask)
+        {
+            DataQuest.ActiveListTask->OnUpdateListTask.RemoveAll(this);
+            DataQuest.ActiveListTask->DestroyListTask();
+            DataQuest.ActiveListTask = nullptr;
+        }
+    }
+}
+
 int32 UQuestManagerBase::GetIndexQuestFromName(const FName& InQuestName)
 {
     return ArrayDataQuest.IndexOfByPredicate([InQuestName](const FDataQuest& Data)
@@ -274,12 +299,25 @@ FDataQuest& UQuestManagerBase::GetDataQuestFromListTask(const UListTaskBase* Lis
     return FindElem ? *FindElem : EmptyDataQuest;
 }
 
-FDataQuest& UQuestManagerBase::GetDataQuestFromPathListTask(const FSoftObjectPath* InListTaskPath)
+FDataQuest& UQuestManagerBase::GetDataQuestFromPathListTask(const FSoftObjectPath& InListTaskPath)
 {
-    if (InListTaskPath->IsNull()) return EmptyDataQuest;
+    if (InListTaskPath.IsNull()) return EmptyDataQuest;
     const auto FindElem = ArrayDataQuest.FindByPredicate([InListTaskPath](const FDataQuest& DataQuest)
     {
-        return DataQuest.ActiveListTask && DataQuest.ActiveListTask->GetClass()->GetName() == InListTaskPath->GetAssetName();
+        return DataQuest.ActiveListTask && DataQuest.ActiveListTask->GetClass()->GetName() == InListTaskPath.GetAssetName();
+    });
+
+    return FindElem ? *FindElem : EmptyDataQuest;
+}
+
+FDataListTask& UQuestManagerBase::GetDataListTaskFromPathListTask(const FSoftObjectPath& InListTaskPath)
+{
+    if (InListTaskPath.IsNull()) return EmptyDataListTask;
+    FDataQuest& DataQuest = GetDataQuestFromPathListTask(InListTaskPath);
+
+    const auto FindElem = DataQuest.ArrayDataListTask.FindByPredicate([InListTaskPath](const FDataListTask& Data)
+    {
+        return Data.PathToListTask == InListTaskPath;
     });
 
     return FindElem ? *FindElem : EmptyDataQuest;

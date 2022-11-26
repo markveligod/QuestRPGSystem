@@ -12,12 +12,11 @@
 UCLASS(ClassGroup=(Managers), meta=(BlueprintSpawnableComponent))
 class QUESTRPGSYSTEM_API UQuestManager : public UQuestManagerBase
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 #pragma region API_Checked
 
 public:
-
     UFUNCTION(BlueprintCallable, Category = "QuestManager | API_Checked")
     EStatusQuest GetStatusQuest(const FName& QuestName);
 
@@ -26,7 +25,6 @@ public:
 #pragma region API_Action
 
 public:
-
     /**
      * @public Request on server for add new quest
      **/
@@ -44,16 +42,14 @@ public:
      **/
     UFUNCTION(Server, Reliable, WithValidation, BlueprintCallable, Category = "API_Action")
     void ServerChangeTargetQuest(const FName QuestName);
-    
-protected:
 
+protected:
     /**
      * @protected Complete quest. Call on side server.
      **/
-    virtual void CompleteQuest(const FName QuestName);
+    virtual void CompleteQuest(const FName QuestName, const bool bSuccessComplete);
 
 private:
-
     /**
      * @private The process of initial start initialization of a set of tasks.
      * The initial set is taken for initialization under the index 0
@@ -81,15 +77,9 @@ private:
     void NotifyUpdateQuest(const FName& QuestName);
 
     /**
-     * @private Reject quest
+     * @private init list task
      **/
-    void RejectQuest(const FName& QuestName);
-    
-    /**
-     * @protected Force next visible list task
-     **/
-    void InitNextVisibleListTask(const FName QuestName, const FSoftObjectPath NextVisibleLTPath);
+    void InitListTask(FDataQuest& DataQuest, const FSoftObjectPath& NextLTPath);
 
 #pragma endregion
-    
 };
