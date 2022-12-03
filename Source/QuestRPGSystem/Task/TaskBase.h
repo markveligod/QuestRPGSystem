@@ -14,7 +14,7 @@ class UListTaskBase;
 /**
  * @class Basic class settings for the implementation of the approach to the implementation of the task entity
  */
-UCLASS(EditInlineNew, Abstract, BlueprintType)
+UCLASS(EditInlineNew, Abstract, Blueprintable)
 class QUESTRPGSYSTEM_API UTaskBase : public UObject
 {
     GENERATED_BODY()
@@ -179,11 +179,11 @@ protected:
     EStatusTask StatusTask{EStatusTask::NoneInit};
 
     // @protected Owner player controller
-    UPROPERTY(Replicated)
+    UPROPERTY(Replicated, BlueprintReadOnly)
     APlayerController* OwnerController{nullptr};
 
     // @protected Owner Task
-    UPROPERTY(Replicated)
+    UPROPERTY(Replicated, BlueprintReadOnly)
     UListTaskBase* OwnerListTask{nullptr};
 
     // @protected For add description. Example: counter [0/1]

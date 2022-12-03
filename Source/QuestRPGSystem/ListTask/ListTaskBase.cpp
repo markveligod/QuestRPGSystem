@@ -68,16 +68,6 @@ bool UListTaskBase::RunListTask()
             }
             break;
         }
-        case ETypeRunListTask::TransferListTask:
-        {
-            for (UTaskBase* Task : ArrayTask)
-            {
-                if (!CHECK_COND(Task != nullptr, "Task is nullptr")) return false;
-                if (!CHECK_COND(Task->IsValidTask(), "Task is not valid")) return false;
-                ProcessTasks(Task);
-            }
-            break;
-        }
     }
 
     LOG_LIST_TASK(ELogVerb::Display, "Run list task");
@@ -131,59 +121,13 @@ void UListTaskBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
     DOREPLIFETIME_CONDITION(UListTaskBase, ParentQuestManager, COND_OwnerOnly);
 }
 
-#if WITH_EDITOR
-
-void UListTaskBase::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
-{
-    UObject::PostEditChangeProperty(PropertyChangedEvent);
-
-    if (!PropertyChangedEvent.Property) return;
-
-    if (PropertyChangedEvent.Property->GetName() == TEXT("TypeRunListTask") ||
-        PropertyChangedEvent.Property->GetName() == TEXT("ArrayIndexTransferToNextBlocks") ||
-        PropertyChangedEvent.Property->GetName() == TEXT("ArrayTask"))
-    {
-        TArray<FDataTransferToNextBlock> ArrayTempData;
-        for (int32 i = 0; i < ArrayTask.Num(); ++i)
-        {
-            if (ArrayIndexTransferToNextBlocks.IsValidIndex(i))
-            {
-                ArrayTempData.Add(ArrayIndexTransferToNextBlocks[i]);
-            }
-            else
-            {
-                ArrayTempData.Add(FDataTransferToNextBlock(i));
-            }
-        }
-        ArrayIndexTransferToNextBlocks = ArrayTempData;
-    }
-}
-
-#endif
-
 #pragma endregion
 
 #pragma region ActionBase
 
 FSoftObjectPath UListTaskBase::GetNextListTask() const
 {
-    switch (TypeRunListTask)
-    {
-        case ETypeRunListTask::StepByStep:
-        {
-            return NextPathBlock;
-        }
-        case ETypeRunListTask::AllSameTime:
-        {
-            return NextPathBlock;
-        }
-        case ETypeRunListTask::TransferListTask:
-        {
-            const int32 Index = FindIndexFirstCompleteTask();
-            return ArrayIndexTransferToNextBlocks.IsValidIndex(Index) ? ArrayIndexTransferToNextBlocks[Index].NextPathBlock : FSoftObjectPath();
-        }
-    }
-    return FSoftObjectPath();
+    return NextPathBlock;
 }
 
 void UListTaskBase::DestroyListTask()
@@ -212,15 +156,13 @@ void UListTaskBase::ProcessTasks(UTaskBase* Task)
             if (!Task->RunTask())
             {
                 Task->ChangeStatusTask(EStatusTask::Complete);
-                FTimerHandle TimerHandle;
-                OwnerController->GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::NextInitTask, 0.1f, false);
+                GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ThisClass::NextInitTask);
             }
             break;
         }
         case EStatusTask::Complete:
         {
-            FTimerHandle TimerHandle;
-            OwnerController->GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::NextInitTask, 0.1f, false);
+            GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ThisClass::NextInitTask);
             break;
         }
     }
@@ -241,24 +183,13 @@ void UListTaskBase::NextInitTask()
                 return;
             }
 
-            FTimerHandle TimerHandle;
-            FTimerDelegate TimerDelegate;
-            TimerDelegate.BindUObject(this, &ThisClass::ProcessTasks, ArrayTask[Index]);
-            OwnerController->GetWorldTimerManager().SetTimer(TimerHandle, TimerDelegate, 0.1f, false);
+            const FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &ThisClass::ProcessTasks, ArrayTask[Index]);
+            GetWorld()->GetTimerManager().SetTimerForNextTick(TimerDelegate);
             break;
         }
         case ETypeRunListTask::AllSameTime:
         {
             if (IsAllTaskComplete())
-            {
-                CompleteListTask();
-                return;
-            }
-            break;
-        }
-        case ETypeRunListTask::TransferListTask:
-        {
-            if (IsSomeTaskComplete())
             {
                 CompleteListTask();
                 return;
@@ -275,12 +206,7 @@ void UListTaskBase::RegisterUpdateTask(UTaskBase* Task)
     if (Task->IsTaskComplete())
     {
         Task->OnUpdateTask.RemoveAll(this);
-
-        // TODO: Здесь можно воспроизвести всякие штуки из специфичных настроек таска
-
-        
-        FTimerHandle TimerHandle;
-        OwnerController->GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::NextInitTask, 0.1f, false);
+        GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ThisClass::NextInitTask);
     }
 
     OnUpdateListTask.Broadcast(this);

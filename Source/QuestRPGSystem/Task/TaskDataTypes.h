@@ -34,20 +34,20 @@ struct FTaskSpecificSettings
         EditCondition = "bEnableTimerTask"))
     float TimerTask{10.0f};
 
-    // Enable timer
+    // Enable check abort task
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (InlineEditConditionToggle))
     bool bEnableCheckAbortTask{true};
 
-    // Timer in sec
+    // Frequency abort task
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = "1.0", ClampMax = "3540.0", ForceUnits = "s",
         EditCondition = "bEnableCheckAbortTask"))
     float CallFrequencyAbortTask{5.0f};
     
-    // Enable on subtitles?
+    // Enable add on unique tag
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (InlineEditConditionToggle))
     bool bAddUniqueTag{false};
 
-    // Enable on subtitles?
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (EditCondition = "bAddDialogTag"))
+    // Name unique tag
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (EditCondition = "bAddUniqueTag"))
     FString NameUniqueTag{""};
 };

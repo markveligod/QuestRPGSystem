@@ -22,6 +22,7 @@ class QUESTRPGSYSTEM_API UListTaskBase : public UObject
 
 friend class UTaskBase;
 friend class UQuestManager;
+friend class UQuestManagerBase;
 
 #pragma region LogListTask
 
@@ -88,14 +89,6 @@ public:
     /** @public IsSupportedForNetworking means an object can be referenced over the network */
     virtual bool IsSupportedForNetworking() const override { return true; }
 
-#if WITH_EDITOR
-
-protected:
-
-    virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-
-#endif
-
 #pragma endregion
 
 #pragma region ActionBase
@@ -117,12 +110,12 @@ protected:
     /**
      * @protected Task Initialization Handler. Call function only on the server side.
      **/
-    void ProcessTasks(UTaskBase* Task);
+    virtual void ProcessTasks(UTaskBase* Task);
 
     /**
      * @protected Task Initialization Handler. Call function only on the server side.
      **/
-    void NextInitTask();
+    virtual void NextInitTask();
 
     /**
      * @protected Register event update task. Call function only on the server side. This function override.
@@ -198,15 +191,11 @@ protected:
     FSoftObjectPath ActionWorld{};
 
     // @protected Type run list task
-    UPROPERTY(EditAnywhere, Category = "Settings List task", meta = (EditCondition = "TypeListTask == ETypeListTask::Visible", EditConditionHides))
+    UPROPERTY(EditAnywhere, Category = "Settings List task")
     ETypeRunListTask TypeRunListTask{ETypeRunListTask::StepByStep};
-
-    // @protected Type run list task
-    UPROPERTY(EditAnywhere, Category = "Settings List task", meta = (EditCondition = "TypeRunListTask == ETypeRunListTask::TransferListTask && TypeListTask == ETypeListTask::Visible", EditConditionHides))
-    TArray<FDataTransferToNextBlock> ArrayIndexTransferToNextBlocks;
-
+    
     // @protected Next path block
-    UPROPERTY(EditAnywhere, Category = "Settings List task", meta = (MetaClass = "ListTaskBase", EditCondition = "TypeRunListTask != ETypeRunListTask::TransferListTask && TypeListTask == ETypeListTask::Visible", EditConditionHides))
+    UPROPERTY(EditAnywhere, Category = "Settings List task", meta = (MetaClass = "ListTaskBase"))
     FSoftClassPath NextPathBlock;
 
     // @protected Set array task for action process
@@ -229,7 +218,7 @@ protected:
 
 #pragma region Signature
 
-public:
+private:
     
     FUpdateListTaskSignature OnUpdateListTask;
 
