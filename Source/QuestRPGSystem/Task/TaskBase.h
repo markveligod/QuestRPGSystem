@@ -14,129 +14,192 @@ class UListTaskBase;
 /**
  * @class Basic class settings for the implementation of the approach to the implementation of the task entity
  */
-UCLASS(EditInlineNew, Abstract, HideCategories = "Trash")
+UCLASS(EditInlineNew, Abstract, BlueprintType)
 class QUESTRPGSYSTEM_API UTaskBase : public UObject
 {
     GENERATED_BODY()
 
-friend class UListTaskBase;
+    friend class UListTaskBase;
 
 #pragma region LogTask
 
 protected:
-    
     /**
-     * @public Write a log to task
+     * @protected Write a log to task
      **/
-    void Print_LogTask(const ELogVerb LogVerb, const FString Text, const int Line, const char* Function) const;
+    virtual void Print_LogTask(const ELogVerb LogVerb, const FString Text, const int Line, const char* Function) const;
 
 #pragma endregion
 
 #pragma region Default
 
 public:
-    
     // Construct
     UTaskBase()
     {
     }
 
+protected:
     /**
-     * @public Call on server side for init task. this override function.
-     * @param1 APlayerController*
-     * @param2 UListTaskBase*
-     * @return bool
+     * @protected Call on server side for init task. this override function.
      **/
     virtual bool InitTask(APlayerController* PlayerController, UListTaskBase* Parent);
 
     /**
-     * @public Call on server side for reset task. this override function.
-     * @return bool
+     * @protected Call on server side for init task. Native Implementation in blueprint
+     **/
+    UFUNCTION(BlueprintNativeEvent, meta = (BlueprintProtected = true))
+    bool InitTask_Event(APlayerController* PlayerController, UListTaskBase* Parent);
+
+    /**
+     * @protected Call on server side for reset task. this override function.
      **/
     virtual bool ResetTask();
 
     /**
-     * @public Call on client side for run task. this override function.
-     * @return bool
+     * @protected Call on server side for reset task. Native Implementation in blueprint
+     **/
+    UFUNCTION(BlueprintNativeEvent, meta = (BlueprintProtected = true))
+    bool ResetTask_Event();
+
+    /**
+     * @protected Call on client side for run task. this override function.
      **/
     virtual bool RunTask();
 
     /**
-     * @public Call on server side for complete task. this override function.
-     * @return bool
+     * @protected Call on server side for run task. Native Implementation in blueprint
+     **/
+    UFUNCTION(BlueprintNativeEvent, meta = (BlueprintProtected = true))
+    bool RunTask_Event();
+
+    /**
+     * @protected Call on server side for complete task. this override function.
      **/
     virtual bool CompleteTask();
 
     /**
-     * @public Call on server side for check valid task. this override function.
-     * @return bool
+     * @protected Call on server side for complete task. Native Implementation in blueprint
+     **/
+    UFUNCTION(BlueprintNativeEvent, meta = (BlueprintProtected = true))
+    bool CompleteTask_Event();
+
+    /**
+     * @protected Call on server side for check valid task. this override function.
      **/
     virtual bool IsValidTask();
+
+    /**
+     * @protected Call on server side for check valid task. Native Implementation in blueprint
+     **/
+    UFUNCTION(BlueprintNativeEvent, meta = (BlueprintProtected = true))
+    bool IsValidTask_Event();
+
+    /**
+     * @protected Call on server side for check abort task. this override function.
+     **/
+    virtual bool IsAbortTask();
+
+    /**
+     * @protected Call on server side for check abort task. Native Implementation in blueprint
+     **/
+    UFUNCTION(BlueprintNativeEvent, meta = (BlueprintProtected = true))
+    bool IsAbortTask_Event();
+
+    /**
+     * @protected Request on server for complete task
+     **/
+    UFUNCTION(Server, Reliable, BlueprintCallable, meta = (BlueprintProtected = true))
+    void ServerCompleteTask();
+
+    /**
+     * @public Return the space this function should be called. Checks to see if this function should
+     * be called locally, remotely, or simply absorbed under the given conditions
+     *
+     * @param Function function to call
+     * @param Stack stack frame for the function call
+     * @return bitmask representing all callspaces that apply to this UFunction in the given context
+     */
+    virtual int32 GetFunctionCallspace(UFunction* Function, FFrame* Stack) override;
+
+    /**
+     * @public Call the actor's function remotely
+     *
+     * @param1 Function function to call
+     * @param2 Parameters arguments to the function call
+     * @param3 Stack stack frame for the function call
+     */
+    virtual bool CallRemoteFunction(UFunction* Function, void* Parms, struct FOutParmRec* OutParms, FFrame* Stack) override;
+
+    /** @public Returns properties that are replicated for the lifetime of the actor channel */
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+    /** @public IsSupportedForNetworking means an object can be referenced over the network */
+    virtual bool IsSupportedForNetworking() const override { return true; }
 
 #pragma endregion
 
 #pragma region DataTask
 
 public:
-
     /**
      * @public Get task description
-     * @return FText
      **/
-    FORCEINLINE FText GetTaskDescription() const { return TaskDescription; }
+    FORCEINLINE FText GetTaskDescription() const { return FText::FromString(TaskDescription.ToString() + " " + AddDescription + " " + TimerDescription); }
 
     /**
      * @public Get state bNotifyUpdate
-     * @return bool
      **/
     FORCEINLINE bool IsNotifyUpdate() const { return bNotifyUpdate; }
 
     /**
      * @public Get Task Specific Settings
-     * @return FTaskSpecificSettings
      **/
     FORCEINLINE const FTaskSpecificSettings& GetTaskSpecificSettings() { return TaskSpecificSettings; }
 
     /**
      * @public Get StatusTask
-     * @return EStatusTask
      **/
     FORCEINLINE EStatusTask GetStatusTask() const { return StatusTask; }
 
-    /**
-     * @public Get state edit task
-     * @return bool
-     **/
-    FORCEINLINE bool IsEditBaseSettingsTask() const { return bEditBaseSettingsTask; }
-
 protected:
-    
-    // @protected Parameter for disabling task settings
-    UPROPERTY(VisibleAnywhere, Category = "Trash")
-    bool bEditBaseSettingsTask = true;
-
     // @protected Task description
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings Task", meta = (DisplayPriority = "0", EditCondition = "bEditBaseSettingsTask", EditConditionHides))
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings Task", meta = (DisplayPriority = "0"))
     FText TaskDescription{};
 
     // @protected Notification of the quest update at the start of a current task
-    UPROPERTY(EditDefaultsOnly, Category = "Settings Task", meta = (DisplayPriority = 1, EditCondition = "bEditBaseSettingsTask", EditConditionHides))
+    UPROPERTY(EditAnywhere, Category = "Settings Task", meta = (DisplayPriority = 1))
     bool bNotifyUpdate{true};
 
     // @protected Task specific settings
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings Task", meta = (EditCondition = "bEditBaseSettingsTask", EditConditionHides))
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings Task")
     FTaskSpecificSettings TaskSpecificSettings{};
 
     // @protected Status task
     EStatusTask StatusTask{EStatusTask::NoneInit};
 
     // @protected Owner player controller
-    UPROPERTY()
+    UPROPERTY(Replicated)
     APlayerController* OwnerController{nullptr};
 
     // @protected Owner Task
-    UPROPERTY()
+    UPROPERTY(Replicated)
     UListTaskBase* OwnerListTask{nullptr};
+
+    // @protected For add description. Example: counter [0/1]
+    FString AddDescription{};
+
+    // @protected for description to timer. Example: [10:28]
+    FString TimerDescription{};
+
+    // @protected Remain timer to complete task
+    float RemainTimerCompleteTask{0.0f};
+
+    // @protected complete task for timer handle
+    FTimerHandle CompleteTaskTimerHandle;
+
+    // @protected abort task for timer handle
+    FTimerHandle AbortTaskTimerHandle;
 
 #pragma endregion
 
@@ -146,31 +209,33 @@ public:
 
     /**
      * @public To change status task
-     * @param1 EStatusTask
      **/
     void ChangeStatusTask(const EStatusTask& NewStatus);
 
     /**
      * @public Checking whether the tasks are completed
-     * @return bool
      **/
     bool IsTaskComplete() const { return StatusTask == EStatusTask::Complete; }
 
 protected:
 
-    // TODO Temp function for test
-    UFUNCTION(Client, Reliable)
-    void ClientDrawPoint(const FVector& Position);
+    /**
+     * @protected Check on abort task
+     **/
+    virtual void CheckAbortTask();
+
+    /**
+     * @protected Check remain task complete
+     **/
+    virtual void CheckRemainTaskComplete();
 
 #pragma endregion
 
 #pragma region Signature
 
 private:
-    
-    // @public Notify for paren list task
+    // @private Notify for paren list task
     FUpdateTaskSignature OnUpdateTask;
 
 #pragma endregion
-    
 };

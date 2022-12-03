@@ -2,6 +2,8 @@
 
 
 #include "Librarys/QuestLibrary.h"
+
+#include "Kismet/KismetStringLibrary.h"
 #include "ListTask/ListTaskBase.h"
 #include "Task/TaskBase.h"
 
@@ -29,6 +31,13 @@ bool UQuestLibrary::CheckedCondition(const bool bCondition, const FString Text, 
         return false;
     }
     return true;
+}
+
+FString UQuestLibrary::GetStringTimeFromSecond(float Seconds)
+{
+    FString Time = UKismetStringLibrary::TimeSecondsToString(Seconds);
+    Time = Time.Mid(0, 5);
+    return Time;
 }
 
 UListTaskBase* UQuestLibrary::CreateListTaskFromPath(UObject* Owner, const FSoftObjectPath& PathListTask)

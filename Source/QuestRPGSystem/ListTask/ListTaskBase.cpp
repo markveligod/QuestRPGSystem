@@ -38,11 +38,6 @@ bool UListTaskBase::InitListTask(APlayerController* PlayerController, UQuestMana
         if (!CHECK_COND(Task != nullptr, "Task is nullptr")) return false;
         if (!CHECK_COND(Task->IsValidTask(), "Task is not valid")) return false;
     }
-
-    if (TypeListTask == ETypeListTask::Hidden)
-    {
-        TypeRunListTask = ETypeRunListTask::StepByStep;
-    }
     
     OwnerController = PlayerController;
     ParentQuestManager = QuestManager;
@@ -310,7 +305,7 @@ int32 UListTaskBase::FindIndexFirstCompleteTask() const
         if (!ArrayTask.IsValidIndex(i)) continue;
         const UTaskBase* Task = ArrayTask[i];
         if (!Task) continue;
-        if (Task->IsEditBaseSettingsTask() && Task->IsTaskComplete()) return i;
+        if (Task->IsTaskComplete()) return i;
     }
     return INDEX_NONE;
 }
@@ -330,7 +325,7 @@ bool UListTaskBase::IsSomeTaskComplete() const
     const auto FindElem = ArrayTask.FindByPredicate([](const UTaskBase* Task)
     {
         if (!Task) return false;
-        return Task->IsEditBaseSettingsTask() && Task->IsTaskComplete();
+        return Task->IsTaskComplete();
     });
     return FindElem != nullptr;
 }

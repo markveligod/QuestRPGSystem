@@ -39,7 +39,6 @@ public:
 
     /**
      * @public Check the condition
-     * @return bool
      **/
     static bool CheckedCondition(const bool bCondition, const FString Text, const int Line, const char* Function);
 
@@ -56,24 +55,22 @@ public:
     }
 
     /**
-     * @private Creates a class of type UListTaskBase in memory
-     * @param1 UObject* Owner
-     * @param2 FSoftObjectPath PathToListTask
-     * @return UListTaskBase*
+     * @public Get String by timer in sec
+     **/
+    static FString GetStringTimeFromSecond(float Seconds);
+
+    /**
+     * @public Creates a class of type UListTaskBase in memory
      **/
     static UListTaskBase* CreateListTaskFromPath(UObject* Owner, const FSoftObjectPath& PathListTask);
 
     /**
-     * @private Fill data info tasks
-     * @param1 UListTaskBase*
-     * @return TArray<FDataInfoTask>
+     * @public Fill data info tasks
      **/
     static TArray<FDataInfoTask> FillDataInfoTasksFromListTask(UListTaskBase* ListTask);
 
     /**
      * @public Check client
-     * @param1 AActor*
-     * @return bool
      **/
     UFUNCTION(BlueprintPure, Category = "QuestLibrary")
     static bool CheckIsClient(const AActor* InActor);

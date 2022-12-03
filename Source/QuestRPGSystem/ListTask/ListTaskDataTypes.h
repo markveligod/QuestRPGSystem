@@ -24,31 +24,6 @@ enum class EStatusListTask: uint8
     Complete,
 };
 
-// List task type
-UENUM()
-enum class ETypeListTask: uint8
-{
-    Visible,
-    Hidden
-};
-
-// Settings run hidden list task
-UENUM()
-enum class ERunHiddenListTask: uint8
-{
-    AddToQuest,
-    InitToRunListTask
-};
-
-// Action hidden to init
-UENUM()
-enum class EActionHiddenListTask: uint8
-{
-    Nothing,
-    CompleteQuest,
-    ForceTransferToNextBlock,
-};
-
 USTRUCT(BlueprintType)
 struct FDataTransferToNextBlock
 {

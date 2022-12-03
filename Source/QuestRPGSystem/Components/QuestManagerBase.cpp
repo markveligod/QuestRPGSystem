@@ -320,7 +320,7 @@ FDataListTask& UQuestManagerBase::GetDataListTaskFromPathListTask(const FSoftObj
         return Data.PathToListTask == InListTaskPath;
     });
 
-    return FindElem ? *FindElem : EmptyDataQuest;
+    return FindElem ? *FindElem : EmptyDataListTask;
 }
 
 #pragma endregion

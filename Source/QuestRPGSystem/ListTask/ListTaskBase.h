@@ -20,48 +20,49 @@ class QUESTRPGSYSTEM_API UListTaskBase : public UObject
 {
     GENERATED_BODY()
 
+friend class UTaskBase;
+friend class UQuestManager;
+
 #pragma region LogListTask
 
+protected:
+    
     /**
-     * @public Write a log to list task
+     * @protected Write a log to list task
      **/
-    void Print_LogListTask(const ELogVerb LogVerb, const FString Text, const int Line, const char* Function) const;
+    virtual void Print_LogListTask(const ELogVerb LogVerb, const FString Text, const int Line, const char* Function) const;
 
 #pragma endregion
 
 #pragma region Default
 
-public:
+protected:
 
     // Constructor
     UListTaskBase();
 
     /**
-     * @public Init list task to process task. this function override
-     * @param1 APlayerController*
-     * @param2 UQuestManager*
-     * @return bool
+     * @protected Init list task to process task. this function override
      **/
     virtual bool InitListTask(APlayerController* PlayerController, UQuestManager* QuestManager);
 
     /**
-     * @public Run list task to process task. this function override
-     * @return bool
+     * @protected Run list task to process task. this function override
      **/
     virtual bool RunListTask();
 
     /**
-     * @public Complete list task. this function override
-     * @return bool
+     * @protected Complete list task. this function override
      **/
     virtual bool CompleteListTask();
 
     /**
-     * @public Reset list task. this function override
-     * @return bool
+     * @protected Reset list task. this function override
      **/
     virtual bool ResetListTask();
 
+public:
+    
     /**
      * @public Return the space this function should be called. Checks to see if this function should
      * be called locally, remotely, or simply absorbed under the given conditions
@@ -89,6 +90,8 @@ public:
 
 #if WITH_EDITOR
 
+protected:
+
     virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 
 #endif
@@ -101,7 +104,6 @@ public:
 
     /**
      * @public Get next list task
-     * @return FSoftObjectPath
      **/
     virtual FSoftObjectPath GetNextListTask() const;
 
@@ -114,56 +116,48 @@ protected:
 
     /**
      * @protected Task Initialization Handler. Call function only on the server side.
-     * @param1 UTaskBase*
      **/
     void ProcessTasks(UTaskBase* Task);
 
     /**
      * @protected Task Initialization Handler. Call function only on the server side.
-     * @param1 UTaskBase*
      **/
     void NextInitTask();
 
     /**
      * @protected Register event update task. Call function only on the server side. This function override.
-     * @param1 UTaskBase*
      **/
     virtual void RegisterUpdateTask(UTaskBase* Task);
 
     /**
      * @protected Find index last not complete task
-     * @return int32
      **/
     int32 FindIndexLastNonCompleteTask() const;
 
     /**
      * @protected Find index some complete task
-     * @return int32
      **/
     int32 FindIndexFirstCompleteTask() const;
 
     /**
      * @protected Checking whether all tasks are completed
-     * @return bool
      **/
     bool IsAllTaskComplete() const;
 
     /**
      * @protected Checking that at least one of the main tasks has been completed
-     * @return bool
      **/
     bool IsSomeTaskComplete() const;
 
     /**
      * @protected Change state for list task
-     * @param1 EStatusListTask
      **/
     void ChangeStateListTask(EStatusListTask NewState);
 
 private:
 
     /**
-     * @public Reset all task
+     * @private Reset all task
      **/
     void ResetAllTask();
 
@@ -197,48 +191,12 @@ public:
      **/
     const FSoftObjectPath& GetPathActionWorld() const { return ActionWorld; }
 
-    /**
-     * @public Get type list task visible or hidden
-     * @return ETypeListTask
-     **/
-    const ETypeListTask& GetTypeListTask() const { return TypeListTask; }
-
-    /**
-     * @public Get run hidden list task
-     * @return ERunHiddenListTask
-     **/
-    const ERunHiddenListTask& GetRunHiddenListTask() const { return RunHiddenListTask; }
-
-    /**
-     * @public Get action hidden list task
-     * @return EActionHiddenListTask
-     **/
-    const EActionHiddenListTask& GetActionHiddenListTask() const { return ActionHiddenListTask; }
-
-    /**
-     * @public Get to init visible block
-     * @return FSoftObjectPath
-     **/
-    const FSoftObjectPath& GetToInitVisibleBlock() const { return InitVisiblePathBlock; }
-
-    /**
-     * @public Get to next visible block from hidden
-     * @return FSoftObjectPath
-     **/
-    const FSoftObjectPath& GetNextVisibleBlockFromHidden() const { return NextVisiblePathBlockFromHidden; }
-
 protected:
-
-    // @protected Type list task
-    UPROPERTY(EditAnywhere, Category = "Settings List task")
-    ETypeListTask TypeListTask{ETypeListTask::Visible};
 
     // @protected Active to World
     UPROPERTY(EditAnywhere, Category = "Settings List task", meta = (AllowedClasses = "World"))
     FSoftObjectPath ActionWorld{};
 
-#pragma region VisibleData
-    
     // @protected Type run list task
     UPROPERTY(EditAnywhere, Category = "Settings List task", meta = (EditCondition = "TypeListTask == ETypeListTask::Visible", EditConditionHides))
     ETypeRunListTask TypeRunListTask{ETypeRunListTask::StepByStep};
@@ -251,24 +209,6 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Settings List task", meta = (MetaClass = "ListTaskBase", EditCondition = "TypeRunListTask != ETypeRunListTask::TransferListTask && TypeListTask == ETypeListTask::Visible", EditConditionHides))
     FSoftClassPath NextPathBlock;
 
-#pragma endregion 
-
-#pragma region HiddenData
-
-    UPROPERTY(EditAnywhere, Category = "Settings List task", meta = (EditCondition = "TypeListTask == ETypeListTask::Hidden", EditConditionHides))
-    ERunHiddenListTask RunHiddenListTask{ERunHiddenListTask::AddToQuest};
-
-    UPROPERTY(EditAnywhere, Category = "Settings List task", meta = (MetaClass = "ListTaskBase", EditCondition = "TypeListTask == ETypeListTask::Hidden && RunHiddenListTask == ERunHiddenListTask::InitToRunListTask", EditConditionHides))
-    FSoftClassPath InitVisiblePathBlock;
-    
-    UPROPERTY(EditAnywhere, Category = "Settings List task", meta = (EditCondition = "TypeListTask == ETypeListTask::Hidden", EditConditionHides))
-    EActionHiddenListTask ActionHiddenListTask{EActionHiddenListTask::Nothing};
-
-    UPROPERTY(EditAnywhere, Category = "Settings List task", meta = (MetaClass = "ListTaskBase", EditCondition = "TypeListTask == ETypeListTask::Hidden && ActionHiddenListTask == EActionHiddenListTask::ForceTransferToNextBlock", EditConditionHides))
-    FSoftClassPath NextVisiblePathBlockFromHidden;
-
-#pragma endregion
-    
     // @protected Set array task for action process
     UPROPERTY(Replicated, EditAnywhere, Instanced, Category = "Settings List task")
     TArray<UTaskBase*> ArrayTask;
@@ -294,5 +234,5 @@ public:
     FUpdateListTaskSignature OnUpdateListTask;
 
 #pragma endregion
-    
+
 };

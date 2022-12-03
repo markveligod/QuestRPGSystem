@@ -131,17 +131,16 @@ void UQuestManager::StartInitListTask(const FName& QuestName)
     if (!CHECK_COND(DataQuest != EmptyDataQuest, "Data quest is empty")) return;
 
     FDataListTask& DataListTask = DataQuest.ArrayDataListTask[0];
-    UListTaskBase* StartVisibleBlock = Cast<UListTaskBase>(UQuestLibrary::CreateListTaskFromPath(GetOwner(), DataListTask.PathToListTask));
-    if (!CHECK_COND(StartVisibleBlock != nullptr, "Start visible block is fail load in memory")) return;
-    if (!CHECK_COND(StartVisibleBlock->GetTypeListTask() == ETypeListTask::Visible, "Start visible block is not visible")) return;
+    UListTaskBase* StartBlock = Cast<UListTaskBase>(UQuestLibrary::CreateListTaskFromPath(GetOwner(), DataListTask.PathToListTask));
+    if (!CHECK_COND(StartBlock != nullptr, "Start visible block is fail load in memory")) return;
 
-    const bool bStatusInitListTask = StartVisibleBlock->InitListTask(Cast<APlayerController>(GetOwner()), this);
+    const bool bStatusInitListTask = StartBlock->InitListTask(Cast<APlayerController>(GetOwner()), this);
     if (!CHECK_COND(bStatusInitListTask, FString::Printf(TEXT("List task: [%s] is none init"),
-        *StartVisibleBlock->GetName())))
+        *StartBlock->GetName())))
         return;
 
-    DataQuest.ActiveListTask = StartVisibleBlock;
-    DataListTask.ArrayDataTask = UQuestLibrary::FillDataInfoTasksFromListTask(StartVisibleBlock);
+    DataQuest.ActiveListTask = StartBlock;
+    DataListTask.ArrayDataTask = UQuestLibrary::FillDataInfoTasksFromListTask(StartBlock);
     DataQuest.ActiveListTask->OnUpdateListTask.AddUObject(this, &ThisClass::RegisterUpdateListTask);
 
     const bool bStatusRunListTask = DataQuest.ActiveListTask->RunListTask();
@@ -214,12 +213,6 @@ void UQuestManager::InitListTask(FDataQuest& DataQuest, const FSoftObjectPath& N
 {
     UListTaskBase* NextVisibleBlock = Cast<UListTaskBase>(UQuestLibrary::CreateListTaskFromPath(GetOwner(), NextLTPath));
     if (!NextVisibleBlock)
-    {
-        CompleteQuest(DataQuest.NameQuestTable, false);
-        return;
-    }
-
-    if (NextVisibleBlock->GetTypeListTask() != ETypeListTask::Visible)
     {
         CompleteQuest(DataQuest.NameQuestTable, false);
         return;

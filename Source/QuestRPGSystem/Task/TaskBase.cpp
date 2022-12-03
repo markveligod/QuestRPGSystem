@@ -4,6 +4,7 @@
 #include "Task/TaskBase.h"
 #include "ListTask/ListTaskBase.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Net/UnrealNetwork.h"
 
 #pragma region LogTask
 
@@ -28,33 +29,123 @@ bool UTaskBase::InitTask(APlayerController* PlayerController, UListTaskBase* Par
 
     LOG_TASK(ELogVerb::Display, "init task base is success");
     ChangeStatusTask(EStatusTask::Init);
+    return InitTask_Event(PlayerController, Parent);
+}
+
+bool UTaskBase::InitTask_Event_Implementation(APlayerController* PlayerController, UListTaskBase* Parent)
+{
     return true;
 }
 
 bool UTaskBase::ResetTask()
 {
+    GetWorld()->GetTimerManager().ClearTimer(CompleteTaskTimerHandle);
+    GetWorld()->GetTimerManager().ClearTimer(AbortTaskTimerHandle);
+
     LOG_TASK(ELogVerb::Display, "reset task base is success");
     ChangeStatusTask(EStatusTask::NoneInit);
+    return ResetTask_Event();
+}
+
+bool UTaskBase::ResetTask_Event_Implementation()
+{
     return true;
 }
 
 bool UTaskBase::RunTask()
 {
+    if (TaskSpecificSettings.bEnableTimerTask)
+    {
+        RemainTimerCompleteTask = TaskSpecificSettings.TimerTask;
+        GetWorld()->GetTimerManager().SetTimer(CompleteTaskTimerHandle, this, &ThisClass::CheckRemainTaskComplete, 1.0f, true);
+    }
+
+    if (TaskSpecificSettings.bEnableCheckAbortTask)
+    {
+        GetWorld()->GetTimerManager().SetTimer(AbortTaskTimerHandle, this, &ThisClass::CheckAbortTask, TaskSpecificSettings.CallFrequencyAbortTask, true);
+    }
+    
     LOG_TASK(ELogVerb::Display, "run task base is success");
     ChangeStatusTask(EStatusTask::Run);
+    return RunTask_Event();
+}
+
+bool UTaskBase::RunTask_Event_Implementation()
+{
     return true;
 }
 
 bool UTaskBase::CompleteTask()
 {
+    GetWorld()->GetTimerManager().ClearTimer(CompleteTaskTimerHandle);
+    GetWorld()->GetTimerManager().ClearTimer(AbortTaskTimerHandle);
+    
     LOG_TASK(ELogVerb::Display, "complete task base is success");
     ChangeStatusTask(EStatusTask::Complete);
+    return CompleteTask_Event();
+}
+
+bool UTaskBase::CompleteTask_Event_Implementation()
+{
     return true;
 }
 
 bool UTaskBase::IsValidTask()
 {
+    return IsValidTask_Event();
+}
+
+bool UTaskBase::IsValidTask_Event_Implementation()
+{
     return true;
+}
+
+bool UTaskBase::IsAbortTask()
+{
+    return IsAbortTask_Event();
+}
+
+bool UTaskBase::IsAbortTask_Event_Implementation()
+{
+    return false;
+}
+
+int32 UTaskBase::GetFunctionCallspace(UFunction* Function, FFrame* Stack)
+{
+    return OwnerController ? OwnerController->GetFunctionCallspace(Function, Stack) : FunctionCallspace::Local;
+}
+
+bool UTaskBase::CallRemoteFunction(UFunction* Function, void* Parms, FOutParmRec* OutParms, FFrame* Stack)
+{
+    LOG_TASK(ELogVerb::Display, FString::Printf(TEXT("CallRemoteFunction: %s"), *Function->GetName()));
+
+    if (!OwnerController && GetWorld()->GetNetMode() == NM_Client)
+    {
+        OwnerController = GetWorld()->GetFirstPlayerController();
+    }
+    if (!OwnerController) return false;
+    UNetDriver* NetDriver = OwnerController->GetNetDriver();
+    if (!NetDriver)
+    {
+        LOG_TASK(ELogVerb::Error, "Net driver is nullptr");
+        return false;
+    }
+
+    NetDriver->ProcessRemoteFunction(OwnerController, Function, Parms, OutParms, Stack, this);
+    return true;
+}
+
+void UTaskBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME_CONDITION(UTaskBase, OwnerController, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(UTaskBase, OwnerListTask, COND_OwnerOnly);
+}
+
+void UTaskBase::ServerCompleteTask_Implementation()
+{
+    CompleteTask();
 }
 
 #pragma endregion
@@ -75,12 +166,25 @@ void UTaskBase::ChangeStatusTask(const EStatusTask& NewStatus)
     OnUpdateTask.Broadcast(this);
 }
 
-void UTaskBase::ClientDrawPoint_Implementation(const FVector& Position)
+void UTaskBase::CheckAbortTask()
 {
-    if (OwnerController && OwnerListTask)
+    if (IsAbortTask())
     {
-        FColor TempColor = OwnerListTask->GetTypeListTask() == ETypeListTask::Visible ? FColor::Yellow : FColor::Orange;
-        DrawDebugSphere(OwnerController->GetWorld(), Position, 50.0f, 12, TempColor, false, 1.0f, 0, 2.0f);
+        GetWorld()->GetTimerManager().ClearTimer(AbortTaskTimerHandle);
+        CompleteTask();
+    }
+}
+
+void UTaskBase::CheckRemainTaskComplete()
+{
+    RemainTimerCompleteTask -= 1.0f;
+    TimerDescription = UQuestLibrary::GetStringTimeFromSecond(RemainTimerCompleteTask);
+    OnUpdateTask.Broadcast(this);
+    if (RemainTimerCompleteTask <= 0.0f)
+    {
+        GetWorld()->GetTimerManager().ClearTimer(CompleteTaskTimerHandle);
+
+        // TODO: Вызвать досрочное завершение квеста
     }
 }
 
