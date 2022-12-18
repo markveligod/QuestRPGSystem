@@ -31,7 +31,7 @@ protected:
     /**
      * @protected Write a log to list task
      **/
-    virtual void Print_LogListTask(const ELogVerb LogVerb, const FString Text, const int Line, const char* Function) const;
+    virtual void Print_LogListTask(const TEnumAsByte<EQuestLogVerb> LogVerb, const FString Text, const int Line, const char* Function) const;
 
 #pragma endregion
 
@@ -219,7 +219,7 @@ protected:
 #pragma region Signature
 
 private:
-    
+
     FUpdateListTaskSignature OnUpdateListTask;
 
 #pragma endregion

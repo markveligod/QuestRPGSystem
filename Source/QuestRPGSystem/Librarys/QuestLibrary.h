@@ -9,9 +9,9 @@
 
 class UTaskBase;
 class UListTaskBase;
+
 // Custom verb to logging
-UENUM()
-enum class ELogVerb: uint8
+enum EQuestLogVerb
 {
     Display,
     Warning,
@@ -35,7 +35,7 @@ public:
     /**
      * @public Write a log
      **/
-    static void Print_Log(const ELogVerb LogVerb, const FString Text, const int Line, const char* Function);
+    static void Print_Log(const TEnumAsByte<EQuestLogVerb> LogVerb, const FString Text, const int Line, const char* Function);
 
     /**
      * @public Check the condition
@@ -62,7 +62,12 @@ public:
     /**
      * @public Creates a class of type UListTaskBase in memory
      **/
-    static UListTaskBase* CreateListTaskFromPath(UObject* Owner, const FSoftObjectPath& PathListTask);
+    static UListTaskBase* LoadListTaskFromPath(UObject* Owner, const FSoftObjectPath& PathListTask);
+
+    /**
+     * @public Creates a class of type UListTaskBase in memory
+     **/
+    static void UnLoadListTaskFromPath(const FSoftObjectPath& PathListTask);
 
     /**
      * @public Fill data info tasks

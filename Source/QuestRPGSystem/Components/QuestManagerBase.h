@@ -23,7 +23,7 @@ protected:
     /**
      * @public Write a log to quest manager
      **/
-    void Print_LogQuestManager(const ELogVerb LogVerb, const FString Text, const int Line, const char* Function) const;
+    void Print_LogQuestManager(const TEnumAsByte<EQuestLogVerb> LogVerb, const FString Text, const int Line, const char* Function) const;
 
 #pragma endregion
 
@@ -109,12 +109,6 @@ protected:
     void ClientSendNotifyCompleteQuest(const FName& NameQuest);
 
     /**
-     * @protected Client notify switch quest
-     **/
-    UFUNCTION(Client, Reliable)
-    void ClientSendNotifySwitchQuest(const FName& NameQuest);
-
-    /**
      * @protected notify start quest
      **/
     virtual void SendNotifyStartQuest(const FName& NameQuest);
@@ -128,11 +122,6 @@ protected:
      * @protected notify complete quest
      **/
     virtual void SendNotifyCompleteQuest(const FName& NameQuest);
-
-    /**
-     * @protected notify switch quest
-     **/
-    virtual void SendNotifySwitchQuest(const FName& NameQuest);
 
     /**
      * @protected notify start quest event
@@ -151,12 +140,6 @@ protected:
      **/
     UFUNCTION(BlueprintImplementableEvent)
     void SendNotifyCompleteQuest_Event(const FName& NameQuest);
-
-    /**
-     * @protected notify switch quest event
-     **/
-    UFUNCTION(BlueprintImplementableEvent)
-    void SendNotifySwitchQuest_Event(const FName& NameQuest);
 
     /**
       * @protected Destruction of an active list of tasks for a specific quest
@@ -264,9 +247,6 @@ protected:
 
     UPROPERTY(BlueprintAssignable)
     FCompleteQuestSignature OnCompleteQuest;
-
-    UPROPERTY(BlueprintAssignable)
-    FSwitchQuestSignature OnSwitchQuest;
 
 #pragma endregion
     

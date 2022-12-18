@@ -9,7 +9,7 @@
 
 #pragma region LogListTask
 
-void UListTaskBase::Print_LogListTask(const ELogVerb LogVerb, const FString Text, const int Line, const char* Function) const
+void UListTaskBase::Print_LogListTask(const TEnumAsByte<EQuestLogVerb> LogVerb, const FString Text, const int Line, const char* Function) const
 {
     if (!OwnerController || !ParentQuestManager) return;
     UQuestLibrary::Print_Log(LogVerb, FString::Printf(TEXT("NetMode: [%i] | OwnerController: [%s] | Parent Quest manager: [%s] | Name List task: [%s] | Type run ListTask: [%s] | %s"),
@@ -70,21 +70,21 @@ bool UListTaskBase::RunListTask()
         }
     }
 
-    LOG_LIST_TASK(ELogVerb::Display, "Run list task");
+    LOG_LIST_TASK(Display, "Run list task");
     ChangeStateListTask(EStatusListTask::Run);
     return true;
 }
 
 bool UListTaskBase::CompleteListTask()
 {
-    LOG_LIST_TASK(ELogVerb::Display, "Complete list task");
+    LOG_LIST_TASK(Display, "Complete list task");
     ChangeStateListTask(EStatusListTask::Complete);
     return true;
 }
 
 bool UListTaskBase::ResetListTask()
 {
-    LOG_LIST_TASK(ELogVerb::Display, "Reset list task");
+    LOG_LIST_TASK(Display, "Reset list task");
 
     ResetAllTask();
     ChangeStateListTask(EStatusListTask::None);
@@ -98,12 +98,12 @@ int32 UListTaskBase::GetFunctionCallspace(UFunction* Function, FFrame* Stack)
 
 bool UListTaskBase::CallRemoteFunction(UFunction* Function, void* Parms, FOutParmRec* OutParms, FFrame* Stack)
 {
-    LOG_LIST_TASK(ELogVerb::Display, FString::Printf(TEXT("CallRemoteFunction: %s"), *Function->GetName()));
+    LOG_LIST_TASK(Display, FString::Printf(TEXT("CallRemoteFunction: %s"), *Function->GetName()));
 
     UNetDriver* NetDriver = OwnerController->GetNetDriver();
     if (!NetDriver)
     {
-        LOG_LIST_TASK(ELogVerb::Error, "Net driver is nullptr");
+        LOG_LIST_TASK(Error, "Net driver is nullptr");
         return false;
     }
 

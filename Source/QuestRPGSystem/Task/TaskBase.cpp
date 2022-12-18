@@ -8,7 +8,7 @@
 
 #pragma region LogTask
 
-void UTaskBase::Print_LogTask(const ELogVerb LogVerb, const FString Text, const int Line, const char* Function) const
+void UTaskBase::Print_LogTask(const TEnumAsByte<EQuestLogVerb> LogVerb, const FString Text, const int Line, const char* Function) const
 {
     if (!OwnerController || !OwnerListTask) return;
     UQuestLibrary::Print_Log(LogVerb, FString::Printf(TEXT("NetMode: [%i] | OwnerController: [%s] | OwnerListTask: [%s] | Name: [%s] | %s"),
@@ -27,7 +27,7 @@ bool UTaskBase::InitTask(APlayerController* PlayerController, UListTaskBase* Par
     OwnerController = PlayerController;
     OwnerListTask = Parent;
 
-    LOG_TASK(ELogVerb::Display, "init task base is success");
+    LOG_TASK(Display, "init task base is success");
     ChangeStatusTask(EStatusTask::Init);
     return InitTask_Event(PlayerController, Parent);
 }
@@ -42,7 +42,7 @@ bool UTaskBase::ResetTask()
     GetWorld()->GetTimerManager().ClearTimer(CompleteTaskTimerHandle);
     GetWorld()->GetTimerManager().ClearTimer(AbortTaskTimerHandle);
 
-    LOG_TASK(ELogVerb::Display, "reset task base is success");
+    LOG_TASK(Display, "reset task base is success");
     ChangeStatusTask(EStatusTask::NoneInit);
     return ResetTask_Event();
 }
@@ -65,7 +65,7 @@ bool UTaskBase::RunTask()
         GetWorld()->GetTimerManager().SetTimer(AbortTaskTimerHandle, this, &ThisClass::CheckAbortTask, TaskSpecificSettings.CallFrequencyAbortTask, true);
     }
     
-    LOG_TASK(ELogVerb::Display, "run task base is success");
+    LOG_TASK(Display, "run task base is success");
     ChangeStatusTask(EStatusTask::Run);
     return RunTask_Event();
 }
@@ -80,7 +80,7 @@ bool UTaskBase::CompleteTask()
     GetWorld()->GetTimerManager().ClearTimer(CompleteTaskTimerHandle);
     GetWorld()->GetTimerManager().ClearTimer(AbortTaskTimerHandle);
     
-    LOG_TASK(ELogVerb::Display, "complete task base is success");
+    LOG_TASK(Display, "complete task base is success");
     ChangeStatusTask(EStatusTask::Complete);
     return CompleteTask_Event();
 }
@@ -117,7 +117,7 @@ int32 UTaskBase::GetFunctionCallspace(UFunction* Function, FFrame* Stack)
 
 bool UTaskBase::CallRemoteFunction(UFunction* Function, void* Parms, FOutParmRec* OutParms, FFrame* Stack)
 {
-    LOG_TASK(ELogVerb::Display, FString::Printf(TEXT("CallRemoteFunction: %s"), *Function->GetName()));
+    LOG_TASK(Display, FString::Printf(TEXT("CallRemoteFunction: %s"), *Function->GetName()));
 
     if (!OwnerController && GetWorld()->GetNetMode() == NM_Client)
     {
@@ -127,7 +127,7 @@ bool UTaskBase::CallRemoteFunction(UFunction* Function, void* Parms, FOutParmRec
     UNetDriver* NetDriver = OwnerController->GetNetDriver();
     if (!NetDriver)
     {
-        LOG_TASK(ELogVerb::Error, "Net driver is nullptr");
+        LOG_TASK(Error, "Net driver is nullptr");
         return false;
     }
 
@@ -156,12 +156,12 @@ void UTaskBase::ChangeStatusTask(const EStatusTask& NewStatus)
 {
     if (StatusTask == NewStatus)
     {
-        LOG_TASK(ELogVerb::Warning, FString::Printf(TEXT("Current status task equal new status: [%s]"),
+        LOG_TASK(Warning, FString::Printf(TEXT("Current status task equal new status: [%s]"),
             *UEnum::GetValueAsString(NewStatus)));
         return;
     }
 
-    LOG_TASK(ELogVerb::Display, FString::Printf(TEXT("New status task: [%s]"), *UEnum::GetValueAsString(NewStatus)));
+    LOG_TASK(Display, FString::Printf(TEXT("New status task: [%s]"), *UEnum::GetValueAsString(NewStatus)));
     StatusTask = NewStatus;
     OnUpdateTask.Broadcast(this);
 }

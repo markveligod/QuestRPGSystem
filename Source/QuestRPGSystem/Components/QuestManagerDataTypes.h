@@ -19,21 +19,14 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUpdateQuestSignature, const FName&,
  */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCompleteQuestSignature, const FName&, NameQuest);
 
-/**
- * Call for switch target quest in Quest Manager
- */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSwitchQuestSignature, const FName&, NameQuest);
-
 // @enum Status process quest
 UENUM(BlueprintType)
 enum class EStatusQuest: uint8
 {
     HaveNot,
-    NeedInit,
-    Init,
+    Start,
     InProcess,
-    CompleteSuccess,
-    CompleteFail
+    Complete,
 };
 
 /**
@@ -66,15 +59,15 @@ struct FDataInfoTask
     GENERATED_BODY()
 
     // Id task
-    UPROPERTY()
+    UPROPERTY(BlueprintReadOnly, SaveGame)
     FString TaskID{};
-    
+
     // Task description
-    UPROPERTY(BlueprintReadOnly)
+    UPROPERTY(BlueprintReadOnly, SaveGame)
     FText TaskDescription{};
 
     // status task
-    UPROPERTY(BlueprintReadOnly)
+    UPROPERTY(BlueprintReadOnly, SaveGame)
     bool bStatusTask{false};
 
     FDataInfoTask(){}
@@ -116,17 +109,17 @@ struct FDataInfoTask
 USTRUCT(BlueprintType)
 struct FDataListTask
 {
-    GENERATED_BODY()
+    GENERATED_USTRUCT_BODY()
 
     // Block of tasks that have been initialized
-    UPROPERTY(BlueprintReadOnly)
+    UPROPERTY(BlueprintReadOnly, SaveGame)
     TArray<FDataInfoTask> ArrayDataTask;
-    
+
     // Active current visible task
-    UPROPERTY(BlueprintReadOnly, meta = (AllowedClasses = "ListTaskBase"))
+    UPROPERTY(BlueprintReadOnly, SaveGame, meta = (AllowedClasses = "ListTaskBase"))
     FSoftObjectPath PathToListTask{};
 
-    UPROPERTY(BlueprintReadOnly)
+    UPROPERTY(BlueprintReadOnly, SaveGame)
     bool bListTaskComplete{false};
 
     FDataListTask(){}
@@ -171,22 +164,18 @@ struct FDataListTask
 USTRUCT(BlueprintType)
 struct FDataQuest 
 {
-    GENERATED_BODY()
+    GENERATED_USTRUCT_BODY()
 
     // Status quest
-    UPROPERTY(BlueprintReadOnly)
-    EStatusQuest StatusQuest{EStatusQuest::NeedInit};
+    UPROPERTY(BlueprintReadOnly, SaveGame)
+    EStatusQuest StatusQuest{EStatusQuest::Start};
 
     // Name quest from table
-    UPROPERTY(BlueprintReadOnly)
+    UPROPERTY(BlueprintReadOnly, SaveGame)
     FName NameQuestTable{};
-    
-    // Name quest from table
-    UPROPERTY(BlueprintReadOnly)
-    bool bIsTargetQuest{false};
 
     // Array data to visible list task
-    UPROPERTY(BlueprintReadOnly)
+    UPROPERTY(BlueprintReadOnly, SaveGame)
     TArray<FDataListTask> ArrayDataListTask;
 
     // Active visible list task
@@ -198,8 +187,8 @@ struct FDataQuest
 
     FString ToString() const
     {
-        return FString::Printf(TEXT("Name Quest Table: [%s] | StatusQuest: [%s] | bIsTargetQuest: [%i] | ArrayDataListTask: [%i]"),
-            *NameQuestTable.ToString(), *UEnum::GetValueAsString(StatusQuest), bIsTargetQuest, ArrayDataListTask.Num());
+        return FString::Printf(TEXT("Name Quest Table: [%s] | StatusQuest: [%s] | ArrayDataListTask: [%i]"),
+            *NameQuestTable.ToString(), *UEnum::GetValueAsString(StatusQuest), ArrayDataListTask.Num());
     }
 
     bool operator==(const FDataQuest& Other) const

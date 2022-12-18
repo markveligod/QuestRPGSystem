@@ -24,22 +24,25 @@ class QUESTRPGSYSTEM_API UTaskBase : public UObject
 #pragma region LogTask
 
 protected:
+
     /**
      * @protected Write a log to task
      **/
-    virtual void Print_LogTask(const ELogVerb LogVerb, const FString Text, const int Line, const char* Function) const;
+    virtual void Print_LogTask(const TEnumAsByte<EQuestLogVerb> LogVerb, const FString Text, const int Line, const char* Function) const;
 
 #pragma endregion
 
 #pragma region Default
 
 public:
+
     // Construct
     UTaskBase()
     {
     }
 
 protected:
+
     /**
      * @protected Call on server side for init task. this override function.
      **/

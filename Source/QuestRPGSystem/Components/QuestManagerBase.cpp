@@ -9,7 +9,7 @@
 
 #pragma region LogQuestManager
 
-void UQuestManagerBase::Print_LogQuestManager(const ELogVerb LogVerb, const FString Text, const int Line, const char* Function) const
+void UQuestManagerBase::Print_LogQuestManager(const TEnumAsByte<EQuestLogVerb> LogVerb, const FString Text, const int Line, const char* Function) const
 {
     if (!GetOwner()) return;
     UQuestLibrary::Print_Log(LogVerb, FString::Printf(TEXT("NetMode: [%i] | Owner: [%s] | Name: [%s] | %s"),
@@ -62,7 +62,7 @@ bool UQuestManagerBase::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* B
         QueuePushReplicateObject.Dequeue(TempUniqID);
         if (const auto ListTask = FindListTaskFromID(TempUniqID))
         {
-            LOG_QM(ELogVerb::Display, FString::Printf(TEXT("List Task: [%s] replicated by ID: %lu"), *ListTask->GetName(), TempUniqID));
+            LOG_QM(Display, FString::Printf(TEXT("List Task: [%s] replicated by ID: %lu"), *ListTask->GetName(), TempUniqID));
             WroteSomething |= Channel->ReplicateSubobject(ListTask, *Bunch, *RepFlags);
         }
     }
@@ -95,7 +95,6 @@ FString UQuestManagerBase::GetJSONFromArrayDataQuest()
         const TSharedPtr<FJsonObject> TempObjectDataQuest = MakeShareable(new FJsonObject());
         TempObjectDataQuest->SetStringField("StatusQuest", UEnum::GetValueAsString(DataQuest.StatusQuest));
         TempObjectDataQuest->SetStringField("NameQuestTable", DataQuest.NameQuestTable.ToString());
-        TempObjectDataQuest->SetBoolField("bIsTargetQuest", DataQuest.bIsTargetQuest);
 
         // Visible list task
         TArray<TSharedPtr<FJsonValue>> arrVisibleListTaskObj;
@@ -170,11 +169,6 @@ void UQuestManagerBase::ClientSendNotifyCompleteQuest_Implementation(const FName
     SendNotifyCompleteQuest(NameQuest);
 }
 
-void UQuestManagerBase::ClientSendNotifySwitchQuest_Implementation(const FName& NameQuest)
-{
-    SendNotifySwitchQuest(NameQuest);
-}
-
 void UQuestManagerBase::SendNotifyStartQuest(const FName& NameQuest)
 {
     OnStartQuest.Broadcast(NameQuest);
@@ -191,12 +185,6 @@ void UQuestManagerBase::SendNotifyCompleteQuest(const FName& NameQuest)
 {
     OnCompleteQuest.Broadcast(NameQuest);
     SendNotifyCompleteQuest_Event(NameQuest);
-}
-
-void UQuestManagerBase::SendNotifySwitchQuest(const FName& NameQuest)
-{
-    OnSwitchQuest.Broadcast(NameQuest);
-    SendNotifySwitchQuest_Event(NameQuest);
 }
 
 #pragma endregion
@@ -232,6 +220,7 @@ void UQuestManagerBase::DestroyActiveListTaskFromQuestName(const FName& NameQues
     {
         DataQuest.ActiveListTask->OnUpdateListTask.RemoveAll(this);
         DataQuest.ActiveListTask->DestroyListTask();
+        UQuestLibrary::UnLoadListTaskFromPath(DataQuest.ActiveListTask->GetClass()->GetPathName());
         DataQuest.ActiveListTask = nullptr;
     }
 }

@@ -17,6 +17,7 @@ class QUESTRPGSYSTEM_API UQuestManager : public UQuestManagerBase
 #pragma region API_Checked
 
 public:
+
     UFUNCTION(BlueprintCallable, Category = "QuestManager | API_Checked")
     EStatusQuest GetStatusQuest(const FName& QuestName);
 
@@ -25,6 +26,7 @@ public:
 #pragma region API_Action
 
 public:
+
     /**
      * @public Request on server for add new quest
      **/
@@ -38,48 +40,52 @@ public:
     void ServerAddArrayQuest(const TArray<FName>& ArrayQuestName);
 
     /**
-     * @public Request on server for change target quest
+     * @public Request on server for init new list task
      **/
     UFUNCTION(Server, Reliable, WithValidation, BlueprintCallable, Category = "API_Action")
-    void ServerChangeTargetQuest(const FName QuestName);
+    void ServerInitListTask(const FName& QuestName, const FSoftClassPath& ListTaskPath);
 
 protected:
+
+    /**
+     * @protected Add quest. Call on side server.
+     **/
+    virtual void AddQuest(const FName& QuestName);
+
+    /**
+     * @protected Checked add quest. Call on side server.
+     **/
+    virtual bool CheckedAddQuest(const FName& QuestName);
+
+    /**
+     * @protected Checked add array quest. Call on side server.
+     **/
+    virtual bool CheckedAddArrayQuest(const TArray<FName>& ArrayQuestName);
+
+    /**
+     * @protected Checked to init list task. Call on side server.
+     **/
+    virtual bool CheckedInitListTask(const FName& QuestName, const FSoftClassPath& ListTaskPath);
+
     /**
      * @protected Complete quest. Call on side server.
      **/
-    virtual void CompleteQuest(const FName QuestName, const bool bSuccessComplete);
-
-private:
-    /**
-     * @private The process of initial start initialization of a set of tasks.
-     * The initial set is taken for initialization under the index 0
-     **/
-    void StartInitQuest(const FName QuestName);
+    virtual void CompleteQuest(const FName QuestName);
 
     /**
-      * @private Initial initialization of the task block
+     * @protected Registration updating of data on the task block
      **/
-    void StartInitListTask(const FName& QuestName);
+    virtual void RegisterUpdateListTask(UListTaskBase* ListTask);
 
     /**
-     * @private Registration updating of data on the task block
+     * @protected Initialization of the task block
      **/
-    void RegisterUpdateListTask(UListTaskBase* ListTask);
+    virtual void InitListTask(const FName QuestName, const FSoftObjectPath ListTask);
 
     /**
-     * @private Next Initialize and run list task from Active List task for quest
+     * @protected Notify update quest
      **/
-    void NextListTask(const FName QuestName);
-
-    /**
-     * @private Notify update quest
-     **/
-    void NotifyUpdateQuest(const FName& QuestName);
-
-    /**
-     * @private init list task
-     **/
-    void InitListTask(FDataQuest& DataQuest, const FSoftObjectPath& NextLTPath);
+    virtual void NotifyUpdateQuest(const FName& QuestName);
 
 #pragma endregion
 };

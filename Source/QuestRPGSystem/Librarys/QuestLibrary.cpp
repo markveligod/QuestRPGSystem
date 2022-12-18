@@ -3,21 +3,22 @@
 
 #include "Librarys/QuestLibrary.h"
 
+#include "Engine/AssetManager.h"
 #include "Kismet/KismetStringLibrary.h"
 #include "ListTask/ListTaskBase.h"
 #include "Task/TaskBase.h"
 
-void UQuestLibrary::Print_Log(const ELogVerb LogVerb, const FString Text, const int Line, const char* Function)
+void UQuestLibrary::Print_Log(const TEnumAsByte<EQuestLogVerb> LogVerb, const FString Text, const int Line, const char* Function)
 {
-    if (LogVerb == ELogVerb::Display)
+    if (LogVerb == Display)
     {
         UE_LOG(LogQuestSystem, Display, TEXT("[%s][%d] TEXT:[%s]"), ANSI_TO_TCHAR(Function), Line, *Text);
     }
-    else if (LogVerb == ELogVerb::Warning)
+    else if (LogVerb == Warning)
     {
         UE_LOG(LogQuestSystem, Warning, TEXT("[%s][%d] TEXT:[%s]"), ANSI_TO_TCHAR(Function), Line, *Text);
     }
-    else if (LogVerb == ELogVerb::Error)
+    else if (LogVerb == Error)
     {
         UE_LOG(LogQuestSystem, Error, TEXT("[%s][%d] TEXT:[%s]"), ANSI_TO_TCHAR(Function), Line, *Text);
     }
@@ -27,7 +28,7 @@ bool UQuestLibrary::CheckedCondition(const bool bCondition, const FString Text, 
 {
     if (!bCondition)
     {
-        Print_Log(ELogVerb::Error, Text, Line, Function);
+        Print_Log(Error, Text, Line, Function);
         return false;
     }
     return true;
@@ -40,12 +41,18 @@ FString UQuestLibrary::GetStringTimeFromSecond(float Seconds)
     return Time;
 }
 
-UListTaskBase* UQuestLibrary::CreateListTaskFromPath(UObject* Owner, const FSoftObjectPath& PathListTask)
+UListTaskBase* UQuestLibrary::LoadListTaskFromPath(UObject* Owner, const FSoftObjectPath& PathListTask)
 {
     if (!CHECK_COND(PathListTask.IsValid(), "Path list task is none")) return nullptr;
-    UClass* CDO = LoadClass<UListTaskBase>(Owner, *(PathListTask.ToString()));
+    const UClass* CDO = LoadClass<UListTaskBase>(Owner, *(PathListTask.ToString()));
     if (!CHECK_COND(CDO != nullptr, "CDO is nullptr")) return nullptr;
     return NewObject<UListTaskBase>(Owner, CDO);
+}
+
+void UQuestLibrary::UnLoadListTaskFromPath(const FSoftObjectPath& PathListTask)
+{
+    FStreamableManager Streamable;
+    Streamable.Unload(PathListTask);
 }
 
 TArray<FDataInfoTask> UQuestLibrary::FillDataInfoTasksFromListTask(UListTaskBase* ListTask)
