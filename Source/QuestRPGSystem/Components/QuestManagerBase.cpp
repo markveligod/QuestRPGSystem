@@ -7,6 +7,13 @@
 #include "Net/UnrealNetwork.h"
 #include "Json.h"
 
+#if UE_EDITOR || UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
+
+static TAutoConsoleVariable<FString> EnableD_QuestSystemShow3DQuest(TEXT("QuestSystem.Show3DQuest"), "", TEXT("Show 3D data for rendering the work of the quest. Example: QuestSystem.Show3DQuest <NameQuestTable>"), ECVF_Cheat);
+static TAutoConsoleVariable<float> EnableD_QuestSystemSizeDebug(TEXT("QuestSystem.SetSizeDebug"), 1.0f, TEXT("Setup size debug "), ECVF_Cheat);
+
+#endif
+
 #pragma region LogQuestManager
 
 void UQuestManagerBase::Print_LogQuestManager(const TEnumAsByte<EQuestLogVerb> LogVerb, const FString Text, const int Line, const char* Function) const
@@ -42,6 +49,26 @@ void UQuestManagerBase::BeginPlay()
 void UQuestManagerBase::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+#if UE_EDITOR || UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
+
+    if (!EnableD_QuestSystemShow3DQuest.GetValueOnGameThread().IsEmpty())
+    {
+        const FDataQuest DataQuest = GetDataQuestFromName(FName(EnableD_QuestSystemShow3DQuest.GetValueOnGameThread()));
+        if (!DataQuest.IsEmpty() && IsValid(DataQuest.ActiveListTask))
+        {
+            TArray<FDrawDebugQuestData> DrawDebugQuestDates;
+            for (const FDrawDebugQuestData& Data : DrawDebugQuestDates)
+            {
+                FString Result = FString::Printf(TEXT("Net mode: [%s] | Data: [%s]"), *UQuestLibrary::GetNetModeToString(GetOwner()), *Data.ToString());
+                DrawDebugSphere(GetWorld(), Data.Position, 32.0f, 12, FColor::Orange, false, 0.0f, 0, 2.0f);
+                DrawDebugString(GetWorld(), Data.Position, Result, nullptr, FColor::Orange, 0.0f, true, EnableD_QuestSystemSizeDebug.GetValueOnGameThread());
+                GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Orange, Result, true, FVector2D(EnableD_QuestSystemSizeDebug.GetValueOnGameThread()));
+            }
+        }
+    }
+
+#endif
 }
 
 void UQuestManagerBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

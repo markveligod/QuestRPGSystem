@@ -166,6 +166,18 @@ void UTaskBase::ChangeStatusTask(const EStatusTask& NewStatus)
     OnUpdateTask.Broadcast(this);
 }
 
+TArray<FDrawDebugQuestData> UTaskBase::GetDrawDebugData()
+{
+    return GetDrawDebugData_Event();
+}
+
+TArray<FDrawDebugQuestData> UTaskBase::GetDrawDebugData_Event_Implementation()
+{
+    TArray<FDrawDebugQuestData> Result;
+
+    return Result;
+}
+
 void UTaskBase::CheckAbortTask()
 {
     if (IsAbortTask())

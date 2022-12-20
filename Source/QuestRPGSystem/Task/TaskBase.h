@@ -220,7 +220,18 @@ public:
      **/
     bool IsTaskComplete() const { return StatusTask == EStatusTask::Complete; }
 
+    /**
+     * @public Get draw debug information
+     **/
+    virtual TArray<FDrawDebugQuestData> GetDrawDebugData();
+
 protected:
+
+    /**
+     * @protected Call on server side for get array debug data. Native Implementation in blueprint
+     **/
+    UFUNCTION(BlueprintNativeEvent, meta = (BlueprintProtected = true))
+    TArray<FDrawDebugQuestData> GetDrawDebugData_Event();
 
     /**
      * @protected Check on abort task

@@ -141,6 +141,17 @@ void UListTaskBase::DestroyListTask()
     MarkAsGarbage();
 }
 
+void UListTaskBase::RequestDrawDebugQuestDataFromTasks(TArray<FDrawDebugQuestData>& DrawDebugData)
+{
+    for (const auto& Task : ArrayTask)
+    {
+        if (IsValid(Task))
+        {
+            DrawDebugData.Append(Task->GetDrawDebugData());
+        }
+    }
+}
+
 void UListTaskBase::ProcessTasks(UTaskBase* Task)
 {
     if (!CHECK_COND(Task != nullptr, "Task is nullptr")) return;

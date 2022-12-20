@@ -111,3 +111,29 @@ bool UQuestLibrary::CheckIsClient(const AActor* InActor)
 
     return false;
 }
+
+FString UQuestLibrary::GetNetModeToString(const AActor* Actor)
+{
+    if (!Actor) return "";
+    
+    switch (Actor->GetNetMode())
+    {
+        case NM_Client:
+        {
+            return "NM_Client";
+        }
+        case NM_DedicatedServer:
+        {
+            return "NM_DedicatedServer";
+        }
+        case NM_Standalone:
+        {
+            return "NM_Standalone";
+        }
+        case NM_ListenServer:
+        {
+            return "NM_ListenServer";
+        }
+    }
+    return "";
+}

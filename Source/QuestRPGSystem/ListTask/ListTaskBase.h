@@ -105,6 +105,11 @@ public:
      **/
     void DestroyListTask();
 
+    /**
+     * @public Request data for draw debug from tasks
+     **/
+    void RequestDrawDebugQuestDataFromTasks(TArray<FDrawDebugQuestData>& DrawDebugData);
+
 protected:
 
     /**

@@ -79,4 +79,10 @@ public:
      **/
     UFUNCTION(BlueprintPure, Category = "QuestLibrary")
     static bool CheckIsClient(const AActor* InActor);
+
+    /**
+     * @public Get net mode to string 
+     **/
+    UFUNCTION(BlueprintPure, Category = "QuestLibrary")
+    static FString GetNetModeToString(const AActor* Actor);
 };

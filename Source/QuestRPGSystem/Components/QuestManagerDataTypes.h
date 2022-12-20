@@ -207,3 +207,19 @@ struct FDataQuest
     }
 };
 
+USTRUCT(BlueprintType)
+struct FDrawDebugQuestData
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FVector Position;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FString Name;
+
+    FString ToString() const
+    {
+        return FString::Printf(TEXT("Name: [%s]\nPosition: [%s]"), *Name, *Position.ToString());
+    }
+};
