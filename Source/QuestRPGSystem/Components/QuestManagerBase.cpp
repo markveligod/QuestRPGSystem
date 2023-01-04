@@ -9,8 +9,11 @@
 
 #if UE_EDITOR || UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
 
+static TAutoConsoleVariable<int32> EnableD_QuestSystemSelectQuest(TEXT("QuestSystem.ShowSelectQuest"), INDEX_NONE, TEXT("The enabled parameter shows information about the selected quest"), ECVF_Cheat);
 static TAutoConsoleVariable<FString> EnableD_QuestSystemShow3DQuest(TEXT("QuestSystem.Show3DQuest"), "", TEXT("Show 3D data for rendering the work of the quest. Example: QuestSystem.Show3DQuest <NameQuestTable>"), ECVF_Cheat);
 static TAutoConsoleVariable<float> EnableD_QuestSystemSizeDebug(TEXT("QuestSystem.SetSizeDebug"), 1.0f, TEXT("Setup size debug "), ECVF_Cheat);
+static TAutoConsoleVariable<bool> EnableD_QuestSystemAllQuest(TEXT("QuestSystem.ShowAllQuest"), false, TEXT("The enabled parameter shows information about the all quest"), ECVF_Cheat);
+
 
 #endif
 
@@ -52,12 +55,36 @@ void UQuestManagerBase::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 
 #if UE_EDITOR || UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
 
+    if (EnableD_QuestSystemAllQuest.GetValueOnGameThread())
+    {
+        if (!GetOwner()) return;
+
+        for (int32 i = 0; i < ArrayDataQuest.Num(); ++i)
+        {
+            if (!ArrayDataQuest.IsValidIndex(i)) continue;
+            const FDataQuest& DataQuest = ArrayDataQuest[i];
+            FString Result = FString::Printf(TEXT("Net mode: [%s] | Index: [%i] | QuestTableName: [%s] | StatusQuest: [%s]"),
+                *UQuestLibrary::GetNetModeToString(GetOwner()), i, *DataQuest.NameQuestTable.ToString(), *UEnum::GetValueAsString(DataQuest.StatusQuest));
+            GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Orange, Result, true, FVector2D(EnableD_QuestSystemSizeDebug.GetValueOnGameThread()));
+        }
+    }
+
+    if (ArrayDataQuest.IsValidIndex(EnableD_QuestSystemSelectQuest.GetValueOnGameThread()))
+    {
+        if (!GetOwner()) return;
+
+        const FString Result = FString::Printf(TEXT("Net mode: [%s] | DataQuest: [%s]"),
+            *UQuestLibrary::GetNetModeToString(GetOwner()), *ArrayDataQuest[EnableD_QuestSystemSelectQuest.GetValueOnGameThread()].ToString());
+        GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Orange, Result, true, FVector2D(EnableD_QuestSystemSizeDebug.GetValueOnGameThread()));
+    }
+
     if (!EnableD_QuestSystemShow3DQuest.GetValueOnGameThread().IsEmpty())
     {
         const FDataQuest DataQuest = GetDataQuestFromName(FName(EnableD_QuestSystemShow3DQuest.GetValueOnGameThread()));
         if (!DataQuest.IsEmpty() && IsValid(DataQuest.ActiveListTask))
         {
             TArray<FDrawDebugQuestData> DrawDebugQuestDates;
+            DataQuest.ActiveListTask->RequestDrawDebugQuestDataFromTasks(DrawDebugQuestDates);
             for (const FDrawDebugQuestData& Data : DrawDebugQuestDates)
             {
                 FString Result = FString::Printf(TEXT("Net mode: [%s] | Data: [%s]"), *UQuestLibrary::GetNetModeToString(GetOwner()), *Data.ToString());
