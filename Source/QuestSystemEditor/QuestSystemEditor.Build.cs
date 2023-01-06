@@ -36,7 +36,8 @@ namespace UnrealBuildTool.Rules
 					"WorkspaceMenuStructure",
 					"Projects",
 					"GraphEditor",
-					"AnimGraph"
+					"AnimGraph",
+					"ToolMenus"
 				}
 			);
 

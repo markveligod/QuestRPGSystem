@@ -8,6 +8,8 @@ class UQuestGraphNode_Base : public UEdGraphNode
 {
     GENERATED_UCLASS_BODY()
 
+public:
+    
     /** Create all of the input pins required */
     virtual void CreateInputPins() {};
     /** Is this the undeletable root node */
@@ -37,5 +39,13 @@ class UQuestGraphNode_Base : public UEdGraphNode
     virtual void AutowireNewNode(UEdGraphPin* FromPin) override;
     virtual bool CanCreateUnderSpecifiedSchema(const UEdGraphSchema* Schema) const override;
     virtual FString GetDocumentationLink() const override;
+    virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
     // End of UEdGraphNode interface.
+
+    /** @public Setup new name node **/
+    void SetupNameNode(const FText NewNameNode) { NameNode = NewNameNode; }
+    
+private:
+
+    FText NameNode{};
 };

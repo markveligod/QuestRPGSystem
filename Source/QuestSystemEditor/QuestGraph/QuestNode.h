@@ -10,5 +10,7 @@ UCLASS()
 class QUESTSYSTEMEDITOR_API UQuestNode : public UObject
 {
     GENERATED_BODY()
-	
+
+    UPROPERTY(EditAnywhere)
+    FString NameNode;
 };

@@ -46,7 +46,4 @@ class UQuestGraphNode : public UQuestGraphNode_Base
     virtual void PostDuplicate(bool bDuplicateForPIE) override;
     // End of UObject interface
 
-private:
-    /** Make sure the soundnode is owned by the SoundCue */
-    void ResetSoundNodeOwner();
 };

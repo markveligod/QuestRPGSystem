@@ -121,7 +121,7 @@ void UQuestGraphNode_Base::AllocateDefaultPins()
 
 	if (!IsRootNode())
 	{
-		CreatePin(EGPD_Output, TEXT("QuestNode"), TEXT(""), nullptr, /*bIsArray=*/ false, /*bIsReference=*/ false, TEXT("Output"));
+		CreatePin(EGPD_Output, TEXT("QuestNode"), TEXT(""), nullptr, /*bIsArray=*/ false, /*bIsReference=*/ false, TEXT("Next List Task"));
 	}
 }
 
@@ -237,4 +237,9 @@ bool UQuestGraphNode_Base::CanCreateUnderSpecifiedSchema(const UEdGraphSchema* S
 FString UQuestGraphNode_Base::GetDocumentationLink() const
 {
 	return TEXT("");
+}
+
+FText UQuestGraphNode_Base::GetNodeTitle(ENodeTitleType::Type TitleType) const
+{
+    return NameNode.IsEmpty() ? Super::GetNodeTitle(TitleType) : NameNode;
 }

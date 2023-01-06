@@ -5,6 +5,7 @@
 #include "IQuestEditor.h"
 #include "Widgets/Docking/SDockTab.h"
 
+class UQuestGraph;
 class SGraphEditor;
 
 
@@ -140,6 +141,8 @@ private:
 private:
 	/** The SoundCue asset being inspected */
 	UQuestObject* QuestObject;
+
+    UQuestGraph* QuestEdGraph;
 
 	/** New Graph Editor */
 	TSharedPtr<SGraphEditor> QuestGraphEditor;

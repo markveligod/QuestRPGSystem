@@ -157,14 +157,12 @@ void UQuestGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeConte
 
 void UQuestGraphNode::PostCopyNode()
 {
-	// Make sure the SoundNode goes back to being owned by the SoundCue after copying.
-	ResetSoundNodeOwner();
+    
 }
 
 void UQuestGraphNode::PostEditImport()
 {
-	// Make sure this SoundNode is owned by the SoundCue it's being pasted into.
-	ResetSoundNodeOwner();
+    
 }
 
 void UQuestGraphNode::PostDuplicate(bool bDuplicateForPIE)
@@ -174,23 +172,6 @@ void UQuestGraphNode::PostDuplicate(bool bDuplicateForPIE)
 	if (!bDuplicateForPIE)
 	{
 		CreateNewGuid();
-	}
-}
-
-void UQuestGraphNode::ResetSoundNodeOwner()
-{
-	if (QuestNode)
-	{
-		UQuestObject* QuestObject = CastChecked<UQuestGraph>(GetGraph())->GetQuestObject();
-
-		// if (QuestNode->GetOuter() != QuestObject)
-		// {
-		// 	// Ensures SoundNode is owned by the SoundCue
-		// 	QuestObject->Rename(NULL, QuestObject, REN_DontCreateRedirectors);
-		// }
-		//
-		// // Set up the back pointer for newly created sound nodes
-		// QuestObject->GraphNode = this;
 	}
 }
 
@@ -244,10 +225,7 @@ void UQuestGraphNode::CreateInputPins()
 FText UQuestGraphNode::GetTooltipText() const
 {
 	FText Tooltip;
-	if (QuestNode)
-	{
-		// Tooltip = QuestNode->GetClass()->GetToolTipText();
-	}
+
 	if (Tooltip.IsEmpty())
 	{
 		Tooltip = GetNodeTitle(ENodeTitleType::ListView);

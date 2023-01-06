@@ -3,17 +3,18 @@
 =============================================================================*/
 #include "QuestEdGraphSchema.h"
 #include "UnrealEd.h"
-#include "SlateBasics.h"
-#include "AssetData.h"
-#include "GraphEditorActions.h"
 #include "ScopedTransaction.h"
 #include "GraphEditor.h"
+#include "GraphEditorActions.h"
 #include "QuestGraph.h"
 #include "QuestGraphNode.h"
 #include "Engine/Selection.h"
+#include "Framework/Commands/GenericCommands.h"
 #include "QuestRPGSystem/Objects/QuestObject.h"
+#include "ToolMenu.h"
+#include "ToolMenuSection.h"
 
-#define LOCTEXT_NAMESPACE "SoundCueSchema"
+#define LOCTEXT_NAMESPACE "QuestSchema"
 
 TArray<UClass*> UQuestGraphSchema::QuestNodeClasses;
 bool UQuestGraphSchema::bQuestNodeClassesInitialized = false;
@@ -247,70 +248,34 @@ void UQuestGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& Context
 
 void UQuestGraphSchema::GetContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
 {
-    // if (Context->Pin)
-    // {
-    //     FToolMenuSection& ToolMenuSection = Menu->AddSection(FName("QuestGraphSchemaPinActions"), FGraphEditorCommands::Get().BreakPinLinks)
-    //     {
-    //         // Only display the 'Break Link' option if there is a link to break!
-    //         if (Context->Pin->LinkedTo.Num() > 0)
-    //         {
-    //             Menu->AddMenuEntry(FName("QuestGraphSchemaPinActions"), ToolMenuSection);
-    //         }
-    //     }
-    //     Menu->EndSection();
-    // }
-    // else if (Context->Node)
-    // {
-    //     const UQuestGraphNode* SoundGraphNode = Cast<const UQuestGraphNode>(Context->Node);
-    //
-    //     MenuBuilder->BeginSection("SoundCueGraphSchemaNodeActions", LOCTEXT("NodeActionsMenuHeader", "Node Actions"));
-    //     {
-    //         MenuBuilder->AddMenuEntry(FGraphEditorCommands::Get().BreakNodeLinks);
-    //     }
-    //     MenuBuilder->EndSection();
-    // }
+    if (Context->Node && Context->Node->IsA(UQuestGraphNode::StaticClass()))
+    {
+        FToolMenuSection& Section = Menu->AddSection(FName("QuestGraphSchemaNodeActions"), LOCTEXT("NodeActionsMenuHeader", "Node Actions"));
+        Section.AddMenuEntry(FGenericCommands::Get().Delete);
+        Section.AddMenuEntry(FGenericCommands::Get().Cut);
+        Section.AddMenuEntry(FGenericCommands::Get().Copy);
+        Section.AddMenuEntry(FGenericCommands::Get().Duplicate);
+        Section.AddMenuEntry(FGraphEditorCommands::Get().BreakNodeLinks);
+    }
     
     Super::GetContextMenuActions(Menu, Context);
 }
 
-// void UQuestGraphSchema::GetContextMenuActions(const UEdGraph* CurrentGraph, const UEdGraphNode* InGraphNode, const UEdGraphPin* InGraphPin, class FMenuBuilder* MenuBuilder, bool bIsDebugging) const
-// {
-// 	if (InGraphPin)
-// 	{
-// 		MenuBuilder->BeginSection("SoundCueGraphSchemaPinActions", LOCTEXT("PinActionsMenuHeader", "Pin Actions"));
-// 		{
-// 			// Only display the 'Break Link' option if there is a link to break!
-// 			if (InGraphPin->LinkedTo.Num() > 0)
-// 			{
-// 				MenuBuilder->AddMenuEntry( FGraphEditorCommands::Get().BreakPinLinks );
-// 			}
-// 		}
-// 		MenuBuilder->EndSection();
-// 	}
-// 	else if (InGraphNode)
-// 	{
-// 		const USoundCueGraphNode* SoundGraphNode = Cast<const USoundCueGraphNode>(InGraphNode);
-//
-// 		MenuBuilder->BeginSection("SoundCueGraphSchemaNodeActions", LOCTEXT("NodeActionsMenuHeader", "Node Actions"));
-// 		{
-// 			MenuBuilder->AddMenuEntry(FGraphEditorCommands::Get().BreakNodeLinks);
-// 		}
-// 		MenuBuilder->EndSection();
-// 	}
-//
-// 	Super::GetContextMenuActions(CurrentGraph, InGraphNode, InGraphPin, MenuBuilder, bIsDebugging);
-// }
-
 void UQuestGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 {
-	const int32 RootNodeHeightOffset = -58;
+}
 
-	// Create the result node
-	// FGraphNodeCreator<UQuestGraphNode_Root> NodeCreator(Graph);
-	// UQuestGraphNode_Root* ResultRootNode = NodeCreator.CreateNode();
-	// ResultRootNode->NodePosY = RootNodeHeightOffset;
-	// NodeCreator.Finalize();
-	// SetNodeMetaData(ResultRootNode, FNodeMetadata::DefaultGraphNode);
+void UQuestGraphSchema::CreateDefaultNodesForGraph(UEdGraph* Graph) const
+{
+    const int32 RootNodeHeightOffset = -58;
+
+    // Create the result node
+    FGraphNodeCreator<UQuestGraphNode> NodeCreator(*Graph);
+    UQuestGraphNode* ResultRootNode = NodeCreator.CreateNode();
+    ResultRootNode->NodePosY = RootNodeHeightOffset;
+    ResultRootNode->SetupNameNode(FText::FromString("START NODE"));
+    NodeCreator.Finalize();
+    SetNodeMetaData(ResultRootNode, FNodeMetadata::DefaultGraphNode);
 }
 
 const FPinConnectionResponse UQuestGraphSchema::CanCreateConnection(const UEdGraphPin* PinA, const UEdGraphPin* PinB) const

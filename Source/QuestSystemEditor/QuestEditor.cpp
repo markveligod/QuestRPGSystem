@@ -62,8 +62,7 @@ void FQuestEditor::InitQuestEditor(const EToolkitMode::Type Mode, const TSharedP
 	GEditor->RegisterForUndo(this);
 
 	FGraphEditorCommands::Register();
-    // TODO: под сомненние в использовании
-	// FQuestGraphEditorCommands::Register();
+	FQuestGraphEditorCommands::Register();
 
 	BindGraphCommands();
 	CreateInternalWidgets();
@@ -217,6 +216,11 @@ void FQuestEditor::CreateInternalWidgets()
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	QuestProperties = PropertyModule.CreateDetailView(Args);
 	QuestProperties->SetObject(QuestObject);
+
+    if (QuestEdGraph)
+    {
+        CastChecked<UQuestGraphSchema>(QuestEdGraph->GetSchema())->CreateDefaultNodesForGraph(QuestEdGraph);
+    }
 }
 
 void FQuestEditor::BindGraphCommands()
@@ -272,7 +276,7 @@ bool FQuestEditor::CanDeleteInput() const
 void FQuestEditor::OnCreateComment()
 {
 	FQuestGraphSchemaAction_NewComment CommentAction;
-	// CommentAction.PerformAction(QuestObject->QuestGraph, nullptr, QuestGraphEditor->GetPasteLocation());
+	CommentAction.PerformAction(QuestEdGraph, nullptr, QuestGraphEditor->GetPasteLocation());
 }
 
 TSharedRef<SGraphEditor> FQuestEditor::CreateGraphEditorWidget()
@@ -281,13 +285,13 @@ TSharedRef<SGraphEditor> FQuestEditor::CreateGraphEditorWidget()
 	{
 		GraphEditorCommands = MakeShareable( new FUICommandList );
 
-		// GraphEditorCommands->MapAction( FQuestGraphEditorCommands::Get().AddInput,
-		// 	FExecuteAction::CreateSP(this, &FQuestEditor::AddInput),
-		// 	FCanExecuteAction::CreateSP( this, &FQuestEditor::CanAddInput ));
-		//
-		// GraphEditorCommands->MapAction( FQuestGraphEditorCommands::Get().DeleteInput,
-		// 	FExecuteAction::CreateSP(this, &FQuestEditor::DeleteInput),
-		// 	FCanExecuteAction::CreateSP( this, &FQuestEditor::CanDeleteInput ));
+		GraphEditorCommands->MapAction( FQuestGraphEditorCommands::Get().AddInput,
+			FExecuteAction::CreateSP(this, &FQuestEditor::AddInput),
+			FCanExecuteAction::CreateSP( this, &FQuestEditor::CanAddInput ));
+		
+		GraphEditorCommands->MapAction( FQuestGraphEditorCommands::Get().DeleteInput,
+			FExecuteAction::CreateSP(this, &FQuestEditor::DeleteInput),
+			FCanExecuteAction::CreateSP( this, &FQuestEditor::CanDeleteInput ));
 
 		// Graph Editor Commands
 		GraphEditorCommands->MapAction( FGraphEditorCommands::Get().CreateComment,
@@ -332,12 +336,13 @@ TSharedRef<SGraphEditor> FQuestEditor::CreateGraphEditorWidget()
 	SGraphEditor::FGraphEditorEvents InEvents;
 	InEvents.OnSelectionChanged = SGraphEditor::FOnSelectionChanged::CreateSP(this, &FQuestEditor::OnSelectedNodesChanged);
 	InEvents.OnTextCommitted = FOnNodeTextCommitted::CreateSP(this, &FQuestEditor::OnNodeTitleCommitted);
-
+    QuestEdGraph = Cast<UQuestGraph>(FBlueprintEditorUtils::CreateNewGraph(QuestObject, "Quest Graph", UQuestGraph::StaticClass(), UQuestGraphSchema::StaticClass()));
+    
 	return SNew(SGraphEditor)
 		.AdditionalCommands(GraphEditorCommands)
 		.IsEditable(true)
 		.Appearance(AppearanceInfo)
-		.GraphToEdit(FBlueprintEditorUtils::CreateNewGraph(QuestObject, "Quest Graph", UQuestGraph::StaticClass(), UQuestGraphSchema::StaticClass()))
+		.GraphToEdit(QuestEdGraph)
 		.GraphEvents(InEvents)
 		.AutoExpandActionMenu(true)
 		.ShowGraphStateOverlay(false);
@@ -357,30 +362,17 @@ void FQuestEditor::OnSelectedNodesChanged(const TSet<class UObject*>& NewSelecti
 {
 	TArray<UObject*> Selection;
 
-	if(NewSelection.Num())
+	if(NewSelection.Num() != 0)
 	{
-		for(TSet<class UObject*>::TConstIterator SetIt(NewSelection);SetIt;++SetIt)
+		for(TSet<class UObject*>::TConstIterator SetIt(NewSelection); SetIt; ++SetIt)
 		{
-			// if (Cast<UQuestGraphNode_Root>(*SetIt))
-			// {
-			// 	Selection.Add(GetQuestObject());
-			// }
-			// else if (UQuestGraphNode* GraphNode = Cast<UQuestGraphNode>(*SetIt))
-			// {
-			// 	Selection.Add(GraphNode->QuestNode);
-			// }
-			// else
-			// {
-			// 	Selection.Add(*SetIt);
-			// }
+			if (UQuestGraphNode* GraphNode = Cast<UQuestGraphNode>(*SetIt))
+			{
+				Selection.Add(GraphNode);
+			}
 		}
+	    SetSelection(Selection);
 	}
-	else
-	{
-		Selection.Add(GetQuestObject());
-	}
-
-	SetSelection(Selection);
 }
 
 void FQuestEditor::OnNodeTitleCommitted(const FText& NewText, ETextCommit::Type CommitInfo, UEdGraphNode* NodeBeingChanged)
