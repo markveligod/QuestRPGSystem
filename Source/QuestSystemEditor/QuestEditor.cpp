@@ -7,13 +7,13 @@
 #include "GraphEditorActions.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "EdGraphUtilities.h"
+#include "SNodePanel.h"
 #include "SoundCueGraphEditorCommands.h"
 #include "Editor/PropertyEditor/Public/PropertyEditorModule.h"
 #include "Editor/PropertyEditor/Public/IDetailsView.h"
 #include "Framework/Commands/GenericCommands.h"
 #include "QuestGraph/QuestEdGraphSchema.h"
 #include "QuestGraph/QuestGraph.h"
-#include "QuestGraph/QuestGraphEditorCommands.h"
 #include "QuestGraph/QuestGraphNode.h"
 
 #define LOCTEXT_NAMESPACE "QuestEditor"
@@ -62,7 +62,6 @@ void FQuestEditor::InitQuestEditor(const EToolkitMode::Type Mode, const TSharedP
 	GEditor->RegisterForUndo(this);
 
 	FGraphEditorCommands::Register();
-	FQuestGraphEditorCommands::Register();
 
 	BindGraphCommands();
 	CreateInternalWidgets();
@@ -154,8 +153,7 @@ TSharedRef<SDockTab> FQuestEditor::SpawnTab_GraphCanvas(const FSpawnTabArgs& Arg
 {
 	check( Args.GetTabId() == GraphCanvasTabId );
 
-	TSharedRef<SDockTab> SpawnedTab = SNew(SDockTab)
-		.Label(LOCTEXT("SoundCueGraphCanvasTitle", "Viewport"));
+	TSharedRef<SDockTab> SpawnedTab = SNew(SDockTab).Label(LOCTEXT("QuestGraphCanvasTitle", "Quest Viewport"));
 
 	if (QuestGraphEditor.IsValid())
 	{
@@ -234,45 +232,6 @@ void FQuestEditor::BindGraphCommands()
 		FExecuteAction::CreateSP( this, &FQuestEditor::RedoGraphAction ));
 }
 
-void FQuestEditor::AddInput()
-{
-	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
-
-	// Iterator used but should only contain one node
-	for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
-	{
-		UQuestGraphNode* SelectedNode = Cast<UQuestGraphNode>(*NodeIt);
-
-		if (SelectedNode)
-		{
-			SelectedNode->AddInputPin();
-			break;
-		}
-	}
-}
-
-bool FQuestEditor::CanAddInput() const
-{
-	return GetSelectedNodes().Num() == 1;
-}
-
-void FQuestEditor::DeleteInput()
-{
-	UEdGraphPin* SelectedPin = QuestGraphEditor->GetGraphPinForMenu();
-	
-	UQuestGraphNode* SelectedNode = Cast<UQuestGraphNode>(SelectedPin->GetOwningNode());
-
-	if (SelectedNode && SelectedNode == SelectedPin->GetOwningNode())
-	{
-		SelectedNode->RemoveInputPin(SelectedPin);
-	}
-}
-
-bool FQuestEditor::CanDeleteInput() const
-{
-	return true;
-}
-
 void FQuestEditor::OnCreateComment()
 {
 	FQuestGraphSchemaAction_NewComment CommentAction;
@@ -284,14 +243,6 @@ TSharedRef<SGraphEditor> FQuestEditor::CreateGraphEditorWidget()
 	if ( !GraphEditorCommands.IsValid() )
 	{
 		GraphEditorCommands = MakeShareable( new FUICommandList );
-
-		GraphEditorCommands->MapAction( FQuestGraphEditorCommands::Get().AddInput,
-			FExecuteAction::CreateSP(this, &FQuestEditor::AddInput),
-			FCanExecuteAction::CreateSP( this, &FQuestEditor::CanAddInput ));
-		
-		GraphEditorCommands->MapAction( FQuestGraphEditorCommands::Get().DeleteInput,
-			FExecuteAction::CreateSP(this, &FQuestEditor::DeleteInput),
-			FCanExecuteAction::CreateSP( this, &FQuestEditor::CanDeleteInput ));
 
 		// Graph Editor Commands
 		GraphEditorCommands->MapAction( FGraphEditorCommands::Get().CreateComment,
@@ -337,7 +288,7 @@ TSharedRef<SGraphEditor> FQuestEditor::CreateGraphEditorWidget()
 	InEvents.OnSelectionChanged = SGraphEditor::FOnSelectionChanged::CreateSP(this, &FQuestEditor::OnSelectedNodesChanged);
 	InEvents.OnTextCommitted = FOnNodeTextCommitted::CreateSP(this, &FQuestEditor::OnNodeTitleCommitted);
     QuestEdGraph = Cast<UQuestGraph>(FBlueprintEditorUtils::CreateNewGraph(QuestObject, "Quest Graph", UQuestGraph::StaticClass(), UQuestGraphSchema::StaticClass()));
-    
+
 	return SNew(SGraphEditor)
 		.AdditionalCommands(GraphEditorCommands)
 		.IsEditable(true)
@@ -407,27 +358,11 @@ void FQuestEditor::DeleteSelectedNodes()
 
 	for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
 	{
-		UEdGraphNode* Node = CastChecked<UEdGraphNode>(*NodeIt);
+		UQuestGraphNode* Node = CastChecked<UQuestGraphNode>(*NodeIt);
 
-		if (Node->CanUserDeleteNode())
+		if (Node->CanUserDeleteNode() && !Node->IsRootNode())
 		{
-			if (UQuestGraphNode* SoundGraphNode = Cast<UQuestGraphNode>(Node))
-			{
-				// UQuestNode* DelNode = SoundGraphNode->QuestNode;
-				//
-				// FBlueprintEditorUtils::RemoveNode(NULL, SoundGraphNode, true);
-				//
-				// // Make sure SoundCue is updated to match graph
-				// QuestObject->CompileSoundNodesFromGraphNodes();
-				//
-				// // Remove this node from the SoundCue's list of all SoundNodes
-				// QuestObject->AllNodes.Remove(DelNode);
-				// QuestObject->MarkPackageDirty();
-			}
-			else
-			{
-				FBlueprintEditorUtils::RemoveNode(nullptr, Node, true);
-			}
+		    FBlueprintEditorUtils::RemoveNode(nullptr, Node, true);
 		}
 	}
 }
@@ -435,19 +370,6 @@ void FQuestEditor::DeleteSelectedNodes()
 bool FQuestEditor::CanDeleteNodes() const
 {
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
-
-	// if (SelectedNodes.Num() == 1)
-	// {
-	// 	for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
-	// 	{
-	// 		if (Cast<UQuestGraphNode_Root>(*NodeIt))
-	// 		{
-	// 			// Return false if only root node is selected, as it can't be deleted
-	// 			return false;
-	// 		}
-	// 	}
-	// }
-
 	return SelectedNodes.Num() > 0;
 }
 
@@ -550,77 +472,71 @@ void FQuestEditor::PasteNodes()
 
 void FQuestEditor::PasteNodesHere(const FVector2D& Location)
 {
-	// // Undo/Redo support
-	// const FScopedTransaction Transaction( NSLOCTEXT("UnrealEd", "SoundCueEditorPaste", "Paste Sound Cue Node") );
-	// QuestObject->GetGraph()->Modify();
-	// QuestObject->Modify();
-	//
-	// // Clear the selection set (newly pasted stuff will be selected)
-	// QuestGraphEditor->ClearSelectionSet();
-	//
-	// // Grab the text to paste from the clipboard.
-	// FString TextToImport;
-	// FPlatformMisc::ClipboardPaste(TextToImport);
-	//
-	// // Import the nodes
-	// TSet<UEdGraphNode*> PastedNodes;
-	// FEdGraphUtilities::ImportNodesFromText(QuestObject->GetGraph(), TextToImport, /*out*/ PastedNodes);
-	//
-	// //Average position of nodes so we can move them while still maintaining relative distances to each other
-	// FVector2D AvgNodePosition(0.0f,0.0f);
-	//
-	// for (TSet<UEdGraphNode*>::TIterator It(PastedNodes); It; ++It)
-	// {
-	// 	UEdGraphNode* Node = *It;
-	// 	AvgNodePosition.X += Node->NodePosX;
-	// 	AvgNodePosition.Y += Node->NodePosY;
-	// }
-	//
-	// if ( PastedNodes.Num() > 0 )
-	// {
-	// 	float InvNumNodes = 1.0f/float(PastedNodes.Num());
-	// 	AvgNodePosition.X *= InvNumNodes;
-	// 	AvgNodePosition.Y *= InvNumNodes;
-	// }
-	//
-	// for (TSet<UEdGraphNode*>::TIterator It(PastedNodes); It; ++It)
-	// {
-	// 	UEdGraphNode* Node = *It;
-	//
-	// 	if (UQuestGraphNode* SoundGraphNode = Cast<UQuestGraphNode>(Node))
-	// 	{
-	// 		QuestObject->AllNodes.Add(SoundGraphNode->SoundNode);
-	// 	}
-	//
-	// 	// Select the newly pasted stuff
-	// 	QuestGraphEditor->SetNodeSelection(Node, true);
-	//
-	// 	Node->NodePosX = (Node->NodePosX - AvgNodePosition.X) + Location.X ;
-	// 	Node->NodePosY = (Node->NodePosY - AvgNodePosition.Y) + Location.Y ;
-	//
-	// 	Node->SnapToGrid(SNodePanel::GetSnapGridSize());
-	//
-	// 	// Give new node a different Guid from the old one
-	// 	Node->CreateNewGuid();
-	// }
-	//
-	// // Force new pasted SoundNodes to have same connections as graph nodes
-	// QuestObject->CompileSoundNodesFromGraphNodes();
-	//
-	// // Update UI
-	// QuestGraphEditor->NotifyGraphChanged();
-	//
-	// QuestObject->PostEditChange();
-	// QuestObject->MarkPackageDirty();
+	// Undo/Redo support
+	const FScopedTransaction Transaction( NSLOCTEXT("UnrealEd", "QuestEditorPaste", "Paste List task Node") );
+	QuestEdGraph->Modify();
+	QuestObject->Modify();
+	
+	// Clear the selection set (newly pasted stuff will be selected)
+	QuestGraphEditor->ClearSelectionSet();
+	
+	// Grab the text to paste from the clipboard.
+	FString TextToImport;
+	FPlatformMisc::ClipboardPaste(TextToImport);
+	
+	// Import the nodes
+	TSet<UEdGraphNode*> PastedNodes;
+	FEdGraphUtilities::ImportNodesFromText(QuestEdGraph, TextToImport, /*out*/ PastedNodes);
+	
+	//Average position of nodes so we can move them while still maintaining relative distances to each other
+	FVector2D AvgNodePosition(0.0f,0.0f);
+	
+	for (TSet<UEdGraphNode*>::TIterator It(PastedNodes); It; ++It)
+	{
+        const UEdGraphNode* Node = *It;
+		AvgNodePosition.X += Node->NodePosX;
+		AvgNodePosition.Y += Node->NodePosY;
+	}
+	
+	if ( PastedNodes.Num() > 0 )
+	{
+        const float InvNumNodes = 1.0f / static_cast<float>(PastedNodes.Num());
+		AvgNodePosition.X *= InvNumNodes;
+		AvgNodePosition.Y *= InvNumNodes;
+	}
+	
+	for (TSet<UEdGraphNode*>::TIterator It(PastedNodes); It; ++It)
+	{
+		UEdGraphNode* Node = *It;
+	
+		if (const UQuestGraphNode* QuestNode = Cast<UQuestGraphNode>(Node))
+		{
+			QuestObject->AllNodes.Add(QuestNode->ListTask);
+		}
+	
+		// Select the newly pasted stuff
+		QuestGraphEditor->SetNodeSelection(Node, true);
+	
+		Node->NodePosX = (Node->NodePosX - AvgNodePosition.X) + Location.X ;
+		Node->NodePosY = (Node->NodePosY - AvgNodePosition.Y) + Location.Y ;
+	
+		Node->SnapToGrid(SNodePanel::GetSnapGridSize());
+	
+		// Give new node a different Guid from the old one
+		Node->CreateNewGuid();
+	}
+    
+	// Update UI
+	QuestGraphEditor->NotifyGraphChanged();
+	QuestObject->PostEditChange();
 }
 
 bool FQuestEditor::CanPasteNodes() const
 {
-	// FString ClipboardContent;
-	// FPlatformMisc::ClipboardPaste(ClipboardContent);
-	//
-	// return FEdGraphUtilities::CanImportNodesFromText(QuestObject->QuestGraph, ClipboardContent);
-    return false;
+	FString ClipboardContent;
+	FPlatformMisc::ClipboardPaste(ClipboardContent);
+	
+	return FEdGraphUtilities::CanImportNodesFromText(QuestEdGraph, ClipboardContent);
 }
 
 void FQuestEditor::DuplicateNodes()
@@ -644,7 +560,6 @@ void FQuestEditor::RedoGraphAction()
 {
 	// Clear selection, to avoid holding refs to nodes that go away
 	QuestGraphEditor->ClearSelectionSet();
-
 	GEditor->RedoTransaction();
 }
 

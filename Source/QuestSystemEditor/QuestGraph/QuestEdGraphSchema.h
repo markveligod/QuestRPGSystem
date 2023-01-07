@@ -3,7 +3,7 @@
 #include "EdGraph/EdGraphSchema.h"
 #include "QuestEdGraphSchema.generated.h"
 
-class UQuestNode;
+class UListTaskBase;
 /** Action to add a node to the graph */
 USTRUCT()
 struct FQuestGraphSchemaAction_NewNode : public FEdGraphSchemaAction
@@ -31,7 +31,7 @@ struct FQuestGraphSchemaAction_NewNode : public FEdGraphSchemaAction
 
 private:
 	/** Connects new node to output of selected nodes */
-	void ConnectToSelectedNodes(UQuestNode* NewNodeclass, UEdGraph* ParentGraph) const;
+	void ConnectToSelectedNodes(UListTaskBase* NewListTaskClass, UEdGraph* ParentGraph) const;
 };
 
 /** Action to add nodes to the graph based on selected objects*/
@@ -95,12 +95,12 @@ UCLASS(MinimalAPI)
 class UQuestGraphSchema : public UEdGraphSchema
 {
 	GENERATED_UCLASS_BODY()
-
+    
 	/** Check whether connecting these pins would cause a loop */
 	bool ConnectionCausesLoop(const UEdGraphPin* InputPin, const UEdGraphPin* OutputPin) const;
 
 	/** Attempts to connect the output of multiple nodes to the inputs of a single one */
-	void TryConnectNodes(const TArray<UQuestNode*>& OutputNodes, UQuestNode* InputNode) const;
+	void TryConnectNodes(const TArray<UListTaskBase*>& OutputNodes, UListTaskBase* InputNode) const;
 
 	//~ Begin EdGraphSchema Interface
 	virtual void GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const override;

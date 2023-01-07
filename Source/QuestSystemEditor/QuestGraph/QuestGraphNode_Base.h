@@ -13,7 +13,9 @@ public:
     /** Create all of the input pins required */
     virtual void CreateInputPins() {};
     /** Is this the undeletable root node */
-    virtual bool IsRootNode() const {return false;}
+    virtual bool IsRootNode() const { return bRootNode; }
+    /** Change state root node **/
+    void ChangeStateRoot(const bool bNewState) { bRootNode = bNewState; }
 
     /** Get the Output Pin (should only ever be one) */
     class UEdGraphPin* GetOutputPin();
@@ -47,5 +49,6 @@ public:
     
 private:
 
+    bool bRootNode{false};
     FText NameNode{};
 };

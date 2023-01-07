@@ -1,9 +1,9 @@
 ﻿#pragma once
 
 #include "QuestGraphNode_Base.h"
-#include "QuestNode.h"
 #include "QuestGraphNode.generated.h"
 
+class UListTaskBase;
 UCLASS(MinimalAPI)
 class UQuestGraphNode : public UQuestGraphNode_Base
 {
@@ -11,10 +11,10 @@ class UQuestGraphNode : public UQuestGraphNode_Base
 
     /** The SoundNode this represents */
     UPROPERTY(VisibleAnywhere, instanced, Category=Quest)
-    UQuestNode* QuestNode;
+    UListTaskBase* ListTask;
 
-    /** Set the SoundNode this represents (also assigns this to the SoundNode in Editor)*/
-    void SetQuestNode(UQuestNode* InQuestNode);
+    /** Set the ListTask this represents (also assigns this to the SoundNode in Editor)*/
+    void SetListTask(UListTaskBase* InListTask);
     /** Fix up the node's owner after being copied */
     void PostCopyNode();
     /** Create a new input pin for this node */

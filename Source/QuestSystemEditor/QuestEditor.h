@@ -122,16 +122,6 @@ private:
 	/** Binds new graph commands to delegates */
 	void BindGraphCommands();
 
-	/** Add an input to the currently selected node */
-	void AddInput();
-	/** Whether we can add an input to the currently selected node */
-	bool CanAddInput() const;
-
-	/** Delete an input from the currently selected node */
-	void DeleteInput();
-	/** Whether we can delete an input from the currently selected node */
-	bool CanDeleteInput() const;
-
 	/* Create comment node on graph */
 	void OnCreateComment();
 

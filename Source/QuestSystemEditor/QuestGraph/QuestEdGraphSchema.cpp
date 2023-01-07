@@ -13,6 +13,7 @@
 #include "QuestRPGSystem/Objects/QuestObject.h"
 #include "ToolMenu.h"
 #include "ToolMenuSection.h"
+#include "QuestSystemEditor/Utils/QuestEditorUtilities.h"
 
 #define LOCTEXT_NAMESPACE "QuestSchema"
 
@@ -57,7 +58,7 @@ UEdGraphNode* FQuestGraphSchemaAction_NewNode::PerformAction(class UEdGraph* Par
     return nullptr;
 }
 
-void FQuestGraphSchemaAction_NewNode::ConnectToSelectedNodes(UQuestNode* NewNodeclass, class UEdGraph* ParentGraph) const
+void FQuestGraphSchemaAction_NewNode::ConnectToSelectedNodes(UListTaskBase* NewListTaskClass, class UEdGraph* ParentGraph) const
 {
 	// only connect if node can have many children
 	// if (NewNode->GetMaxChildNodes() > 1)
@@ -184,12 +185,12 @@ UEdGraphNode* FQuestGraphSchemaAction_NewComment::PerformAction(class UEdGraph* 
 
 UEdGraphNode* FQuestGraphSchemaAction_Paste::PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode/* = true*/)
 {
-	// FQuestEditorUtilities::PasteNodesHere(ParentGraph, Location);
+    FQuestEditorUtilities::PasteNodesHere(ParentGraph, Location);
 	return nullptr;
 }
 
 /////////////////////////////////////////////////////
-// USoundCueGraphSchema
+// UQuestGraphSchema
 
 UQuestGraphSchema::UQuestGraphSchema(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -218,7 +219,7 @@ bool UQuestGraphSchema::ConnectionCausesLoop(const UEdGraphPin* InputPin, const 
 	return false;
 }
 
-void UQuestGraphSchema::TryConnectNodes(const TArray<UQuestNode*>& OutputNodes, UQuestNode* InputNode) const
+void UQuestGraphSchema::TryConnectNodes(const TArray<UListTaskBase*>& OutputNodes, UListTaskBase* InputNode) const
 {
 	// for (int32 Index = 0; Index < OutputNodes.Num(); Index++)
 	// {
@@ -239,11 +240,11 @@ void UQuestGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& Context
 
 	GetCommentAction(ContextMenuBuilder, ContextMenuBuilder.CurrentGraph);
 
-	// if (!ContextMenuBuilder.FromPin && FQuestEditorUtilities::CanPasteNodes(ContextMenuBuilder.CurrentGraph))
-	// {
-	// 	TSharedPtr<FQuestGraphSchemaAction_Paste> NewAction( new FQuestGraphSchemaAction_Paste(FText::GetEmpty(), LOCTEXT("PasteHereAction", "Paste here"), TEXT(""), 0) );
-	// 	ContextMenuBuilder.AddAction( NewAction );
-	// }
+	if (!ContextMenuBuilder.FromPin)
+	{
+		TSharedPtr<FQuestGraphSchemaAction_Paste> NewAction( new FQuestGraphSchemaAction_Paste(FText::GetEmpty(), LOCTEXT("Actions", "Create Node List Task"), TEXT(""), 0) );
+		ContextMenuBuilder.AddAction( NewAction );
+	}
 }
 
 void UQuestGraphSchema::GetContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
@@ -274,6 +275,7 @@ void UQuestGraphSchema::CreateDefaultNodesForGraph(UEdGraph* Graph) const
     UQuestGraphNode* ResultRootNode = NodeCreator.CreateNode();
     ResultRootNode->NodePosY = RootNodeHeightOffset;
     ResultRootNode->SetupNameNode(FText::FromString("START NODE"));
+    ResultRootNode->ChangeStateRoot(true);
     NodeCreator.Finalize();
     SetNodeMetaData(ResultRootNode, FNodeMetadata::DefaultGraphNode);
 }
@@ -362,28 +364,7 @@ void UQuestGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNot
 
 void UQuestGraphSchema::DroppedAssetsOnGraph(const TArray<FAssetData>& Assets, const FVector2D& GraphPosition, UEdGraph* Graph) const
 {
-	// TArray<UQuestObject*> Quests;
-	// for (int32 AssetIdx = 0; AssetIdx < Assets.Num(); ++AssetIdx)
-	// {
-	// 	UQuestObject* Quest = Cast<UQuestObject>(Assets[AssetIdx].GetAsset());
-	// 	if (Quest)
-	// 	{
-	// 		Quests.Add(Quest);
-	// 	}
-	// }
-	//
-	// if (Quests.Num() > 0)
-	// {
-	// 	const FScopedTransaction Transaction( LOCTEXT("QuestEditorDropQuest", "Quest Editor: Drag and Drop Sound Wave") );
-	//
-	// 	UQuestGraph* SoundCueGraph = CastChecked<UQuestGraph>(Graph);
-	// 	USoundCue* SoundCue = SoundCueGraph->GetSoundCue();
-	//
-	// 	SoundCueGraph->Modify();
-	//
-	// 	TArray<USoundNode*> CreatedPlayers;
-	// 	FSoundCueEditorUtilities::CreateWaveContainers(Waves, SoundCue, CreatedPlayers, GraphPosition);
-	// }
+	
 }
 
 void UQuestGraphSchema::GetAllQuestNodeActions(FGraphActionMenuBuilder& ActionMenuBuilder, bool bShowSelectedActions) const

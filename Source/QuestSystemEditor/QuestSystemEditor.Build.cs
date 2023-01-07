@@ -37,7 +37,8 @@ namespace UnrealBuildTool.Rules
 					"Projects",
 					"GraphEditor",
 					"AnimGraph",
-					"ToolMenus"
+					"ToolMenus",
+					"EditorFramework"
 				}
 			);
 
@@ -47,9 +48,9 @@ namespace UnrealBuildTool.Rules
 					"PropertyEditor",
 					"SlateCore",
 					"ApplicationCore",
-					"UnrealEd",
 					"Json",
 					"JsonUtilities",
+					"UnrealEd",
 					"QuestRPGSystem"
 				}
 			);

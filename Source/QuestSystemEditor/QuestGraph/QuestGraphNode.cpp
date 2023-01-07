@@ -47,12 +47,6 @@ void UQuestGraphNode::PostLoad()
 	// }
 }
 
-void UQuestGraphNode::SetQuestNode(UQuestNode* InQuestNode)
-{
-	QuestNode = InQuestNode;
-	// InQuestNode->GraphNode = this;
-}
-
 void UQuestGraphNode::CreateInputPin()
 {
 	// UEdGraphPin* NewPin = CreatePin(EGPD_Input, TEXT("SoundNode"), TEXT(""), NULL, /*bIsArray=*/ false, /*bIsReference=*/ false, QuestNode->GetInputPinName(GetInputCount()).ToString());
@@ -112,7 +106,7 @@ int32 UQuestGraphNode::EstimateNodeWidth() const
 	const int32 EstimatedCharWidth = 6;
 	FString NodeTitle = GetNodeTitle(ENodeTitleType::FullTitle).ToString();
 	UFont* Font = GetDefault<UEditorEngine>()->EditorFont;
-	int32 Result = NodeTitle.Len()*EstimatedCharWidth;
+	int32 Result = NodeTitle.Len() * EstimatedCharWidth;
 
 	if (Font)
 	{
@@ -124,35 +118,27 @@ int32 UQuestGraphNode::EstimateNodeWidth() const
 
 bool UQuestGraphNode::CanAddInputPin() const
 {
-	if(QuestNode)
-	{
-		// Check if adding another input would exceed max child nodes.
-		// return QuestNode->ChildNodes.Num() < QuestNode->GetMaxChildNodes();
-	}
 	return false;
 }
 
 FText UQuestGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	if (QuestNode)
-	{
-		// return QuestNode->GetTitle();
-	}
     return Super::GetNodeTitle(TitleType);
 }
 
 void UQuestGraphNode::PrepareForCopying()
 {
-	if (QuestNode)
-	{
-		// Temporarily take ownership of the SoundNode, so that it is not deleted when cutting
-		// QuestNode->Rename(NULL, this, REN_DontCreateRedirectors);
-	}
+	
 }
 
 void UQuestGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
 {
     Super::GetNodeContextMenuActions(Menu, Context);
+}
+
+void UQuestGraphNode::SetListTask(UListTaskBase* InListTask)
+{
+    ListTask = InListTask;
 }
 
 void UQuestGraphNode::PostCopyNode()
@@ -177,10 +163,7 @@ void UQuestGraphNode::PostDuplicate(bool bDuplicateForPIE)
 
 void UQuestGraphNode::CreateInputPins()
 {
-	// for (int32 ChildIndex = 0; ChildIndex < QuestNode->ChildNodes.Num(); ++ChildIndex)
-	// {
-	// 	CreateInputPin();
-	// }
+	
 }
 
 // void UQuestGraphNode::GetContextMenuActions(const FGraphNodeContextMenuBuilder& Context) const
