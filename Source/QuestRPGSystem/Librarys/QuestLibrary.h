@@ -58,22 +58,7 @@ public:
      * @public Get String by timer in sec
      **/
     static FString GetStringTimeFromSecond(float Seconds);
-
-    /**
-     * @public Creates a class of type UListTaskBase in memory
-     **/
-    static UListTaskBase* LoadListTaskFromPath(UObject* Owner, const FSoftObjectPath& PathListTask);
-
-    /**
-     * @public Creates a class of type UListTaskBase in memory
-     **/
-    static void UnLoadListTaskFromPath(const FSoftObjectPath& PathListTask);
-
-    /**
-     * @public Fill data info tasks
-     **/
-    static TArray<FDataInfoTask> FillDataInfoTasksFromListTask(UListTaskBase* ListTask);
-
+    
     /**
      * @public Check client
      **/

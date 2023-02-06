@@ -4,6 +4,8 @@
 
 #include "QuestGraphNode_Base.h"
 #include "QuestEdGraphSchema.h"
+#include "QuestRPGSystem/Objects/QuestObject.h"
+#include "QuestSystemEditor/QuestGraph/QuestGraph.h"
 
 /////////////////////////////////////////////////////
 // UQuestGraphNode_Base
@@ -115,14 +117,18 @@ void UQuestGraphNode_Base::InsertNewNode(UEdGraphPin* FromPin, UEdGraphPin* NewL
 
 void UQuestGraphNode_Base::AllocateDefaultPins()
 {
-	check(Pins.Num() == 0);
+    check(Pins.Num() == 0);
 
-	CreateInputPins();
+    CreateInputPins();
 
-	if (!IsRootNode())
-	{
-		CreatePin(EGPD_Output, TEXT("QuestNode"), TEXT(""), nullptr, /*bIsArray=*/ false, /*bIsReference=*/ false, TEXT("Next List Task"));
-	}
+    if (IsRootNode())
+    {
+        CreatePin(EGPD_Output, TEXT("QuestNode"), TEXT(""), nullptr, /*bIsArray=*/ false, /*bIsReference=*/ false, TEXT("Start Node Quest"));
+    }
+    else
+    {
+        CreatePin(EGPD_Input, TEXT("QuestNode"), TEXT(""), nullptr, /*bIsArray=*/ false, /*bIsReference=*/ false, TEXT("Input Node Quest"));
+    }
 }
 
 void UQuestGraphNode_Base::ReconstructNode()

@@ -7,14 +7,14 @@
 #include "QuestRPGSystem/Librarys/QuestLibrary.h"
 #include "TaskBase.generated.h"
 
-class UListTaskBase;
+class UQuestObject;
 
 #define LOG_TASK(LogVerb, Text) Print_LogTask(LogVerb, Text, __LINE__, __FUNCTION__)
 
 /**
  * @class Basic class settings for the implementation of the approach to the implementation of the task entity
  */
-UCLASS(EditInlineNew, Abstract, Blueprintable)
+UCLASS(EditInlineNew, DefaultToInstanced, Abstract, Blueprintable)
 class QUESTRPGSYSTEM_API UTaskBase : public UObject
 {
     GENERATED_BODY()
@@ -36,82 +36,56 @@ protected:
 
 public:
 
-    // Construct
+    /** Construct **/
     UTaskBase()
     {
     }
 
 protected:
 
-    /**
-     * @protected Call on server side for init task. this override function.
-     **/
-    virtual bool InitTask(APlayerController* PlayerController, UListTaskBase* Parent);
+    /** @protected Call on server side for init task  **/
+    virtual bool InitTask(APlayerController* PlayerController, UQuestObject* Parent);
 
-    /**
-     * @protected Call on server side for init task. Native Implementation in blueprint
-     **/
+    /** @protected Call on server side for init task **/
     UFUNCTION(BlueprintNativeEvent, meta = (BlueprintProtected = true))
-    bool InitTask_Event(APlayerController* PlayerController, UListTaskBase* Parent);
+    bool InitTask_Event(APlayerController* PlayerController, UQuestObject* Parent);
 
-    /**
-     * @protected Call on server side for reset task. this override function.
-     **/
+    /** @protected Call on server side for reset task **/
     virtual bool ResetTask();
 
-    /**
-     * @protected Call on server side for reset task. Native Implementation in blueprint
-     **/
+    /** @protected Call on server side for reset task **/
     UFUNCTION(BlueprintNativeEvent, meta = (BlueprintProtected = true))
     bool ResetTask_Event();
 
-    /**
-     * @protected Call on client side for run task. this override function.
-     **/
+    /** @protected Call on client side for run task **/
     virtual bool RunTask();
 
-    /**
-     * @protected Call on server side for run task. Native Implementation in blueprint
-     **/
+    /** @protected Call on server side for run task **/
     UFUNCTION(BlueprintNativeEvent, meta = (BlueprintProtected = true))
     bool RunTask_Event();
 
-    /**
-     * @protected Call on server side for complete task. this override function.
-     **/
+    /** @protected Call on server side for complete task **/
     virtual bool CompleteTask();
 
-    /**
-     * @protected Call on server side for complete task. Native Implementation in blueprint
-     **/
+    /** @protected Call on server side for complete task **/
     UFUNCTION(BlueprintNativeEvent, meta = (BlueprintProtected = true))
     bool CompleteTask_Event();
 
-    /**
-     * @protected Call on server side for check valid task. this override function.
-     **/
+    /** @protected Call on server side for check valid task **/
     virtual bool IsValidTask();
 
-    /**
-     * @protected Call on server side for check valid task. Native Implementation in blueprint
-     **/
+    /** @protected Call on server side for check valid task **/
     UFUNCTION(BlueprintNativeEvent, meta = (BlueprintProtected = true))
     bool IsValidTask_Event();
 
-    /**
-     * @protected Call on server side for check abort task. this override function.
-     **/
+    /** @protected Call on server side for check abort task **/
     virtual bool IsAbortTask();
 
-    /**
-     * @protected Call on server side for check abort task. Native Implementation in blueprint
-     **/
+    /** @protected Call on server side for check abort task **/
     UFUNCTION(BlueprintNativeEvent, meta = (BlueprintProtected = true))
     bool IsAbortTask_Event();
 
-    /**
-     * @protected Request on server for complete task
-     **/
+    /** @protected Request on server for complete task **/
     UFUNCTION(Server, Reliable, BlueprintCallable, meta = (BlueprintProtected = true))
     void ServerCompleteTask();
 
@@ -145,14 +119,11 @@ protected:
 #pragma region DataTask
 
 public:
-    /**
-     * @public Get task description
-     **/
+
+    /** @public Get task description **/
     FORCEINLINE FText GetTaskDescription() const { return FText::FromString(TaskDescription.ToString() + " " + AddDescription + " " + TimerDescription); }
 
-    /**
-     * @public Get state bNotifyUpdate
-     **/
+    /** @public Get state bNotifyUpdate **/
     FORCEINLINE bool IsNotifyUpdate() const { return bNotifyUpdate; }
 
     /**
@@ -182,12 +153,12 @@ protected:
     EStatusTask StatusTask{EStatusTask::NoneInit};
 
     // @protected Owner player controller
-    UPROPERTY(Replicated, BlueprintReadOnly)
+    UPROPERTY(BlueprintReadOnly)
     APlayerController* OwnerController{nullptr};
 
     // @protected Owner Task
     UPROPERTY(Replicated, BlueprintReadOnly)
-    UListTaskBase* OwnerListTask{nullptr};
+    UQuestObject* OwnerQuestObject{nullptr};
 
     // @protected For add description. Example: counter [0/1]
     FString AddDescription{};

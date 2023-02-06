@@ -8,7 +8,6 @@
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "EdGraphUtilities.h"
 #include "SNodePanel.h"
-#include "SoundCueGraphEditorCommands.h"
 #include "Editor/PropertyEditor/Public/PropertyEditorModule.h"
 #include "Editor/PropertyEditor/Public/IDetailsView.h"
 #include "Framework/Commands/GenericCommands.h"
@@ -509,10 +508,10 @@ void FQuestEditor::PasteNodesHere(const FVector2D& Location)
 	{
 		UEdGraphNode* Node = *It;
 	
-		if (const UQuestGraphNode* QuestNode = Cast<UQuestGraphNode>(Node))
-		{
-			QuestObject->AllNodes.Add(QuestNode->ListTask);
-		}
+		// if (const UQuestGraphNode* QuestNode = Cast<UQuestGraphNode>(Node))
+		// {
+		// 	QuestObject->AllNodes.Add(QuestNode->ListTask);
+		// }
 	
 		// Select the newly pasted stuff
 		QuestGraphEditor->SetNodeSelection(Node, true);
@@ -525,7 +524,13 @@ void FQuestEditor::PasteNodesHere(const FVector2D& Location)
 		// Give new node a different Guid from the old one
 		Node->CreateNewGuid();
 	}
-    
+
+    // Create new
+    if (PastedNodes.Num() == 0)
+    {
+        CastChecked<UQuestGraphSchema>(QuestEdGraph->GetSchema())->CreateStandardNodeForGraph(QuestEdGraph, Location);
+    }
+
 	// Update UI
 	QuestGraphEditor->NotifyGraphChanged();
 	QuestObject->PostEditChange();

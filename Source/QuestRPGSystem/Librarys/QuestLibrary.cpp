@@ -2,10 +2,8 @@
 
 
 #include "Librarys/QuestLibrary.h"
-
 #include "Engine/AssetManager.h"
 #include "Kismet/KismetStringLibrary.h"
-#include "ListTask/ListTaskBase.h"
 #include "Task/TaskBase.h"
 
 void UQuestLibrary::Print_Log(const TEnumAsByte<EQuestLogVerb> LogVerb, const FString Text, const int Line, const char* Function)
@@ -39,41 +37,6 @@ FString UQuestLibrary::GetStringTimeFromSecond(float Seconds)
     FString Time = UKismetStringLibrary::TimeSecondsToString(Seconds);
     Time = Time.Mid(0, 5);
     return Time;
-}
-
-UListTaskBase* UQuestLibrary::LoadListTaskFromPath(UObject* Owner, const FSoftObjectPath& PathListTask)
-{
-    if (!CHECK_COND(PathListTask.IsValid(), "Path list task is none")) return nullptr;
-    const UClass* CDO = LoadClass<UListTaskBase>(Owner, *(PathListTask.ToString()));
-    if (!CHECK_COND(CDO != nullptr, "CDO is nullptr")) return nullptr;
-    return NewObject<UListTaskBase>(Owner, CDO);
-}
-
-void UQuestLibrary::UnLoadListTaskFromPath(const FSoftObjectPath& PathListTask)
-{
-    FStreamableManager Streamable;
-    Streamable.Unload(PathListTask);
-}
-
-TArray<FDataInfoTask> UQuestLibrary::FillDataInfoTasksFromListTask(UListTaskBase* ListTask)
-{
-    TArray<FDataInfoTask> ResultDataInfoTask;
-    if (!CHECK_COND(ListTask != nullptr, "List task is nullptr")) return ResultDataInfoTask;
-
-    TArray<UTaskBase*> ArrayTasks = ListTask->GetArrayTask();
-    for (int32 i = 0; i < ArrayTasks.Num(); ++i)
-    {
-        if (!ArrayTasks.IsValidIndex(i)) continue;
-        const UTaskBase* Task = ArrayTasks[i];
-        FDataInfoTask TempDataInfoTask;
-        TempDataInfoTask.TaskDescription = Task->GetTaskDescription();
-        TempDataInfoTask.bStatusTask = Task->GetStatusTask() == EStatusTask::Complete;
-        TempDataInfoTask.TaskID = FString::Printf(TEXT("Index - %i - List Task Path - %s - Task Class - %s"),
-            i, *ListTask->GetClass()->GetName(), *Task->GetClass()->GetName());
-        ResultDataInfoTask.Add(TempDataInfoTask);
-    }
-
-    return ResultDataInfoTask;
 }
 
 bool UQuestLibrary::CheckIsClient(const AActor* InActor)

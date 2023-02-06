@@ -3,18 +3,19 @@
 #include "QuestGraphNode_Base.h"
 #include "QuestGraphNode.generated.h"
 
-class UListTaskBase;
-UCLASS(MinimalAPI)
+class UTaskBase;
+UCLASS()
 class UQuestGraphNode : public UQuestGraphNode_Base
 {
     GENERATED_UCLASS_BODY()
 
-    /** The SoundNode this represents */
-    UPROPERTY(VisibleAnywhere, instanced, Category=Quest)
-    UListTaskBase* ListTask;
+    /** The Task this represents */
+    UPROPERTY(EditAnywhere, Category=Quest, meta = (MetaClass = "TaskBase"))
+    FSoftClassPath TaskPath;
 
-    /** Set the ListTask this represents (also assigns this to the SoundNode in Editor)*/
-    void SetListTask(UListTaskBase* InListTask);
+    UPROPERTY(EditAnywhere, instanced, Category=Quest)
+    UTaskBase* Task;
+
     /** Fix up the node's owner after being copied */
     void PostCopyNode();
     /** Create a new input pin for this node */
@@ -41,6 +42,7 @@ class UQuestGraphNode : public UQuestGraphNode_Base
     // End of UEdGraphNode interface
 
     // UObject interface
+    
     virtual void PostLoad() override;
     virtual void PostEditImport() override;
     virtual void PostDuplicate(bool bDuplicateForPIE) override;

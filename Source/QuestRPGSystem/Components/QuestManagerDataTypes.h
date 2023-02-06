@@ -4,22 +4,16 @@
 #include "Engine/DataTable.h"
 #include "QuestManagerDataTypes.generated.h"
 
-/**
- * Call for start quest in Quest Manager
- */
+/** Call for start quest in Quest Manager **/
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStartQuestSignature, const FName&, NameQuest);
 
-/**
- * Call for update quest in Quest Manager
- */
+/** Call for update quest in Quest Manager **/
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUpdateQuestSignature, const FName&, NameQuest);
 
-/**
- * Call for complete quest in Quest Manager
- */
+/** Call for complete quest in Quest Manager **/
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCompleteQuestSignature, const FName&, NameQuest);
 
-// @enum Status process quest
+/** @enum Status process quest **/
 UENUM(BlueprintType)
 enum class EStatusQuest: uint8
 {
@@ -29,9 +23,7 @@ enum class EStatusQuest: uint8
     Complete,
 };
 
-/**
- * @sturct Data quest for Table
- **/
+/** @struct Data quest for Table **/
 USTRUCT(BlueprintType)
 struct FDataQuestTable : public FTableRowBase
 {
@@ -46,13 +38,11 @@ struct FDataQuestTable : public FTableRowBase
     FText DescriptionQuest{};
 
     // Start visible list task
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings Quest", meta = (MetaClass = "ListTaskBase"))
-    FSoftClassPath StartListTask;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings Quest", meta = (MetaClass = "QuestObject"))
+    FSoftClassPath QuestObject;
 };
 
-/**
- * @sturct Data task for processing
- **/
+/** @sturct Data task for processing **/
 USTRUCT(BlueprintType)
 struct FDataInfoTask
 {
@@ -99,62 +89,7 @@ struct FDataInfoTask
 
     bool operator!=(const FDataInfoTask& Other) const
     {
-        return !(this->TaskID == Other.TaskID);
-    }
-};
-
-/**
- * @sturct Data List task for processing to visible
- **/
-USTRUCT(BlueprintType)
-struct FDataListTask
-{
-    GENERATED_USTRUCT_BODY()
-
-    // Block of tasks that have been initialized
-    UPROPERTY(BlueprintReadOnly, SaveGame)
-    TArray<FDataInfoTask> ArrayDataTask;
-
-    // Active current visible task
-    UPROPERTY(BlueprintReadOnly, SaveGame, meta = (AllowedClasses = "ListTaskBase"))
-    FSoftObjectPath PathToListTask{};
-
-    UPROPERTY(BlueprintReadOnly, SaveGame)
-    bool bListTaskComplete{false};
-
-    FDataListTask(){}
-    FDataListTask(const FSoftObjectPath& InPathToListTask):PathToListTask(InPathToListTask) {}
-    FDataListTask(const FDataListTask& Other)
-    {
-        *this = Other;
-    }
-
-    void operator=(const FDataListTask& Other)
-    {
-        this->ArrayDataTask = Other.ArrayDataTask;
-        this->PathToListTask = Other.PathToListTask;
-        this->bListTaskComplete = Other.bListTaskComplete;
-    }
-
-    FString ToString() const
-    {
-        return FString::Printf(TEXT("Path to Visible list task: [%s] | Array Data task: [%i] | List task complete: [%i]"),
-            *PathToListTask.ToString(), ArrayDataTask.Num(), bListTaskComplete);
-    }
-
-    bool operator==(const FDataListTask& Other) const
-    {
-        return this->PathToListTask == Other.PathToListTask;
-    }
-
-    bool operator!=(const FDataListTask& Other) const
-    {
-        return !(this->PathToListTask == Other.PathToListTask);
-    }
-
-    bool IsEmpty() const
-    {
-        return this->PathToListTask.IsNull();
+        return this->TaskID != Other.TaskID;
     }
 };
 
@@ -174,13 +109,13 @@ struct FDataQuest
     UPROPERTY(BlueprintReadOnly, SaveGame)
     FName NameQuestTable{};
 
-    // Array data to visible list task
+    // Array data info task
     UPROPERTY(BlueprintReadOnly, SaveGame)
-    TArray<FDataListTask> ArrayDataListTask;
+    TArray<FDataInfoTask> ArrayDataListTask;
 
     // Active visible list task
     UPROPERTY()
-    class UListTaskBase* ActiveListTask{nullptr};
+    class UQuestObject* ActiveObject{nullptr};
 
     FDataQuest(){}
     explicit FDataQuest(const FName& NewNameQuest): NameQuestTable(NewNameQuest){}

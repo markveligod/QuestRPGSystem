@@ -2,37 +2,37 @@
 
 
 #include "Task/TaskBase.h"
-#include "ListTask/ListTaskBase.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Net/UnrealNetwork.h"
+#include "Objects/QuestObject.h"
 
 #pragma region LogTask
 
 void UTaskBase::Print_LogTask(const TEnumAsByte<EQuestLogVerb> LogVerb, const FString Text, const int Line, const char* Function) const
 {
-    if (!OwnerController || !OwnerListTask) return;
+    if (!OwnerController || !OwnerQuestObject) return;
     UQuestLibrary::Print_Log(LogVerb, FString::Printf(TEXT("NetMode: [%i] | OwnerController: [%s] | OwnerListTask: [%s] | Name: [%s] | %s"),
-        OwnerController->GetNetMode(), *OwnerController->GetName(), *OwnerListTask->GetName(), *GetName(), *Text), Line, Function);
+        OwnerController->GetNetMode(), *OwnerController->GetName(), *OwnerQuestObject->GetName(), *GetName(), *Text), Line, Function);
 }
 
 #pragma endregion
 
 #pragma region Default
 
-bool UTaskBase::InitTask(APlayerController* PlayerController, UListTaskBase* Parent)
+bool UTaskBase::InitTask(APlayerController* PlayerController, UQuestObject* Parent)
 {
     if (!CHECK_COND(PlayerController != nullptr, "Player controller is nullptr")) return false;
     if (!CHECK_COND(Parent != nullptr, "Parent list task is nullptr")) return false;
 
     OwnerController = PlayerController;
-    OwnerListTask = Parent;
+    OwnerQuestObject = Parent;
 
     LOG_TASK(Display, "init task base is success");
     ChangeStatusTask(EStatusTask::Init);
     return InitTask_Event(PlayerController, Parent);
 }
 
-bool UTaskBase::InitTask_Event_Implementation(APlayerController* PlayerController, UListTaskBase* Parent)
+bool UTaskBase::InitTask_Event_Implementation(APlayerController* PlayerController, UQuestObject* Parent)
 {
     return true;
 }
@@ -139,8 +139,6 @@ void UTaskBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-    DOREPLIFETIME_CONDITION(UTaskBase, OwnerController, COND_OwnerOnly);
-    DOREPLIFETIME_CONDITION(UTaskBase, OwnerListTask, COND_OwnerOnly);
 }
 
 void UTaskBase::ServerCompleteTask_Implementation()

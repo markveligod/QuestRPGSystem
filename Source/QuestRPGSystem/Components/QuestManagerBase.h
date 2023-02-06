@@ -182,12 +182,7 @@ public:
     FDataQuestTable GetDataQuestTableFromName(const FName& NameQuest) const;
     
 protected:
-
-    /**
-     * @protected Get class UListTaskBase from unique ID UObject
-     **/
-    UListTaskBase* FindListTaskFromID(const uint32 ID) const;
-
+    
     /**
      * @protected Get data quest from unique ID UObject Active list task
      **/
@@ -197,21 +192,6 @@ protected:
      * @protected Get non-constant data quest from Name quest
      **/
     FDataQuest& GetDataQuestFromName(const FName& NameQuest);
-
-    /**
-     * @protected Get non-constant data quest from Active list task
-     **/
-    FDataQuest& GetDataQuestFromListTask(const UListTaskBase* ListTask);
-
-    /**
-     * @protected Get non-constant data quest from list task path
-     **/
-    FDataQuest& GetDataQuestFromPathListTask(const FSoftObjectPath& InListTaskPath);
-
-    /**
-     * @protected Get non-constant data list task from list task path
-     **/
-    FDataListTask& GetDataListTaskFromPathListTask(const FSoftObjectPath& InListTaskPath);
 
 #pragma endregion
 
@@ -231,9 +211,6 @@ protected:
 
     // @protected Constant empty data quest
     FDataQuest EmptyDataQuest;
-
-    // @protected Constant empty data list task
-    FDataListTask EmptyDataListTask;
 
 #pragma endregion
 

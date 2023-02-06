@@ -7,6 +7,7 @@
 #include "QuestGraph.h"
 #include "Engine/Font.h"
 #include "QuestRPGSystem/Objects/QuestObject.h"
+#include "QuestRPGSystem/Task/TaskBase.h"
 
 #define LOCTEXT_NAMESPACE "SoundCueGraphNode"
 
@@ -22,29 +23,29 @@ void UQuestGraphNode::PostLoad()
 {
 	Super::PostLoad();
 
-	// // Fixup any SoundNode back pointers that may be out of date
+	// Fixup any SoundNode back pointers that may be out of date
 	// if (QuestNode)
 	// {
 	// 	QuestNode->GraphNode = this;
 	// }
-	//
-	// for (int32 Index = 0; Index < Pins.Num(); ++Index)
-	// {
-	// 	UEdGraphPin* Pin = Pins[Index];
-	// 	if (Pin->PinName.IsEmpty())
-	// 	{
-	// 		// Makes sure pin has a name for lookup purposes but user will never see it
-	// 		if (Pin->Direction == EGPD_Input)
-	// 		{
-	// 			Pin->PinName = CreateUniquePinName(TEXT("Input"));
-	// 		}
-	// 		else
-	// 		{
-	// 			Pin->PinName = CreateUniquePinName(TEXT("Output"));
-	// 		}
-	// 		Pin->PinFriendlyName = FText::FromString(TEXT(" "));
-	// 	}
-	// }
+	
+	for (int32 Index = 0; Index < Pins.Num(); ++Index)
+	{
+		UEdGraphPin* Pin = Pins[Index];
+		// if (Pin->PinName.IsEmpty())
+		// {
+		// 	// Makes sure pin has a name for lookup purposes but user will never see it
+		// 	if (Pin->Direction == EGPD_Input)
+		// 	{
+		// 		Pin->PinName = CreateUniquePinName(TEXT("Input"));
+		// 	}
+		// 	else
+		// 	{
+		// 		Pin->PinName = CreateUniquePinName(TEXT("Output"));
+		// 	}
+		// 	Pin->PinFriendlyName = FText::FromString(TEXT(" "));
+		// }
+	}
 }
 
 void UQuestGraphNode::CreateInputPin()
@@ -134,11 +135,6 @@ void UQuestGraphNode::PrepareForCopying()
 void UQuestGraphNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
 {
     Super::GetNodeContextMenuActions(Menu, Context);
-}
-
-void UQuestGraphNode::SetListTask(UListTaskBase* InListTask)
-{
-    ListTask = InListTask;
 }
 
 void UQuestGraphNode::PostCopyNode()

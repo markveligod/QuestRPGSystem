@@ -242,7 +242,7 @@ void UQuestGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& Context
 
 	if (!ContextMenuBuilder.FromPin)
 	{
-		TSharedPtr<FQuestGraphSchemaAction_Paste> NewAction( new FQuestGraphSchemaAction_Paste(FText::GetEmpty(), LOCTEXT("Actions", "Create Node List Task"), TEXT(""), 0) );
+		TSharedPtr<FQuestGraphSchemaAction_Paste> NewAction( new FQuestGraphSchemaAction_Paste(FText::GetEmpty(), LOCTEXT("Actions", "Create Node Task"), TEXT(""), 0) );
 		ContextMenuBuilder.AddAction( NewAction );
 	}
 }
@@ -278,6 +278,21 @@ void UQuestGraphSchema::CreateDefaultNodesForGraph(UEdGraph* Graph) const
     ResultRootNode->ChangeStateRoot(true);
     NodeCreator.Finalize();
     SetNodeMetaData(ResultRootNode, FNodeMetadata::DefaultGraphNode);
+    ResultRootNode->MarkPackageDirty();
+}
+
+void UQuestGraphSchema::CreateStandardNodeForGraph(UEdGraph* Graph, const FVector2D& InLocationNode) const
+{
+    // Create the result node
+    FGraphNodeCreator<UQuestGraphNode> NodeCreator(*Graph);
+    UQuestGraphNode* ResultRootNode = NodeCreator.CreateNode();
+    ResultRootNode->NodePosX = InLocationNode.X;
+    ResultRootNode->NodePosY = InLocationNode.Y;
+    ResultRootNode->SetupNameNode(FText::FromString("Task node"));
+    ResultRootNode->ChangeStateRoot(false);
+    NodeCreator.Finalize();
+    SetNodeMetaData(ResultRootNode, FNodeMetadata::DefaultGraphNode);
+    ResultRootNode->MarkPackageDirty();
 }
 
 const FPinConnectionResponse UQuestGraphSchema::CanCreateConnection(const UEdGraphPin* PinA, const UEdGraphPin* PinB) const

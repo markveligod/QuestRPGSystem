@@ -5,7 +5,9 @@
 #include "CoreMinimal.h"
 #include "QuestObject.generated.h"
 
-class UListTaskBase;
+class UQuestNode;
+class UTaskBase;
+
 /**
  * 
  */
@@ -16,5 +18,4 @@ class QUESTRPGSYSTEM_API UQuestObject : public UObject
 
 public:
 
-    TArray<UListTaskBase*> AllNodes;
 };

@@ -3,7 +3,6 @@
 
 #include "Components/QuestManager.h"
 #include "Librarys/QuestLibrary.h"
-#include "ListTask/ListTaskBase.h"
 
 #pragma region API_Checked
 
@@ -83,102 +82,27 @@ void UQuestManager::AddQuest(const FName& QuestName)
     FDataQuest DataQuest(QuestName);
     DataQuest.StatusQuest = EStatusQuest::Start;
     
-    DataQuest.ArrayDataListTask.Add(FDataListTask(QuestFromTable->StartListTask));
-    ArrayDataQuest.AddUnique(DataQuest);
-
-    ClientSendNotifyStartQuest(DataQuest.NameQuestTable);
-
-    const FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &ThisClass::InitListTask, QuestName, FSoftObjectPath(QuestFromTable->StartListTask));
-    GetWorld()->GetTimerManager().SetTimerForNextTick(TimerDelegate);
+    
 }
 
 void UQuestManager::CompleteQuest(const FName QuestName)
 {
-    LOG_QM(EQuestLogVerb::Display, FString::Printf(TEXT("QuestName: [%s]"), *QuestName.ToString()));
-
-    FDataQuest& DataQuest = GetDataQuestFromName(QuestName);
-    if (!CHECK_COND(DataQuest != EmptyDataQuest, "Data quest is empty")) return;
-
-    const FDataQuestTable* QuestFromTable = DataQuestTable->FindRow<FDataQuestTable>(QuestName, "");
-    if (!CHECK_COND(QuestFromTable != nullptr, "Data quest from table is not found")) return;
-
-    for (auto& DataVisibleLT : DataQuest.ArrayDataListTask)
-    {
-        DataVisibleLT.bListTaskComplete = true;
-    }
-
-    DestroyActiveListTaskFromQuestName(QuestName);
-    DataQuest.StatusQuest = EStatusQuest::Complete;
-    ClientSendNotifyCompleteQuest(QuestName);
+    
 }
 
 void UQuestManager::InitListTask(const FName QuestName, const FSoftObjectPath ListTask)
 {
-    if (!CHECK_COND(GetOwner()->HasAuthority(), "Owner is not Authority")) return;
-
-    LOG_QM(EQuestLogVerb::Display, FString::Printf(TEXT("QuestName: [%s] | ListTask: [%s]"), *QuestName.ToString(),
-        *ListTask.ToString()));
-
-    DestroyActiveListTaskFromQuestName(QuestName);
-
-    FDataQuest& DataQuest = GetDataQuestFromName(QuestName);
-    if (!CHECK_COND(DataQuest != EmptyDataQuest, "Data quest is empty")) return;
-
-    DataQuest.StatusQuest = EStatusQuest::InProcess;
-    UListTaskBase* NextVisibleBlock = Cast<UListTaskBase>(UQuestLibrary::LoadListTaskFromPath(GetOwner(), ListTask));
-    if (!NextVisibleBlock)
-    {
-        CompleteQuest(QuestName);
-        return;
-    }
-
-    if (!NextVisibleBlock->InitListTask(Cast<APlayerController>(GetOwner()), this))
-    {
-        CompleteQuest(QuestName);
-        return;
-    }
-
-    if (!NextVisibleBlock->RunListTask())
-    {
-        CompleteQuest(QuestName);
-        return;
-    }
-
-    FDataListTask NewDataVisibleListTask(ListTask);
-    NewDataVisibleListTask.ArrayDataTask = UQuestLibrary::FillDataInfoTasksFromListTask(NextVisibleBlock);
-    NextVisibleBlock->OnUpdateListTask.AddUObject(this, &ThisClass::RegisterUpdateListTask);
-    DataQuest.ArrayDataListTask.Add(NewDataVisibleListTask);
-    DataQuest.ActiveListTask = NextVisibleBlock;
-
-    NotifyUpdateQuest(DataQuest.NameQuestTable);
+    
 }
 
 void UQuestManager::RegisterUpdateListTask(UListTaskBase* ListTask)
 {
-    if (!CHECK_COND(ListTask != nullptr, "List task is nullptr")) return;
-    const FDataQuest& DataQuest = FindDataQuestFromID(ListTask->GetUniqueID());
-
-    UpdateInfoDataQuest(DataQuest.NameQuestTable);
-    NotifyUpdateQuest(DataQuest.NameQuestTable);
-
-    if (ListTask->GetStatusListTask() == EStatusListTask::Complete)
-    {
-        ListTask->OnUpdateListTask.RemoveAll(this);
-        FDataListTask& DataListTask = GetDataListTaskFromPathListTask(DataQuest.ActiveListTask);
-        DataListTask.bListTaskComplete = true;
-
-        const FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &ThisClass::InitListTask, DataQuest.NameQuestTable, DataQuest.ActiveListTask->GetNextListTask());
-        GetWorld()->GetTimerManager().SetTimerForNextTick(TimerDelegate);
-    }
+   
 }
 
 void UQuestManager::NotifyUpdateQuest(const FName& QuestName)
 {
-    if (!UQuestLibrary::CheckIsClient(GetOwner()))
-    {
-        PushReplicateID(QuestName);
-    }
-    ClientSendNotifyUpdateQuest(QuestName);
+    
 }
 
 #pragma endregion

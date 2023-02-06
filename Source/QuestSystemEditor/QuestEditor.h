@@ -130,9 +130,9 @@ private:
 
 private:
 	/** The SoundCue asset being inspected */
-	UQuestObject* QuestObject;
+	UQuestObject* QuestObject{nullptr};
 
-    UQuestGraph* QuestEdGraph;
+    UQuestGraph* QuestEdGraph{nullptr};
 
 	/** New Graph Editor */
 	TSharedPtr<SGraphEditor> QuestGraphEditor;
