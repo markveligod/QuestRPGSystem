@@ -13,7 +13,8 @@
 #include "Framework/Commands/GenericCommands.h"
 #include "QuestGraph/QuestEdGraphSchema.h"
 #include "QuestGraph/QuestGraph.h"
-#include "QuestGraph/QuestGraphNode.h"
+#include "QuestGraph/QuestGraphNode_Base.h"
+#include "QuestGraph/QuestGraphNode_Root.h"
 
 #define LOCTEXT_NAMESPACE "QuestEditor"
 
@@ -287,6 +288,7 @@ TSharedRef<SGraphEditor> FQuestEditor::CreateGraphEditorWidget()
 	InEvents.OnSelectionChanged = SGraphEditor::FOnSelectionChanged::CreateSP(this, &FQuestEditor::OnSelectedNodesChanged);
 	InEvents.OnTextCommitted = FOnNodeTextCommitted::CreateSP(this, &FQuestEditor::OnNodeTitleCommitted);
     QuestEdGraph = Cast<UQuestGraph>(FBlueprintEditorUtils::CreateNewGraph(QuestObject, "Quest Graph", UQuestGraph::StaticClass(), UQuestGraphSchema::StaticClass()));
+    
 
 	return SNew(SGraphEditor)
 		.AdditionalCommands(GraphEditorCommands)
@@ -316,10 +318,14 @@ void FQuestEditor::OnSelectedNodesChanged(const TSet<class UObject*>& NewSelecti
 	{
 		for(TSet<class UObject*>::TConstIterator SetIt(NewSelection); SetIt; ++SetIt)
 		{
-			if (UQuestGraphNode* GraphNode = Cast<UQuestGraphNode>(*SetIt))
+			if (UQuestGraphNode_Base* GraphNodeBase = Cast<UQuestGraphNode_Base>(*SetIt))
 			{
-				Selection.Add(GraphNode);
+				Selection.Add(GraphNodeBase);
 			}
+		    else if (UQuestGraphNode_Root* GraphNodeRoot = Cast<UQuestGraphNode_Root>(*SetIt))
+		    {
+		        Selection.Add(GraphNodeRoot);
+		    }
 		}
 	    SetSelection(Selection);
 	}
@@ -357,9 +363,9 @@ void FQuestEditor::DeleteSelectedNodes()
 
 	for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
 	{
-		UQuestGraphNode* Node = CastChecked<UQuestGraphNode>(*NodeIt);
+		UQuestGraphNode_Base* Node = CastChecked<UQuestGraphNode_Base>(*NodeIt);
 
-		if (Node->CanUserDeleteNode() && !Node->IsRootNode())
+		if (Node->CanUserDeleteNode())
 		{
 		    FBlueprintEditorUtils::RemoveNode(nullptr, Node, true);
 		}
@@ -430,9 +436,9 @@ void FQuestEditor::CopySelectedNodes()
 
 	for (FGraphPanelSelectionSet::TConstIterator SelectedIter(SelectedNodes); SelectedIter; ++SelectedIter)
 	{
-		if(UQuestGraphNode* Node = Cast<UQuestGraphNode>(*SelectedIter))
+		if(UQuestGraphNode_Base* Node = Cast<UQuestGraphNode_Base>(*SelectedIter))
 		{
-			Node->PrepareForCopying();
+			// Node->PrepareForCopying();
 		}
 	}
 
@@ -442,9 +448,9 @@ void FQuestEditor::CopySelectedNodes()
 	// Make sure SoundCue remains the owner of the copied nodes
 	for (FGraphPanelSelectionSet::TConstIterator SelectedIter(SelectedNodes); SelectedIter; ++SelectedIter)
 	{
-		if (UQuestGraphNode* Node = Cast<UQuestGraphNode>(*SelectedIter))
+		if (UQuestGraphNode_Base* Node = Cast<UQuestGraphNode_Base>(*SelectedIter))
 		{
-			Node->PostCopyNode();
+			// Node->PostCopyNode();
 		}
 	}
 }

@@ -7,7 +7,8 @@
 #include "GraphEditor.h"
 #include "GraphEditorActions.h"
 #include "QuestGraph.h"
-#include "QuestGraphNode.h"
+#include "QuestGraphNode_Base.h"
+#include "QuestGraphNode_Root.h"
 #include "Engine/Selection.h"
 #include "Framework/Commands/GenericCommands.h"
 #include "QuestRPGSystem/Objects/QuestObject.h"
@@ -199,7 +200,7 @@ UQuestGraphSchema::UQuestGraphSchema(const FObjectInitializer& ObjectInitializer
 
 bool UQuestGraphSchema::ConnectionCausesLoop(const UEdGraphPin* InputPin, const UEdGraphPin* OutputPin) const
 {
-	UQuestGraphNode* InputNode = Cast<UQuestGraphNode>(InputPin->GetOwningNode());
+	UQuestGraphNode_Base* InputNode = Cast<UQuestGraphNode_Base>(InputPin->GetOwningNode());
 
 	// if (InputNode)
 	// {
@@ -249,7 +250,7 @@ void UQuestGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& Context
 
 void UQuestGraphSchema::GetContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
 {
-    if (Context->Node && Context->Node->IsA(UQuestGraphNode::StaticClass()))
+    if (Context->Node && Context->Node->IsA(UQuestGraphNode_Base::StaticClass()))
     {
         FToolMenuSection& Section = Menu->AddSection(FName("QuestGraphSchemaNodeActions"), LOCTEXT("NodeActionsMenuHeader", "Node Actions"));
         Section.AddMenuEntry(FGenericCommands::Get().Delete);
@@ -271,11 +272,9 @@ void UQuestGraphSchema::CreateDefaultNodesForGraph(UEdGraph* Graph) const
     const int32 RootNodeHeightOffset = -58;
 
     // Create the result node
-    FGraphNodeCreator<UQuestGraphNode> NodeCreator(*Graph);
-    UQuestGraphNode* ResultRootNode = NodeCreator.CreateNode();
+    FGraphNodeCreator<UQuestGraphNode_Root> NodeCreator(*Graph);
+    UQuestGraphNode_Root* ResultRootNode = NodeCreator.CreateNode();
     ResultRootNode->NodePosY = RootNodeHeightOffset;
-    ResultRootNode->SetupNameNode(FText::FromString("START NODE"));
-    ResultRootNode->ChangeStateRoot(true);
     NodeCreator.Finalize();
     SetNodeMetaData(ResultRootNode, FNodeMetadata::DefaultGraphNode);
     ResultRootNode->MarkPackageDirty();
@@ -284,12 +283,10 @@ void UQuestGraphSchema::CreateDefaultNodesForGraph(UEdGraph* Graph) const
 void UQuestGraphSchema::CreateStandardNodeForGraph(UEdGraph* Graph, const FVector2D& InLocationNode) const
 {
     // Create the result node
-    FGraphNodeCreator<UQuestGraphNode> NodeCreator(*Graph);
-    UQuestGraphNode* ResultRootNode = NodeCreator.CreateNode();
+    FGraphNodeCreator<UQuestGraphNode_Base> NodeCreator(*Graph);
+    UQuestGraphNode_Base* ResultRootNode = NodeCreator.CreateNode();
     ResultRootNode->NodePosX = InLocationNode.X;
     ResultRootNode->NodePosY = InLocationNode.Y;
-    ResultRootNode->SetupNameNode(FText::FromString("Task node"));
-    ResultRootNode->ChangeStateRoot(false);
     NodeCreator.Finalize();
     SetNodeMetaData(ResultRootNode, FNodeMetadata::DefaultGraphNode);
     ResultRootNode->MarkPackageDirty();

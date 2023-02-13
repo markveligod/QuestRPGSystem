@@ -4,8 +4,6 @@
 
 #include "QuestGraphNode_Base.h"
 #include "QuestEdGraphSchema.h"
-#include "QuestRPGSystem/Objects/QuestObject.h"
-#include "QuestSystemEditor/QuestGraph/QuestGraph.h"
 
 /////////////////////////////////////////////////////
 // UQuestGraphNode_Base
@@ -15,120 +13,31 @@ UQuestGraphNode_Base::UQuestGraphNode_Base(const FObjectInitializer& ObjectIniti
 {
 }
 
-UEdGraphPin* UQuestGraphNode_Base::GetOutputPin()
+#pragma region ObjectInterface
+
+void UQuestGraphNode_Base::PostLoad()
 {
-	UEdGraphPin* OutputPin = nullptr;
-
-	for (int32 PinIndex = 0; PinIndex < Pins.Num(); PinIndex++)
-	{
-		if (Pins[PinIndex]->Direction == EGPD_Output)
-		{
-			// should only ever be one output pin
-			check(OutputPin == nullptr);
-			OutputPin = Pins[PinIndex];
-		}
-	}
-
-	return OutputPin;
+    Super::PostLoad();
 }
 
-void UQuestGraphNode_Base::GetInputPins(TArray<class UEdGraphPin*>& OutInputPins)
+void UQuestGraphNode_Base::PostEditImport()
 {
-	OutInputPins.Empty();
-
-	for (int32 PinIndex = 0; PinIndex < Pins.Num(); PinIndex++)
-	{
-		if (Pins[PinIndex]->Direction == EGPD_Input)
-		{
-			OutInputPins.Add(Pins[PinIndex]);
-		}
-	}
+    Super::PostEditImport();
 }
 
-UEdGraphPin* UQuestGraphNode_Base::GetInputPin(int32 InputIndex)
+void UQuestGraphNode_Base::PostDuplicate(bool bDuplicateForPIE)
 {
-	check(InputIndex >= 0 && InputIndex < GetInputCount());
-
-	for (int32 PinIndex = 0, FoundInputs = 0; PinIndex < Pins.Num(); PinIndex++)
-	{
-		if (Pins[PinIndex]->Direction == EGPD_Input)
-		{
-			if (InputIndex == FoundInputs)
-			{
-				return Pins[PinIndex];
-			}
-			else
-			{
-				FoundInputs++;
-			}
-		}
-	}
-
-	return nullptr;
+    Super::PostDuplicate(bDuplicateForPIE);
 }
 
-int32 UQuestGraphNode_Base::GetInputCount() const
-{
-	int32 InputCount = 0;
+#pragma endregion
 
-	for (int32 PinIndex = 0, FoundInputs = 0; PinIndex < Pins.Num(); PinIndex++)
-	{
-		if (Pins[PinIndex]->Direction == EGPD_Input)
-		{
-			InputCount++;
-		}
-	}
-
-	return InputCount;
-}
-
-void UQuestGraphNode_Base::InsertNewNode(UEdGraphPin* FromPin, UEdGraphPin* NewLinkPin, TSet<UEdGraphNode*>& OutNodeList)
-{
-	const UQuestGraphSchema* Schema = CastChecked<UQuestGraphSchema>(GetSchema());
-
-	// The pin we are creating from already has a connection that needs to be broken. We want to "insert" the new node in between, so that the output of the new node is hooked up too
-	UEdGraphPin* OldLinkedPin = FromPin->LinkedTo[0];
-	check(OldLinkedPin);
-
-	FromPin->BreakAllPinLinks();
-
-	// Hook up the old linked pin to the first valid output pin on the new node
-	for (int32 OutpinPinIdx=0; OutpinPinIdx<Pins.Num(); OutpinPinIdx++)
-	{
-		UEdGraphPin* OutputExecPin = Pins[OutpinPinIdx];
-		check(OutputExecPin);
-		if (ECanCreateConnectionResponse::CONNECT_RESPONSE_MAKE == Schema->CanCreateConnection(OldLinkedPin, OutputExecPin).Response)
-		{
-			if (Schema->TryCreateConnection(OldLinkedPin, OutputExecPin))
-			{
-				OutNodeList.Add(OldLinkedPin->GetOwningNode());
-				OutNodeList.Add(this);
-			}
-			break;
-		}
-	}
-
-	if (Schema->TryCreateConnection(FromPin, NewLinkPin))
-	{
-		OutNodeList.Add(FromPin->GetOwningNode());
-		OutNodeList.Add(this);
-	}
-}
+#pragma region EdGraphNodeInterface
 
 void UQuestGraphNode_Base::AllocateDefaultPins()
 {
-    check(Pins.Num() == 0);
-
-    CreateInputPins();
-
-    if (IsRootNode())
-    {
-        CreatePin(EGPD_Output, TEXT("QuestNode"), TEXT(""), nullptr, /*bIsArray=*/ false, /*bIsReference=*/ false, TEXT("Start Node Quest"));
-    }
-    else
-    {
-        CreatePin(EGPD_Input, TEXT("QuestNode"), TEXT(""), nullptr, /*bIsArray=*/ false, /*bIsReference=*/ false, TEXT("Input Node Quest"));
-    }
+    Super::AllocateDefaultPins();
+    CreatePin(EGPD_Input, TEXT("QuestNode"), TEXT(""), nullptr, /*bIsArray=*/ false, /*bIsReference=*/ false, TEXT("Input Node Quest"));
 }
 
 void UQuestGraphNode_Base::ReconstructNode()
@@ -149,41 +58,41 @@ void UQuestGraphNode_Base::ReconstructNode()
 		}
 	}
 
-	// Store the old Input and Output pins
-	TArray<UEdGraphPin*> OldInputPins;
-	GetInputPins(OldInputPins);
-	UEdGraphPin* OldOutputPin = GetOutputPin();
-
-	// Move the existing pins to a saved array
-	TArray<UEdGraphPin*> OldPins(Pins);
-	Pins.Empty();
-
-	// Recreate the new pins
-	AllocateDefaultPins();
-
-	// Get new Input and Output pins
-	TArray<UEdGraphPin*> NewInputPins;
-	GetInputPins(NewInputPins);
-	UEdGraphPin* NewOutputPin = GetOutputPin();
-
-	for (int32 PinIndex = 0; PinIndex < OldInputPins.Num(); PinIndex++)
-	{
-		if (PinIndex < NewInputPins.Num())
-		{
-			NewInputPins[PinIndex]->CopyPersistentDataFromOldPin(*OldInputPins[PinIndex]);
-		}
-	}
-
-	NewOutputPin->CopyPersistentDataFromOldPin(*OldOutputPin);
-	OldInputPins.Empty();
-	OldOutputPin = nullptr;
-
-	// Throw away the original pins
-	for (int32 OldPinIndex = 0; OldPinIndex < OldPins.Num(); ++OldPinIndex)
-	{
-		UEdGraphPin* OldPin = OldPins[OldPinIndex];
-		OldPin->Modify();
-		OldPin->BreakAllPinLinks();
+	// // Store the old Input and Output pins
+	// TArray<UEdGraphPin*> OldInputPins;
+	// GetInputPins(OldInputPins);
+	// UEdGraphPin* OldOutputPin = GetOutputPin();
+	//
+	// // Move the existing pins to a saved array
+	// TArray<UEdGraphPin*> OldPins(Pins);
+	// Pins.Empty();
+	//
+	// // Recreate the new pins
+	// AllocateDefaultPins();
+	//
+	// // Get new Input and Output pins
+	// TArray<UEdGraphPin*> NewInputPins;
+	// GetInputPins(NewInputPins);
+	// UEdGraphPin* NewOutputPin = GetOutputPin();
+	//
+	// for (int32 PinIndex = 0; PinIndex < OldInputPins.Num(); PinIndex++)
+	// {
+	// 	if (PinIndex < NewInputPins.Num())
+	// 	{
+	// 		NewInputPins[PinIndex]->CopyPersistentDataFromOldPin(*OldInputPins[PinIndex]);
+	// 	}
+	// }
+	//
+	// NewOutputPin->CopyPersistentDataFromOldPin(*OldOutputPin);
+	// OldInputPins.Empty();
+	// OldOutputPin = nullptr;
+	//
+	// // Throw away the original pins
+	// for (int32 OldPinIndex = 0; OldPinIndex < OldPins.Num(); ++OldPinIndex)
+	// {
+	// 	UEdGraphPin* OldPin = OldPins[OldPinIndex];
+	// 	OldPin->Modify();
+	// 	OldPin->BreakAllPinLinks();
 
 // #if 0
 // 		UEdGraphNode::ReturnPinToPool(OldPin);
@@ -192,8 +101,8 @@ void UQuestGraphNode_Base::ReconstructNode()
 // 		OldPin->RemoveFromRoot();
 // 		OldPin->MarkPendingKill();
 // #endif
-	}
-	OldPins.Empty();
+	// }
+	// OldPins.Empty();
 }
 
 void UQuestGraphNode_Base::AutowireNewNode(UEdGraphPin* FromPin)
@@ -221,7 +130,6 @@ void UQuestGraphNode_Base::AutowireNewNode(UEdGraphPin* FromPin)
 			}
 			else if(ECanCreateConnectionResponse::CONNECT_RESPONSE_BREAK_OTHERS_A == Response.Response)
 			{
-				InsertNewNode(FromPin, Pin, NodeList);
 				break;
 			}
 		}
@@ -247,5 +155,27 @@ FString UQuestGraphNode_Base::GetDocumentationLink() const
 
 FText UQuestGraphNode_Base::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-    return NameNode.IsEmpty() ? Super::GetNodeTitle(TitleType) : NameNode;
+    return Super::GetNodeTitle(TitleType);
 }
+
+void UQuestGraphNode_Base::PrepareForCopying()
+{
+    Super::PrepareForCopying();
+}
+
+void UQuestGraphNode_Base::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
+{
+    Super::GetNodeContextMenuActions(Menu, Context);
+}
+
+FText UQuestGraphNode_Base::GetTooltipText() const
+{
+    return Super::GetTooltipText();
+}
+
+FString UQuestGraphNode_Base::GetDocumentationExcerptName() const
+{
+    return Super::GetDocumentationExcerptName();
+}
+
+#pragma endregion

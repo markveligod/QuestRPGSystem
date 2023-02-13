@@ -1,10 +1,10 @@
 ﻿#pragma once
 
 #include "EdGraph/EdGraphNode.h"
-#include "QuestGraphNode_Base.generated.h"
+#include "QuestGraphNode_Root.generated.h"
 
 UCLASS()
-class UQuestGraphNode_Base : public UEdGraphNode
+class UQuestGraphNode_Root : public UEdGraphNode
 {
     GENERATED_UCLASS_BODY()
 
@@ -19,7 +19,7 @@ protected:
     // End of UObject interface
 
 #pragma endregion
-
+    
 #pragma region EdGraphNodeInterface
 
 public:
@@ -37,5 +37,5 @@ public:
     virtual FString GetDocumentationExcerptName() const override;
     // End of UEdGraphNode interface.
 
-    #pragma endregion
+#pragma endregion
 };
