@@ -11,14 +11,12 @@ public:
     SLATE_END_ARGS()
 
     void Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData);
-
 };
 
 class SEditorPaletteTasks : public SGraphPalette
 {
 
 public:
-
     SLATE_BEGIN_ARGS(SEditorPaletteTasks) {}
     SLATE_ARGUMENT(TWeakPtr<class FRPG_QuestAssetEditor>, InEditor)
     SLATE_END_ARGS()
@@ -26,9 +24,8 @@ public:
     void Construct(const FArguments& InArgs, TWeakPtr<class FRPG_QuestAssetEditor> InEditor);
 
     virtual void RefreshActionsList(bool bPreserveExpansion) override;
-	
-protected:
 
+protected:
     virtual TSharedRef<SWidget> OnCreateWidgetForAction(FCreateWidgetForActionData* const InCreateData) override;
     virtual void CollectAllActions(FGraphActionListBuilderBase& OutAllActions) override;
 
@@ -37,6 +34,4 @@ protected:
 private:
     TWeakPtr<class FRPG_QuestAssetEditor> Editor;
     TArray<UClass*> TaskNodes;
-
 };
-

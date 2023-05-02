@@ -7,9 +7,7 @@
 
 #define LOCTEXT_NAMESPACE "AssetTypeActions"
 
-FRPG_QuestAssetTypeActions::FRPG_QuestAssetTypeActions()
-{
-}
+FRPG_QuestAssetTypeActions::FRPG_QuestAssetTypeActions() {}
 
 FText FRPG_QuestAssetTypeActions::GetName() const
 {

@@ -7,20 +7,12 @@
 #define LOCTEXT_NAMESPACE "EdGraphSchemaAction"
 
 FEdGraphSchemaAction_Task::FEdGraphSchemaAction_Task(FText InNodeCategory, URPG_TaskNodeBase* Node, const ERPG_TypeNode& TypeNode)
-        : FEdGraphSchemaAction(MoveTemp(InNodeCategory),
-        FText::FromString(Node->GetDesc()),
-        FText::FromName(Node->GetClass()->GetFName()),0),
-        NodeClass(Node),
-        TypeNode(TypeNode)
+    : FEdGraphSchemaAction(MoveTemp(InNodeCategory), FText::FromString(Node->GetDesc()), FText::FromName(Node->GetClass()->GetFName()), 0), NodeClass(Node), TypeNode(TypeNode)
 {
-    
 }
 
 FEdGraphSchemaAction_Task::FEdGraphSchemaAction_Task(FText InNodeCategory, FText InMenuDesc, FText InToolTip, const ERPG_TypeNode& TypeNode)
-        : FEdGraphSchemaAction(MoveTemp(InNodeCategory),
-        MoveTemp(InMenuDesc),
-        MoveTemp(InToolTip),0),
-        TypeNode(TypeNode)
+    : FEdGraphSchemaAction(MoveTemp(InNodeCategory), MoveTemp(InMenuDesc), MoveTemp(InToolTip), 0), TypeNode(TypeNode)
 {
 }
 

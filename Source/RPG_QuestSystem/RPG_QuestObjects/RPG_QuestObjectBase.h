@@ -50,7 +50,7 @@ protected:
     /** @protected Reset a quest. Call only Server **/
     virtual void ResetQuest();
 
-    /** 
+    /**
      * Handles reading, writing, and reference collecting using FArchive.
      * This implementation handles all FProperty serialization, but can be overridden for native variables.
      */
@@ -90,7 +90,6 @@ protected:
 #pragma region ActionQuestObject
 
 public:
-
     /** @public Getting the state of the quest entity **/
     const ERPG_StateEntity& GetStateQuest() const { return StateQuestObject; }
 
@@ -118,7 +117,6 @@ public:
 #if UE_EDITOR
 
 public:
-
     /** @public Creating a new working task node **/
     FRPG_TaskNodeData* CreateNewTaskNode(UClass* ClassNode, const FVector2D& Location, const ERPG_TypeNode& TypeNode);
 
@@ -140,7 +138,6 @@ public:
     FString GetCategoryNameByTypeNode(const ERPG_TypeNode& TypeNode) const;
 
 private:
-
     /** @private Search for a free number index **/
     int32 IsFreeIndexNumSlot() const;
 
@@ -148,9 +145,8 @@ private:
     void PrintTaskNodes();
 
 #endif
-    
-protected:
 
+protected:
     /** @protected Changes to the state of the quest object entity **/
     virtual void ChangeStateQuestObject(ERPG_StateEntity NewState);
 

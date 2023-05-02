@@ -1,13 +1,10 @@
 /** Copyright Mark Veligod. Published in 2023. **/
 
-
 #include "RPG_TaskNodes/RPG_ExampleTaskNodes/RPG_MoveToTaskNode.h"
 
 #pragma region DefaultInterfaceTaskNodeBase
 
-URPG_MoveToTaskNode::URPG_MoveToTaskNode()
-{
-}
+URPG_MoveToTaskNode::URPG_MoveToTaskNode() {}
 
 bool URPG_MoveToTaskNode::InitTask(APlayerController* PlayerController, URPG_QuestObjectBase* ParentQuest)
 {
@@ -21,7 +18,7 @@ void URPG_MoveToTaskNode::RunTask()
     if (UWorld* World = GetWorld())
     {
         TASK_NODE_LOG(Display, TEXT("Start check distance to position"));
-        World->GetTimerManager().SetTimer(CheckDistToPosTimerHandle,this, &ThisClass::RegisterCheckDistToPos, FrequencyCheckDist, true);
+        World->GetTimerManager().SetTimer(CheckDistToPosTimerHandle, this, &ThisClass::RegisterCheckDistToPos, FrequencyCheckDist, true);
     }
     return Super::RunTask();
 }

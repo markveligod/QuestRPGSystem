@@ -4,10 +4,7 @@
 
 #pragma region DefaultInterfaceTaskNodeBase
 
-URPG_PrintStringTaskNode::URPG_PrintStringTaskNode()
-{
-    
-}
+URPG_PrintStringTaskNode::URPG_PrintStringTaskNode() {}
 
 bool URPG_PrintStringTaskNode::InitTask(APlayerController* PlayerController, URPG_QuestObjectBase* ParentQuest)
 {
@@ -57,7 +54,6 @@ void URPG_PrintStringTaskNode::ActionPrintString_Implementation()
 
     ServerCompleteTask();
 }
-
 
 void URPG_PrintStringTaskNode::ServerCompleteTask_Implementation()
 {

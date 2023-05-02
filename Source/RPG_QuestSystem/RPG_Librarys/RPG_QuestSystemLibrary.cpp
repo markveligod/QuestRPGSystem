@@ -9,7 +9,7 @@ static TAutoConsoleVariable<bool> EnableD_QuestSystemLog(TEXT("QuestSystem.ShowL
 
 void URPG_QuestSystemLibrary::Print_Log(const TEnumAsByte<ERPG_QSLogVerb> LogVerb, const FString& Text, const int Line, const char* Function)
 {
-    
+
 #if !UE_EDITOR && (UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG)
     if (!EnableD_QuestSystemLog.GetValueOnGameThread()) return;
 #endif

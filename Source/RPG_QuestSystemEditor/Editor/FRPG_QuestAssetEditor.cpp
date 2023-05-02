@@ -52,17 +52,17 @@ void FRPG_QuestAssetEditor::RegisterTabSpawners(const TSharedRef<FTabManager>& I
     FAssetEditorToolkit::RegisterTabSpawners(InTabManager);
 
     InTabManager->RegisterTabSpawner(FQuestEditorTabs::QuestViewportID, FOnSpawnTab::CreateSP(this, &FRPG_QuestAssetEditor::SpawnTab_Viewport))
-        .SetDisplayName( LOCTEXT("ViewportTab", "Viewport") )
+        .SetDisplayName(LOCTEXT("ViewportTab", "Viewport"))
         .SetGroup(WorkspaceMenuCategoryRef)
         .SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Viewports"));
 
     InTabManager->RegisterTabSpawner(FQuestEditorTabs::QuestDetailsID, FOnSpawnTab::CreateSP(this, &FRPG_QuestAssetEditor::SpawnTab_Details))
-        .SetDisplayName( LOCTEXT("DetailsTabLabel", "Details") )
+        .SetDisplayName(LOCTEXT("DetailsTabLabel", "Details"))
         .SetGroup(WorkspaceMenuCategoryRef)
         .SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Details"));
 
     InTabManager->RegisterTabSpawner(FQuestEditorTabs::QuestListTaskID, FOnSpawnTab::CreateSP(this, &FRPG_QuestAssetEditor::SpawnTab_ListTask))
-        .SetDisplayName( LOCTEXT("LisTaskLabel", "ListTask") )
+        .SetDisplayName(LOCTEXT("LisTaskLabel", "ListTask"))
         .SetGroup(WorkspaceMenuCategoryRef)
         .SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.Palette"));
 }
@@ -145,45 +145,27 @@ void FRPG_QuestAssetEditor::BindGraphCommands()
     const FGenericCommands& GenericCommands = FGenericCommands::Get();
     const FGraphEditorCommandsImpl& GraphCommands = FGraphEditorCommands::Get();
 
-    ToolkitCommands->MapAction(GenericCommands.Delete,
-    FExecuteAction::CreateSP(this, &FRPG_QuestAssetEditor::DeleteSelectedNodes),
-    FCanExecuteAction::CreateSP(this, &FRPG_QuestAssetEditor::CanDeleteNodes));
+    ToolkitCommands->MapAction(
+        GenericCommands.Delete, FExecuteAction::CreateSP(this, &FRPG_QuestAssetEditor::DeleteSelectedNodes), FCanExecuteAction::CreateSP(this, &FRPG_QuestAssetEditor::CanDeleteNodes));
 }
 
 void FRPG_QuestAssetEditor::InitQuestEditor(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, URPG_QuestObjectBase* InitQuestObject)
 {
     QuestBeingEdited = InitQuestObject;
     TSharedPtr<FRPG_QuestAssetEditor> QuestEditorPtr = SharedThis(this);
-    
+
     BindGraphCommands();
     // Default layout
-    const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("Standalone_QuestEditor_Layout_v3")
-    ->AddArea
-    (
-        FTabManager::NewPrimaryArea() ->SetOrientation(Orient_Vertical)
-        ->Split
-        (
-            FTabManager::NewSplitter() ->SetOrientation(Orient_Horizontal)->SetSizeCoefficient(0.9f)
-            ->Split
-            (
-                FTabManager::NewStack()
-                ->SetSizeCoefficient(0.20f)
-                ->AddTab(FQuestEditorTabs::QuestDetailsID, ETabState::OpenedTab)
-            )
-            ->Split
-            (
-                FTabManager::NewStack()
-                ->SetSizeCoefficient(0.50f)
-                ->AddTab(FQuestEditorTabs::QuestViewportID, ETabState::OpenedTab)
-            )
-            ->Split
-            (
-                FTabManager::NewStack()
-                ->SetSizeCoefficient(0.20f)
-                ->AddTab(FQuestEditorTabs::QuestListTaskID, ETabState::OpenedTab)
-            )
-        )
-    );
+    const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout =
+        FTabManager::NewLayout("Standalone_QuestEditor_Layout_v3")
+            ->AddArea(FTabManager::NewPrimaryArea()
+                          ->SetOrientation(Orient_Vertical)
+                          ->Split(FTabManager::NewSplitter()
+                                      ->SetOrientation(Orient_Horizontal)
+                                      ->SetSizeCoefficient(0.9f)
+                                      ->Split(FTabManager::NewStack()->SetSizeCoefficient(0.20f)->AddTab(FQuestEditorTabs::QuestDetailsID, ETabState::OpenedTab))
+                                      ->Split(FTabManager::NewStack()->SetSizeCoefficient(0.50f)->AddTab(FQuestEditorTabs::QuestViewportID, ETabState::OpenedTab))
+                                      ->Split(FTabManager::NewStack()->SetSizeCoefficient(0.20f)->AddTab(FQuestEditorTabs::QuestListTaskID, ETabState::OpenedTab))));
 
     // Initialize the asset editor
     InitAssetEditor(Mode, InitToolkitHost, QuestEditorAppName, StandaloneDefaultLayout, true, true, InitQuestObject);
@@ -194,8 +176,7 @@ TSharedRef<SDockTab> FRPG_QuestAssetEditor::SpawnTab_Viewport(const FSpawnTabArg
 {
     TSharedPtr<FRPG_QuestAssetEditor> QuestEditorPtr = SharedThis(this);
 
-    TSharedRef<SDockTab> SpawnedTab = SNew(SDockTab)
-            .Label(LOCTEXT("QuestGraphTitle", "Graph"));
+    TSharedRef<SDockTab> SpawnedTab = SNew(SDockTab).Label(LOCTEXT("QuestGraphTitle", "Graph"));
 
     FocusedGraphEditor = CreateGraphWidget();
     if (FocusedGraphEditor.IsValid())
@@ -203,7 +184,7 @@ TSharedRef<SDockTab> FRPG_QuestAssetEditor::SpawnTab_Viewport(const FSpawnTabArg
         QuestEdGraph->GetSchema()->CreateDefaultNodesForGraph(*QuestEdGraph);
         SpawnedTab->SetContent(FocusedGraphEditor.ToSharedRef());
     }
-    
+
     return SpawnedTab;
 }
 
@@ -217,21 +198,14 @@ TSharedRef<SDockTab> FRPG_QuestAssetEditor::SpawnTab_Details(const FSpawnTabArgs
     QuestProperties = PropertyModule.CreateDetailView(DetailsArgs);
 
     // Spawn the tab
-    return SNew(SDockTab)
-        .Label(LOCTEXT("DetailsTab_Title", "Details"))
-        [
-            QuestProperties.ToSharedRef()
-        ];
+    return SNew(SDockTab).Label(LOCTEXT("DetailsTab_Title", "Details"))[QuestProperties.ToSharedRef()];
 }
 
 TSharedRef<SDockTab> FRPG_QuestAssetEditor::SpawnTab_ListTask(const FSpawnTabArgs& Args)
 {
     Palette = SNew(SEditorPaletteTasks, SharedThis(this));
 
-    return SNew(SDockTab)
-        [
-            Palette.ToSharedRef()
-        ];
+    return SNew(SDockTab)[Palette.ToSharedRef()];
 }
 
 TSharedRef<SGraphEditor> FRPG_QuestAssetEditor::CreateGraphWidget()
@@ -240,7 +214,7 @@ TSharedRef<SGraphEditor> FRPG_QuestAssetEditor::CreateGraphWidget()
     InEvents.OnSelectionChanged = SGraphEditor::FOnSelectionChanged::CreateSP(this, &FRPG_QuestAssetEditor::OnSelectedNodesChanged);
     InEvents.OnTextCommitted = FOnNodeTextCommitted::CreateSP(this, &FRPG_QuestAssetEditor::OnNodeTitleCommitted);
     QuestEdGraph = Cast<URPG_QuestGraph>(FBlueprintEditorUtils::CreateNewGraph(QuestBeingEdited, "Quest Graph", URPG_QuestGraph::StaticClass(), URPG_QuestGraphSchema::StaticClass()));
-    
+
     return SNew(SGraphEditor)
         .AdditionalCommands(ToolkitCommands)
         .IsEditable(true)
@@ -255,9 +229,9 @@ void FRPG_QuestAssetEditor::OnSelectedNodesChanged(const TSet<UObject*>& Nodes)
 {
     TArray<UObject*> Selection;
 
-    if(Nodes.Num() != 0)
+    if (Nodes.Num() != 0)
     {
-        for(TSet<class UObject*>::TConstIterator SetIt(Nodes); SetIt; ++SetIt)
+        for (TSet<class UObject*>::TConstIterator SetIt(Nodes); SetIt; ++SetIt)
         {
             if (URPG_QuestGraphNode_Base* GraphNodeBase = Cast<URPG_QuestGraphNode_Base>(*SetIt))
             {

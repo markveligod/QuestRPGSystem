@@ -1,13 +1,12 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "RPG_QuestObjectFactory.h"
 
 #include "RPG_QuestSystem/RPG_Config/RPG_QuestSystemSettings.h"
 #include "RPG_QuestSystem/RPG_QuestObjects/RPG_QuestObjectBase.h"
 #include "RPG_QuestSystemEditor/RPG_QuestSystemEditor.h"
 
-#define LOCTEXT_NAMESPACE "QuestObjectFactory" 
+#define LOCTEXT_NAMESPACE "QuestObjectFactory"
 
 URPG_QuestObjectFactory::URPG_QuestObjectFactory()
 {

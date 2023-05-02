@@ -1,13 +1,10 @@
 /** Copyright Mark Veligod. Published in 2023. **/
 
-
 #include "RPG_TaskNodes/RPG_ExampleTaskNodes/RPG_InstanceTaskNode.h"
 
 #pragma region DefaultInterfaceTaskNodeBase
 
-URPG_InstanceTaskNode::URPG_InstanceTaskNode()
-{
-}
+URPG_InstanceTaskNode::URPG_InstanceTaskNode() {}
 
 bool URPG_InstanceTaskNode::InitTask(APlayerController* PlayerController, URPG_QuestObjectBase* ParentQuest)
 {
@@ -71,10 +68,7 @@ void URPG_InstanceTaskNode::RegisterUpdateTask(URPG_TaskNodeBase* Task)
 {
     if (!Task) return;
 
-    const bool bIsTaskInRun = ExecuteTasks.ContainsByPredicate([](URPG_TaskNodeBase* Task)
-    {
-        return Task ? Task->GetStateTaskNode() == ERPG_StateEntity::Run : false;
-    });
+    const bool bIsTaskInRun = ExecuteTasks.ContainsByPredicate([](URPG_TaskNodeBase* Task) { return Task ? Task->GetStateTaskNode() == ERPG_StateEntity::Run : false; });
 
     if (!bIsTaskInRun)
     {

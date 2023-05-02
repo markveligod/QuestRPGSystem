@@ -17,7 +17,6 @@ class RPG_QUESTSYSTEM_API URPG_QuestSystemSettings : public UDeveloperSettings
     GENERATED_BODY()
 
 public:
-
     URPG_QuestSystemSettings();
 
     /** @public Configuring start node **/

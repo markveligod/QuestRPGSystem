@@ -7,11 +7,10 @@
 #include "RPG_QuestHandleSubsystem.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class RPG_QUESTSYSTEM_API URPG_QuestHandleSubsystem : public UTickableWorldSubsystem
 {
-	GENERATED_BODY()
-	
+    GENERATED_BODY()
 };

@@ -1,12 +1,9 @@
 ﻿/** Copyright Mark Veligod. Published in 2023. **/
 
-
 #include "RPG_QuestGraphNode_Base.h"
 #include "RPG_QuestSystem/RPG_QuestObjects/RPG_QuestObjectBase.h"
 
-URPG_QuestGraphNode_Base::URPG_QuestGraphNode_Base()
-{
-}
+URPG_QuestGraphNode_Base::URPG_QuestGraphNode_Base() {}
 
 #pragma region EdGraphNodeInterface
 
@@ -27,7 +24,6 @@ void URPG_QuestGraphNode_Base::AllocateDefaultPins()
         CreatePin(EGPD_Input, PinCategory, TEXT(""), PIN_TASK_IN);
         CreatePin(EGPD_Output, PinCategory, TEXT(""), PIN_TASK_OUT);
     }
-    
 }
 
 void URPG_QuestGraphNode_Base::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
@@ -46,10 +42,9 @@ FText URPG_QuestGraphNode_Base::GetNodeTitle(ENodeTitleType::Type TitleType) con
 
     if (TaskNodeElem && TaskNodeElem->TypeNode == ERPG_TypeNode::StandardNode && TaskNodeElem->TaskNodeBase)
     {
-        return FText::FromString(FString::Printf(TEXT("#%i | %s"),
-            TaskNodeElem->IndexNode, *TaskNodeElem->TaskNodeBase->GetDesc()));
+        return FText::FromString(FString::Printf(TEXT("#%i | %s"), TaskNodeElem->IndexNode, *TaskNodeElem->TaskNodeBase->GetDesc()));
     }
-    
+
     return Super::GetNodeTitle(TitleType);
 }
 
@@ -59,16 +54,15 @@ FText URPG_QuestGraphNode_Base::GetTooltipText() const
 
     if (TaskNodeElem && TaskNodeElem->TypeNode == ERPG_TypeNode::StartNode)
     {
-        return FText::FromString(FString::Printf(TEXT("#%i | START | X=%i Y=%i"),
-            TaskNodeElem->IndexNode, NodePosX, NodePosY));
+        return FText::FromString(FString::Printf(TEXT("#%i | START | X=%i Y=%i"), TaskNodeElem->IndexNode, NodePosX, NodePosY));
     }
-    
+
     if (TaskNodeElem && TaskNodeElem->TypeNode == ERPG_TypeNode::StandardNode && TaskNodeElem->TaskNodeBase)
     {
-        return FText::FromString(FString::Printf(TEXT("#%i | %s | X=%i Y=%i\nDesc: [%s]"),
-            TaskNodeElem->IndexNode, *TaskNodeElem->TaskNodeBase->GetDesc(), NodePosX, NodePosY, *TaskNodeElem->TaskNodeBase->GetDescriptionTask().ToString()));
+        return FText::FromString(FString::Printf(TEXT("#%i | %s | X=%i Y=%i\nDesc: [%s]"), TaskNodeElem->IndexNode, *TaskNodeElem->TaskNodeBase->GetDesc(), NodePosX, NodePosY,
+            *TaskNodeElem->TaskNodeBase->GetDescriptionTask().ToString()));
     }
-    
+
     return Super::GetTooltipText();
 }
 
@@ -195,10 +189,7 @@ ERPG_TypeNode URPG_QuestGraphNode_Base::GetTypeTaskNode() const
 
 UEdGraphPin* URPG_QuestGraphNode_Base::GetGraphPinByName(FString NamePin)
 {
-    const auto FindElem = Pins.FindByPredicate([NamePin](UEdGraphPin* Pin)
-    {
-        return Pin ? Pin->PinName.ToString() == NamePin : false;
-    });
+    const auto FindElem = Pins.FindByPredicate([NamePin](UEdGraphPin* Pin) { return Pin ? Pin->PinName.ToString() == NamePin : false; });
     return FindElem ? *FindElem : nullptr;
 }
 

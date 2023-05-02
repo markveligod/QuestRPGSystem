@@ -14,10 +14,7 @@ void FRPG_QuestSystemEditorModule::StartupModule()
     RegisterAssetCategoryAndActions();
 }
 
-void FRPG_QuestSystemEditorModule::ShutdownModule()
-{
-    
-}
+void FRPG_QuestSystemEditorModule::ShutdownModule() {}
 
 void FRPG_QuestSystemEditorModule::RegisterAssetCategoryAndActions() const
 {
@@ -27,5 +24,5 @@ void FRPG_QuestSystemEditorModule::RegisterAssetCategoryAndActions() const
 }
 
 #undef LOCTEXT_NAMESPACE
-    
+
 IMPLEMENT_MODULE(FRPG_QuestSystemEditorModule, RPG_QuestSystemEditor)

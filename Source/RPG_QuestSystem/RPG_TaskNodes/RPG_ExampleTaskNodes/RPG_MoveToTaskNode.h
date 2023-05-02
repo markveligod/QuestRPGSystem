@@ -7,24 +7,22 @@
 #include "RPG_MoveToTaskNode.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS(DisplayName = "Move TO")
 class RPG_QUESTSYSTEM_API URPG_MoveToTaskNode : public URPG_TaskNodeBase
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 #pragma region DefaultInterfaceTaskNodeBase
 
 public:
-    
     URPG_MoveToTaskNode();
 
     /** @public Return a one line description of an object for viewing in the thumbnail view of the generic browser */
     virtual FString GetDesc() override { return FString("MoveTo"); }
 
 protected:
-    
     /** @protected Initializing a task **/
     virtual bool InitTask(APlayerController* PlayerController, URPG_QuestObjectBase* ParentQuest) override;
 
@@ -42,7 +40,6 @@ protected:
 #pragma region ActionTask
 
 private:
-
     void RegisterCheckDistToPos();
 
 #pragma endregion
@@ -50,7 +47,6 @@ private:
 #pragma region TaskSettings
 
 private:
-
     /** @private Target point of achievement and completion of the current task **/
     UPROPERTY(EditAnywhere)
     FVector TargetPosition{FVector::ZeroVector};

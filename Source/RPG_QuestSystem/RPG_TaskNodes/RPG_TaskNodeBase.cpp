@@ -24,10 +24,7 @@ bool URPG_TaskNodeBase::Print_CLogTask(const bool bCond, const TEnumAsByte<ERPG_
 
 #pragma region DefaultInterface
 
-URPG_TaskNodeBase::URPG_TaskNodeBase()
-{
-
-}
+URPG_TaskNodeBase::URPG_TaskNodeBase() {}
 
 bool URPG_TaskNodeBase::InitTask(APlayerController* PlayerController, URPG_QuestObjectBase* ParentQuest)
 {
@@ -51,17 +48,13 @@ bool URPG_TaskNodeBase::InitTask_Event_Implementation()
 
 void URPG_TaskNodeBase::RunTask()
 {
-    if (TASK_NODE_CLOG(StateTaskNode != ERPG_StateEntity::Init, Error, FString::Printf(TEXT("Task is not state INIT | Task current state: [%s]"), *UEnum::GetValueAsString(StateTaskNode))))
-        return;
+    if (TASK_NODE_CLOG(StateTaskNode != ERPG_StateEntity::Init, Error, FString::Printf(TEXT("Task is not state INIT | Task current state: [%s]"), *UEnum::GetValueAsString(StateTaskNode)))) return;
 
     ChangeStateTaskNode(ERPG_StateEntity::Run);
     return RunTask_Event();
 }
 
-void URPG_TaskNodeBase::RunTask_Event_Implementation()
-{
-    
-}
+void URPG_TaskNodeBase::RunTask_Event_Implementation() {}
 
 void URPG_TaskNodeBase::CompleteTask()
 {
@@ -71,10 +64,7 @@ void URPG_TaskNodeBase::CompleteTask()
     return CompleteTask_Event();
 }
 
-void URPG_TaskNodeBase::CompleteTask_Event_Implementation()
-{
-    
-}
+void URPG_TaskNodeBase::CompleteTask_Event_Implementation() {}
 
 void URPG_TaskNodeBase::ResetTask()
 {
@@ -82,10 +72,7 @@ void URPG_TaskNodeBase::ResetTask()
     return ResetTask_Event();
 }
 
-void URPG_TaskNodeBase::ResetTask_Event_Implementation()
-{
-
-}
+void URPG_TaskNodeBase::ResetTask_Event_Implementation() {}
 
 TArray<URPG_TaskNodeBase*> URPG_TaskNodeBase::GetAllInstanced()
 {

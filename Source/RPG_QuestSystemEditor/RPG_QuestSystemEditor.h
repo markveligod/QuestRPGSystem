@@ -12,11 +12,9 @@ public:
     virtual void StartupModule() override;
     virtual void ShutdownModule() override;
 
-
 #pragma region Action
-    
-protected:
 
+protected:
     /** @private Creating a new category for the quest system **/
     void RegisterAssetCategoryAndActions() const;
 
@@ -25,7 +23,6 @@ protected:
 #pragma region Data
 
 public:
-
     static EAssetTypeCategories::Type AssetCategory;
 
 #pragma endregion

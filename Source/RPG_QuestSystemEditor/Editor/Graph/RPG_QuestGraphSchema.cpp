@@ -1,6 +1,5 @@
 ﻿/** Copyright Mark Veligod. Published in 2023. **/
 
-
 #include "RPG_QuestGraphSchema.h"
 
 #include "EdGraphNode_Comment.h"
@@ -115,7 +114,7 @@ UEdGraphNode* URPG_QuestGraphSchema::CreateStandardNodeForGraph(UEdGraph* Graph,
     if (!Graph) return nullptr;
     URPG_QuestObjectBase* QuestObject = CastChecked<URPG_QuestGraph>(Graph)->GetQuestObject();
     if (!QuestObject) return nullptr;
-    
+
     FGraphNodeCreator<URPG_QuestGraphNode_Base> NodeCreator(*Graph);
     URPG_QuestGraphNode_Base* ResultRootNode = NodeCreator.CreateNode();
     if (!ResultRootNode) return nullptr;

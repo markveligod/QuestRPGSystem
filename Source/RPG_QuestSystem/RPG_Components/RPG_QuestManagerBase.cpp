@@ -9,7 +9,7 @@
 
 #pragma region ConsoleAction
 
-static TAutoConsoleVariable<bool> EnableD_ShowStateQuest(TEXT("RPGQuestSystem.ShowStateQuest"),false,TEXT("RPGQuestSystem.ShowStateQuest [true/false]"),ECVF_Cheat);
+static TAutoConsoleVariable<bool> EnableD_ShowStateQuest(TEXT("RPGQuestSystem.ShowStateQuest"), false, TEXT("RPGQuestSystem.ShowStateQuest [true/false]"), ECVF_Cheat);
 
 #pragma endregion
 
@@ -63,8 +63,7 @@ void URPG_QuestManagerBase::TickComponent(float DeltaTime, ELevelTick TickType, 
         for (auto& Data : ArrayDataQuest)
         {
             if (!Data.IsValidQuest()) continue;
-            FString Result = FString::Printf(TEXT("Quest Table Name: [%s] | Quest State: [%s]"),
-                *Data.QuestRowNameTable.ToString(), *UEnum::GetValueAsString(Data.ActiveQuest->GetStateQuest()));
+            FString Result = FString::Printf(TEXT("Quest Table Name: [%s] | Quest State: [%s]"), *Data.QuestRowNameTable.ToString(), *UEnum::GetValueAsString(Data.ActiveQuest->GetStateQuest()));
             GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Orange, Result);
         }
     }
@@ -80,7 +79,7 @@ void URPG_QuestManagerBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 bool URPG_QuestManagerBase::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
 {
     bool WroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
-    
+
     if (!QueueRepQuest.IsEmpty())
     {
         FName QuestName;
@@ -142,26 +141,17 @@ void URPG_QuestManagerBase::AddQuest(FName NewQuest)
 
 FRPG_DataQuest* URPG_QuestManagerBase::FindDataQuestByName(const FName& CheckQuest)
 {
-    return ArrayDataQuest.FindByPredicate([CheckQuest](const FRPG_DataQuest& Data)
-    {
-        return Data.QuestRowNameTable.IsEqual(CheckQuest);
-    });
+    return ArrayDataQuest.FindByPredicate([CheckQuest](const FRPG_DataQuest& Data) { return Data.QuestRowNameTable.IsEqual(CheckQuest); });
 }
 
 int32 URPG_QuestManagerBase::FindIndexDataQuestByName(const FName& CheckQuest) const
 {
-    return ArrayDataQuest.IndexOfByPredicate([CheckQuest](const FRPG_DataQuest& Data)
-    {
-        return Data.QuestRowNameTable.IsEqual(CheckQuest);
-    });
+    return ArrayDataQuest.IndexOfByPredicate([CheckQuest](const FRPG_DataQuest& Data) { return Data.QuestRowNameTable.IsEqual(CheckQuest); });
 }
 
 const FRPG_DataQuest& URPG_QuestManagerBase::FindDataQuestByQuestObject(URPG_QuestObjectBase* QuestObject)
 {
-    const int32 ElemIndex = ArrayDataQuest.IndexOfByPredicate([QuestObject](const FRPG_DataQuest& Data)
-    {
-        return Data.ActiveQuest == QuestObject;
-    });
+    const int32 ElemIndex = ArrayDataQuest.IndexOfByPredicate([QuestObject](const FRPG_DataQuest& Data) { return Data.ActiveQuest == QuestObject; });
     if (ElemIndex == INDEX_NONE) return EMPTY_DATA_QUEST;
 
     return ArrayDataQuest[ElemIndex];

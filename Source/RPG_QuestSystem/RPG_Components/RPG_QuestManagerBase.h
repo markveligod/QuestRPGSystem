@@ -44,7 +44,6 @@ public:
     virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 
 protected:
-
     // Called when the game starts
     virtual void BeginPlay() override;
 
@@ -53,7 +52,6 @@ protected:
 #pragma region ActionQuestManager
 
 public:
-
     /** @public Request to the server about adding a new quest **/
     UFUNCTION(Server, Reliable, WithValidation, Category = "ActionQuestManager")
     void ServerAddQuest(const FName& NewQuest);
@@ -71,7 +69,6 @@ public:
     const FRPG_DataQuest& FindDataQuestByQuestObject(URPG_QuestObjectBase* QuestObject);
 
 protected:
-
     /** @protected Validation check for adding a quest**/
     virtual bool IsValidationRequestAddQuest(const FName& CheckQuest);
 
@@ -90,7 +87,6 @@ protected:
 #pragma region DataQuestManager
 
 protected:
-
     /** @protected A set of quests**/
     UPROPERTY(SaveGame, ReplicatedUsing = OnRep_ArrayDataQuest)
     TArray<FRPG_DataQuest> ArrayDataQuest;
@@ -104,7 +100,6 @@ protected:
 #define EMPTY_DATA_QUEST EmptyDataQuest;
 
 private:
-
     /** @private Queue of requests for replication of quests and its tasks **/
     TQueue<FName> QueueRepQuest;
 
@@ -113,11 +108,9 @@ private:
 #pragma region Signatures
 
 private:
-
     DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FUpdateQuestSignature, APlayerController*, Owner, const FName&, QuestName, const ERPG_StateEntity&, QuestState);
 
 public:
-
     /** @signature Signature for the Quest status update event **/
     UPROPERTY(BlueprintAssignable)
     FUpdateQuestSignature OnUpdateDataQuest;

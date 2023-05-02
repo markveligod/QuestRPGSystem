@@ -36,10 +36,7 @@ struct FRPG_DataSaveQuest
     UPROPERTY(SaveGame)
     FString DataQuestJSON{""};
 
-    void Serialize(FArchive& Ar)
-    {
-        Ar << QuestRowNameTable << DataQuestJSON;
-    }
+    void Serialize(FArchive& Ar) { Ar << QuestRowNameTable << DataQuestJSON; }
 
     friend FArchive& operator<<(FArchive& Ar, FRPG_DataSaveQuest& InstanceData)
     {
@@ -61,15 +58,9 @@ struct FRPG_DataQuest
     UPROPERTY()
     class URPG_QuestObjectBase* ActiveQuest{nullptr};
 
-    bool IsValidQuest() const
-    {
-        return QuestRowNameTable != NAME_None && ActiveQuest != nullptr;
-    }
+    bool IsValidQuest() const { return QuestRowNameTable != NAME_None && ActiveQuest != nullptr; }
 
-    bool operator==(const FRPG_DataQuest& Data) const
-    {
-        return Data.QuestRowNameTable.IsEqual(QuestRowNameTable);
-    }
+    bool operator==(const FRPG_DataQuest& Data) const { return Data.QuestRowNameTable.IsEqual(QuestRowNameTable); }
 };
 
 /** @struct Data structure for storing the basic information of the quest in the form of a data table **/

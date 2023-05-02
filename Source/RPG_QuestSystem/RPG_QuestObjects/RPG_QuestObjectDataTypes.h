@@ -28,10 +28,7 @@ struct FRPG_StartConnectNodeData
     UPROPERTY()
     int32 OutConnectNode{INDEX_NONE};
 
-    friend FArchive& operator<<(FArchive& Ar, FRPG_StartConnectNodeData& InstanceData)
-    {
-        return Ar << InstanceData.OutConnectNode;
-    }
+    friend FArchive& operator<<(FArchive& Ar, FRPG_StartConnectNodeData& InstanceData) { return Ar << InstanceData.OutConnectNode; }
 };
 
 USTRUCT()
@@ -45,10 +42,7 @@ struct FRPG_StandardConnectNodeData
     UPROPERTY()
     int32 OutConnectNode{INDEX_NONE};
 
-    friend FArchive& operator<<(FArchive& Ar, FRPG_StandardConnectNodeData& InstanceData)
-    {
-        return Ar << InstanceData.InConnectNode << InstanceData.OutConnectNode;
-    }
+    friend FArchive& operator<<(FArchive& Ar, FRPG_StandardConnectNodeData& InstanceData) { return Ar << InstanceData.InConnectNode << InstanceData.OutConnectNode; }
 };
 
 USTRUCT()
@@ -83,18 +77,10 @@ struct FRPG_TaskNodeData
         TaskNodeBase = nullptr;
     }
 
-    bool operator==(const FRPG_TaskNodeData& Data) const
-    {
-        return Data.IndexNode == this->IndexNode;
-    }
+    bool operator==(const FRPG_TaskNodeData& Data) const { return Data.IndexNode == this->IndexNode; }
 
     friend FArchive& operator<<(FArchive& Ar, FRPG_TaskNodeData& InstanceData)
     {
-        return Ar << InstanceData.IndexNode
-        << InstanceData.TypeNode
-        << InstanceData.NodePosition
-        << InstanceData.TaskNodeBase
-        << InstanceData.StartConnectNode
-        << InstanceData.StandardConnectNode;
+        return Ar << InstanceData.IndexNode << InstanceData.TypeNode << InstanceData.NodePosition << InstanceData.TaskNodeBase << InstanceData.StartConnectNode << InstanceData.StandardConnectNode;
     }
 };

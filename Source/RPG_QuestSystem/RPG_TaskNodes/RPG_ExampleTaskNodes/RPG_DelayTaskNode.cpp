@@ -1,14 +1,10 @@
 /** Copyright Mark Veligod. Published in 2023. **/
 
-
 #include "RPG_TaskNodes/RPG_ExampleTaskNodes/RPG_DelayTaskNode.h"
 
 #pragma region DefaultInterfaceTaskNodeBase
 
-URPG_DelayTaskNode::URPG_DelayTaskNode()
-{
-    
-}
+URPG_DelayTaskNode::URPG_DelayTaskNode() {}
 
 bool URPG_DelayTaskNode::InitTask(APlayerController* PlayerController, URPG_QuestObjectBase* ParentQuest)
 {
@@ -36,4 +32,3 @@ void URPG_DelayTaskNode::ResetTask()
 }
 
 #pragma endregion
-

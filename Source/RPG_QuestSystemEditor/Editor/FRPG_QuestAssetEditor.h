@@ -27,8 +27,8 @@ public:
     // End of FEditorUndoClient
 
     // FAssetEditorToolkit
-    virtual FName GetToolkitFName() const override;				// Must implement in derived class!
-    virtual FText GetBaseToolkitName() const override;			// Must implement in derived class!
+    virtual FName GetToolkitFName() const override;     // Must implement in derived class!
+    virtual FText GetBaseToolkitName() const override;  // Must implement in derived class!
     virtual FText GetToolkitName() const override;
     virtual FText GetToolkitToolTipText() const override;
 
@@ -44,14 +44,13 @@ public:
     // End of FSerializableObject interface
 
     virtual void BindGraphCommands();
-    
+
 public:
-    void InitQuestEditor(const EToolkitMode::Type Mode, const TSharedPtr< IToolkitHost >& InitToolkitHost, URPG_QuestObjectBase* InitQuestObject);
+    void InitQuestEditor(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, URPG_QuestObjectBase* InitQuestObject);
 
     URPG_QuestObjectBase* GetQuestBeingEdited() const { return QuestBeingEdited; }
-    
-protected:
 
+protected:
     TSharedRef<SDockTab> SpawnTab_Viewport(const FSpawnTabArgs& Args);
     TSharedRef<SDockTab> SpawnTab_Details(const FSpawnTabArgs& Args);
     TSharedRef<SDockTab> SpawnTab_ListTask(const FSpawnTabArgs& Args);

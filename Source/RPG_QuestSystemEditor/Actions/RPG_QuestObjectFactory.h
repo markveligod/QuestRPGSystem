@@ -7,7 +7,7 @@
 #include "RPG_QuestObjectFactory.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class RPG_QUESTSYSTEMEDITOR_API URPG_QuestObjectFactory : public UFactory
@@ -22,5 +22,4 @@ class RPG_QUESTSYSTEMEDITOR_API URPG_QuestObjectFactory : public UFactory
     virtual FText GetDisplayName() const override;
     virtual FString GetDefaultNewAssetName() const override;
     // End of UFactory interface
-
 };

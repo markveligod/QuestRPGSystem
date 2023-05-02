@@ -18,14 +18,12 @@ class RPG_QUESTSYSTEM_API URPG_PrintStringTaskNode : public URPG_TaskNodeBase
 #pragma region DefaultInterfaceTaskNodeBase
 
 public:
-    
     URPG_PrintStringTaskNode();
 
     /** @public Return a one line description of an object for viewing in the thumbnail view of the generic browser */
     virtual FString GetDesc() override { return FString("PrintDebugString"); }
 
 protected:
-    
     /** @protected Initializing a task **/
     virtual bool InitTask(APlayerController* PlayerController, URPG_QuestObjectBase* ParentQuest) override;
 
@@ -43,7 +41,6 @@ protected:
 #pragma region ActionTask
 
 private:
-
     /** @private Action on printing a line on the screen**/
     UFUNCTION(Client, Unreliable)
     void ActionPrintString();
@@ -57,7 +54,6 @@ private:
 #pragma region TaskSettings
 
 private:
-
     /** @private The line to be printed **/
     UPROPERTY(EditAnywhere)
     FString DisplayString{""};

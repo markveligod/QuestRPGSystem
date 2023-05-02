@@ -9,7 +9,7 @@
 
 enum class ERPG_TypeNode : uint8;
 /**
- * 
+ *
  */
 UCLASS()
 class RPG_QUESTSYSTEMEDITOR_API URPG_QuestGraphSchema : public UEdGraphSchema
@@ -17,7 +17,6 @@ class RPG_QUESTSYSTEMEDITOR_API URPG_QuestGraphSchema : public UEdGraphSchema
     GENERATED_BODY()
 
 public:
-    
     //~ Begin EdGraphSchema Interface
     virtual bool CanGraphBeDropped(TSharedPtr<FEdGraphSchemaAction> InAction) const override;
     virtual void GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const override;
@@ -32,7 +31,6 @@ public:
     //~ End EdGraphSchema Interface
 
 private:
-
     URPG_QuestGraphNode_Base* FindQuestGraphNodeByIndex(UEdGraph& Graph, int32 TargetIndexNode) const;
 
     FLinearColor PinTypeColor{FLinearColor::White};

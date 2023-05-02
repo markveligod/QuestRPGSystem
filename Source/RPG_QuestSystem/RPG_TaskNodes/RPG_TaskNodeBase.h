@@ -40,7 +40,6 @@ public:
     virtual FString GetDesc() override { return GetClass() ? GetClass()->GetName() : GetName(); }
 
 protected:
-
     /** @protected Initializing a task. Call only Server side **/
     virtual bool InitTask(APlayerController* PlayerController, URPG_QuestObjectBase* ParentQuest);
 
@@ -54,7 +53,6 @@ protected:
     virtual void ResetTask();
 
 protected:
-
     /** @protected Initializing a task to blueprint event. Call only Server side **/
     UFUNCTION(BlueprintNativeEvent, meta = (BlueprintProtected = true))
     bool InitTask_Event();
@@ -72,7 +70,6 @@ protected:
     void ResetTask_Event();
 
 public:
-
     /** @public Get all instance tasks**/
     UFUNCTION(BlueprintCallable)
     virtual TArray<URPG_TaskNodeBase*> GetAllInstanced();
@@ -111,7 +108,6 @@ public:
 #pragma region ActionTaskNode
 
 public:
-
     /** @public Getting a description of the current task **/
     UFUNCTION(BlueprintCallable)
     const FText& GetDescriptionTask() { return DescriptionTask; }
@@ -121,7 +117,6 @@ public:
     const ERPG_StateEntity& GetStateTaskNode() { return StateTaskNode; }
 
 private:
-
     /** @private Changing the state of the task entity **/
     UFUNCTION(BlueprintCallable, meta = (BlueprintProtected = true))
     void ChangeStateTaskNode(ERPG_StateEntity NewState);
@@ -131,7 +126,6 @@ private:
 #pragma region DataTask
 
 protected:
-
     /** @protected Description of the current task **/
     UPROPERTY(EditAnywhere, meta = (MultiLine = true))
     FText DescriptionTask;
@@ -145,7 +139,6 @@ protected:
     URPG_QuestObjectBase* OwnerQuestObject{nullptr};
 
 private:
-    
     /** @private Current status of the node task **/
     ERPG_StateEntity StateTaskNode{ERPG_StateEntity::None};
 
@@ -156,7 +149,6 @@ private:
     friend class URPG_InstanceTaskNode;
 
 protected:
-    
     /** @protected Notification if the task has been updated data or state **/
     UFUNCTION(BlueprintCallable, meta = (BlueprintProtected = true))
     void NotifyUpdateTaskNode() { OnUpdateTaskNode.ExecuteIfBound(this); }

@@ -30,7 +30,7 @@ bool URPG_QuestObjectBase::Print_CLogQuest(const bool bCond, const TEnumAsByte<E
 URPG_QuestObjectBase::URPG_QuestObjectBase()
 {
     if (HasAnyFlags(RF_ClassDefaultObject)) return;
-    
+
 #if UE_EDITOR
 
     if (!FindStartTaskNode())
@@ -40,7 +40,6 @@ URPG_QuestObjectBase::URPG_QuestObjectBase()
     }
 
 #endif
-
 }
 
 bool URPG_QuestObjectBase::InitQuest(APlayerController* PlayerController, URPG_QuestManagerBase* ParentQuestManager)
@@ -91,7 +90,7 @@ void URPG_QuestObjectBase::Serialize(FArchive& Ar)
 
     if (Ar.IsSaving())
     {
-        QUEST_OBJECT_LOG(Display, FString::Printf(TEXT("----| SERIALIZE SAVE QUEST: [%s] |----"), *GetName()));        
+        QUEST_OBJECT_LOG(Display, FString::Printf(TEXT("----| SERIALIZE SAVE QUEST: [%s] |----"), *GetName()));
     }
     else
     {
@@ -145,7 +144,7 @@ void URPG_QuestObjectBase::StartTask(int32 Index)
 {
     if (QUEST_OBJECT_CLOG(StateQuestObject != ERPG_StateEntity::Run, Error, TEXT("StateQuestObject is not Running"))) return;
 
-     FRPG_TaskNodeData* TaskNodeData = FindTaskNodeByElem(Index);
+    FRPG_TaskNodeData* TaskNodeData = FindTaskNodeByElem(Index);
     if (QUEST_OBJECT_CLOG(TaskNodeData == nullptr, Display, TEXT("TaskNodeData is not found")))
     {
         CompleteQuest();
@@ -213,42 +212,27 @@ TArray<URPG_TaskNodeBase*> URPG_QuestObjectBase::GetArrayInstanceTaskNodes()
 
 FRPG_TaskNodeData* URPG_QuestObjectBase::FindTaskNodeByElem(int32 IndexNode)
 {
-    return ArrayTaskNodes.FindByPredicate([IndexNode](const FRPG_TaskNodeData& Data)
-    {
-        return Data.IndexNode == IndexNode;
-    });
+    return ArrayTaskNodes.FindByPredicate([IndexNode](const FRPG_TaskNodeData& Data) { return Data.IndexNode == IndexNode; });
 }
 
 FRPG_TaskNodeData* URPG_QuestObjectBase::FindTaskNodeByTask(URPG_TaskNodeBase* TaskNode)
 {
-    return ArrayTaskNodes.FindByPredicate([TaskNode](const FRPG_TaskNodeData& Data)
-    {
-        return Data.TaskNodeBase == TaskNode;
-    });
+    return ArrayTaskNodes.FindByPredicate([TaskNode](const FRPG_TaskNodeData& Data) { return Data.TaskNodeBase == TaskNode; });
 }
 
 FRPG_TaskNodeData* URPG_QuestObjectBase::FindStartTaskNode()
 {
-    return ArrayTaskNodes.FindByPredicate([](const FRPG_TaskNodeData& Data)
-    {
-        return Data.TypeNode == ERPG_TypeNode::StartNode;
-    });
+    return ArrayTaskNodes.FindByPredicate([](const FRPG_TaskNodeData& Data) { return Data.TypeNode == ERPG_TypeNode::StartNode; });
 }
 
 int32 URPG_QuestObjectBase::FindTaskNodeByIndex(int32 IndexNode) const
 {
-    return ArrayTaskNodes.IndexOfByPredicate([IndexNode](const FRPG_TaskNodeData& Data)
-    {
-        return Data.IndexNode == IndexNode;
-    });
+    return ArrayTaskNodes.IndexOfByPredicate([IndexNode](const FRPG_TaskNodeData& Data) { return Data.IndexNode == IndexNode; });
 }
 
 int32 URPG_QuestObjectBase::FindStartTaskNodeByIndex() const
 {
-    return ArrayTaskNodes.IndexOfByPredicate([](const FRPG_TaskNodeData& Data)
-    {
-        return Data.TypeNode == ERPG_TypeNode::StartNode;
-    });
+    return ArrayTaskNodes.IndexOfByPredicate([](const FRPG_TaskNodeData& Data) { return Data.TypeNode == ERPG_TypeNode::StartNode; });
 }
 
 #if UE_EDITOR
@@ -316,7 +300,7 @@ FLinearColor URPG_QuestObjectBase::GetNodeTitleColor(int32 TargetIndexNode) cons
     if (!QuestSystemSettings) return FLinearColor();
     int32 IndexTaskNodeData = FindTaskNodeByIndex(TargetIndexNode);
     if (!ArrayTaskNodes.IsValidIndex(IndexTaskNodeData)) return FLinearColor();
-    
+
     if (ArrayTaskNodes[IndexTaskNodeData].TypeNode == ERPG_TypeNode::StartNode)
     {
         return QuestSystemSettings->StartTaskNodeEditorColor.NodeTitleColor;
@@ -336,7 +320,7 @@ FLinearColor URPG_QuestObjectBase::GetNodeCommentColor(int32 TargetIndexNode) co
     if (!QuestSystemSettings) return FLinearColor();
     int32 IndexTaskNodeData = FindTaskNodeByIndex(TargetIndexNode);
     if (!ArrayTaskNodes.IsValidIndex(IndexTaskNodeData)) return FLinearColor();
-        
+
     if (ArrayTaskNodes[IndexTaskNodeData].TypeNode == ERPG_TypeNode::StartNode)
     {
         return QuestSystemSettings->StartTaskNodeEditorColor.NodeCommentColor;
@@ -356,7 +340,7 @@ FLinearColor URPG_QuestObjectBase::GetNodeBodyTintColor(int32 TargetIndexNode) c
     if (!QuestSystemSettings) return FLinearColor();
     int32 IndexTaskNodeData = FindTaskNodeByIndex(TargetIndexNode);
     if (!ArrayTaskNodes.IsValidIndex(IndexTaskNodeData)) return FLinearColor();
-        
+
     if (ArrayTaskNodes[IndexTaskNodeData].TypeNode == ERPG_TypeNode::StartNode)
     {
         return QuestSystemSettings->StartTaskNodeEditorColor.NodeBodyTintColor;
@@ -385,7 +369,7 @@ int32 URPG_QuestObjectBase::IsFreeIndexNumSlot() const
 {
     for (int32 i = 0; i < INT32_MAX; i++)
     {
-        if (!ArrayTaskNodes.ContainsByPredicate([i](const FRPG_TaskNodeData& Data){ return Data.IndexNode == i; }))
+        if (!ArrayTaskNodes.ContainsByPredicate([i](const FRPG_TaskNodeData& Data) { return Data.IndexNode == i; }))
         {
             return i;
         }
@@ -406,7 +390,7 @@ void URPG_QuestObjectBase::PrintTaskNodes()
     }
     QUEST_OBJECT_LOG(Display, FString::Printf(TEXT("Size json data: [%.2f] KB"), SizeArrayTaskNodesJSON));
 
-    SIZE_T GeneralSize = 0; 
+    SIZE_T GeneralSize = 0;
     for (const auto& Data : ArrayTaskNodes)
     {
         if (!Data.TaskNodeBase) continue;

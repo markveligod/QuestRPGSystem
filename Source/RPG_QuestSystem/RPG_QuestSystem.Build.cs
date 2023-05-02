@@ -17,7 +17,7 @@ public class RPG_QuestSystem : ModuleRules
         });
 
         PublicDependencyModuleNames.AddRange(new string[] {
-            "Core", 
+            "Core",
             // ... add other public dependencies that you statically link with here ...
         });
 

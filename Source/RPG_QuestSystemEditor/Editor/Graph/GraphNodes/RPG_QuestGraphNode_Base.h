@@ -11,7 +11,7 @@
 #define PIN_TASK_OUT TEXT("Out")
 
 /**
- * 
+ *
  */
 UCLASS()
 class RPG_QUESTSYSTEMEDITOR_API URPG_QuestGraphNode_Base : public UEdGraphNode
@@ -26,7 +26,6 @@ class RPG_QUESTSYSTEMEDITOR_API URPG_QuestGraphNode_Base : public UEdGraphNode
 #pragma region EdGraphNodeInterface
 
 public:
-
     // UEdGraphNode interface.
     virtual void AllocateDefaultPins() override;
     virtual void GetNodeContextMenuActions(class UToolMenu* Menu, class UGraphNodeContextMenuContext* Context) const override;
@@ -43,7 +42,6 @@ public:
 #pragma region DataNode
 
 public:
-
     int32 TargetIndexTaskNode{INDEX_NONE};
 
 #pragma endregion
@@ -51,14 +49,12 @@ public:
 #pragma region ActionNode
 
 public:
-
     int32 GetIndexFromTaskNode(FName PinName) const;
     FRPG_TaskNodeData* GetTaskNodeData() const;
     ERPG_TypeNode GetTypeTaskNode() const;
     UEdGraphPin* GetGraphPinByName(FString NamePin);
 
 private:
-
     URPG_QuestObjectBase* GetQuestObject() const;
 
 #pragma endregion
