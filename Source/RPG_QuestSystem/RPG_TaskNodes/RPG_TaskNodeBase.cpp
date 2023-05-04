@@ -1,6 +1,8 @@
 /** Copyright Mark Veligod. Published in 2023. **/
 
 #include "RPG_TaskNodes/RPG_TaskNodeBase.h"
+
+#include "Net/UnrealNetwork.h"
 #include "RPG_Librarys/RPG_QuestSystemLibrary.h"
 #include "RPG_QuestObjects/RPG_QuestObjectBase.h"
 
@@ -85,6 +87,10 @@ TArray<URPG_TaskNodeBase*> URPG_TaskNodeBase::GetAllInstanced()
 
 int32 URPG_TaskNodeBase::GetFunctionCallspace(UFunction* Function, FFrame* Stack)
 {
+    if (!OwnerPC && GetWorld()->GetNetMode() == NM_Client)
+    {
+        OwnerPC = GetWorld()->GetFirstPlayerController();
+    }
     return (OwnerPC ? OwnerPC->GetFunctionCallspace(Function, Stack) : FunctionCallspace::Local);
 }
 
@@ -104,6 +110,8 @@ bool URPG_TaskNodeBase::CallRemoteFunction(UFunction* Function, void* Parms, FOu
 void URPG_TaskNodeBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+   DOREPLIFETIME_CONDITION(URPG_TaskNodeBase, StateTaskNode, COND_OwnerOnly);
 }
 
 #pragma endregion

@@ -4,7 +4,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 
 #if !UE_BUILD_SHIPPING
-static TAutoConsoleVariable<bool> EnableD_QuestSystemLog(TEXT("QuestSystem.ShowLog"), false, TEXT("Enable logging in the quest system"), ECVF_Cheat);
+static TAutoConsoleVariable<bool> EnableD_QuestSystemLog(TEXT("RPGQuestSystem.ShowLog"), false, TEXT("RPGQuestSystem.ShowLog [true/false]"), ECVF_Cheat);
 #endif
 
 void URPG_QuestSystemLibrary::Print_Log(const TEnumAsByte<ERPG_QSLogVerb> LogVerb, const FString& Text, const int Line, const char* Function)

@@ -11,6 +11,22 @@
 
 static TAutoConsoleVariable<bool> EnableD_ShowStateQuest(TEXT("RPGQuestSystem.ShowStateQuest"), false, TEXT("RPGQuestSystem.ShowStateQuest [true/false]"), ECVF_Cheat);
 
+static FAutoConsoleCommandWithWorldAndArgs EnableD_ToDistance(
+    TEXT("RPGQuestSystem.AddQuest"),
+    TEXT("RPGQuestSystem.AddQuest [QuestTableName]"),
+    FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray<FString>& Args, UWorld* World)
+    {
+        if (!World) return;
+        if (!Args.IsValidIndex(0)) return;
+        FName QuestName = FName(Args[0]);
+        APlayerController* PC = World->GetFirstPlayerController();
+        if (!PC) return;
+        URPG_QuestManagerBase* QM = PC->FindComponentByClass<URPG_QuestManagerBase>();
+        if (!QM) return;
+        QM->ServerAddQuest(QuestName);
+    })
+);
+
 #pragma endregion
 
 #pragma region Log
@@ -51,6 +67,7 @@ URPG_QuestManagerBase::URPG_QuestManagerBase()
 #endif
 
     SetIsReplicatedByDefault(true);
+    bReplicateUsingRegisteredSubObjectList = false;
 }
 
 // Called every frame
@@ -63,8 +80,18 @@ void URPG_QuestManagerBase::TickComponent(float DeltaTime, ELevelTick TickType, 
         for (auto& Data : ArrayDataQuest)
         {
             if (!Data.IsValidQuest()) continue;
-            FString Result = FString::Printf(TEXT("Quest Table Name: [%s] | Quest State: [%s]"), *Data.QuestRowNameTable.ToString(), *UEnum::GetValueAsString(Data.ActiveQuest->GetStateQuest()));
+            FString NetMode = URPG_QuestSystemLibrary::GetNetModeToString(OwnerPC);
+            FString Result = FString::Printf(TEXT("NetMode: [%s] | Quest Table Name: [%s] | Quest State: [%s]"),
+                *NetMode, *Data.QuestRowNameTable.ToString(), *UEnum::GetValueAsString(Data.ActiveQuest->GetStateQuest()));
+            TArray<URPG_TaskNodeBase*> AllTasks = Data.ActiveQuest->GetArrayInstanceTaskNodes();
+            for (URPG_TaskNodeBase* Task : AllTasks)
+            {
+                if (!Task) continue;
+                FString DescTask = FString::Printf(TEXT("Desc Task: [%s] | State task: [%s]"), *Task->GetDesc(), *UEnum::GetValueAsString(Task->GetStateTaskNode()));
+                GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Orange, DescTask);
+            }
             GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Orange, Result);
+            GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Orange, "--- | --- | --- | ---");
         }
     }
 }
@@ -80,21 +107,23 @@ bool URPG_QuestManagerBase::ReplicateSubobjects(UActorChannel* Channel, FOutBunc
 {
     bool WroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
 
+    // Replicated quests and task from quests
     if (!QueueRepQuest.IsEmpty())
     {
         FName QuestName;
         QueueRepQuest.Dequeue(QuestName);
         FRPG_DataQuest* DataQuest = FindDataQuestByName(QuestName);
-        if (DataQuest && DataQuest->IsValidQuest())
+        if (DataQuest && DataQuest->ActiveQuest)
         {
             WroteSomething |= Channel->ReplicateSubobject(DataQuest->ActiveQuest, *Bunch, *RepFlags);
-            TArray<URPG_TaskNodeBase*> AllTasks = DataQuest->ActiveQuest->GetArrayInstanceTaskNodes();
-            for (URPG_TaskNodeBase* Task : AllTasks)
+            TArray<URPG_TaskNodeBase*> ArrayTasks = DataQuest->ActiveQuest->GetArrayInstanceTaskNodes();
+            for (URPG_TaskNodeBase* Task : ArrayTasks)
             {
                 WroteSomething |= Channel->ReplicateSubobject(Task, *Bunch, *RepFlags);
             }
         }
     }
+
     return WroteSomething;
 }
 
@@ -105,6 +134,7 @@ void URPG_QuestManagerBase::BeginPlay()
 
     OwnerPC = Cast<APlayerController>(GetOwner());
     if (QUEST_MANAGER_CLOG(!OwnerPC, Error, TEXT("Owner is nullptr"))) return;
+    OwnerPC->SetReplicates(true);
 }
 
 #pragma endregion
@@ -125,18 +155,29 @@ void URPG_QuestManagerBase::AddQuest(FName NewQuest)
 {
     if (QUEST_MANAGER_CLOG(!OwnerPC, Error, TEXT("Owner is nullptr"))) return;
     if (QUEST_MANAGER_CLOG(!OwnerPC->HasAuthority(), Error, TEXT("Owner is not Authority"))) return;
+    if (QUEST_MANAGER_CLOG(!DataQuestTable, Error, TEXT("Data quest table is nullptr"))) return;
+    if (QUEST_MANAGER_CLOG(NewQuest == NAME_None, Error, TEXT("Name quest is none"))) return;
+    if (QUEST_MANAGER_CLOG(!DataQuestTable->GetRowNames().Contains(NewQuest), Error, TEXT("Name quest is not contains in DataQuestTable"))) return;
     if (QUEST_MANAGER_CLOG(FindDataQuestByName(NewQuest) != nullptr, Error, TEXT("Quest is exist"))) return;
 
-    const URPG_QuestSystemSettings* QuestSystemSettings = GetDefault<URPG_QuestSystemSettings>();
-    if (QUEST_MANAGER_CLOG(!QuestSystemSettings, Error, TEXT("QuestSystemSettings is nullptr"))) return;
+    FRPG_DataQuestTable* FindDataQuestTable = DataQuestTable->FindRow<FRPG_DataQuestTable>(NewQuest, TEXT(""));
+    if (QUEST_MANAGER_CLOG(FindDataQuestTable == nullptr, Error, TEXT("FindDataQuestTable is nullptr"))) return;
 
     FRPG_DataQuest NewDataQuest;
     NewDataQuest.QuestRowNameTable = NewQuest;
-    NewDataQuest.ActiveQuest = NewObject<URPG_QuestObjectBase>(this, QuestSystemSettings->SupportQuestClass);
+    URPG_QuestObjectBase* RefQuestObject = FindDataQuestTable->QuestObjectPath.LoadSynchronous();
+    if (!RefQuestObject) return;
+    NewDataQuest.ActiveQuest = NewObject<URPG_QuestObjectBase>(this, RefQuestObject->GetClass(), NAME_None, RF_NoFlags, RefQuestObject);
     if (QUEST_MANAGER_CLOG(!NewDataQuest.IsValidQuest(), Error, TEXT("Quest is not valid"))) return;
 
     NewDataQuest.ActiveQuest->OnUpdateStateQuest.BindUObject(this, &ThisClass::RegisterUpdateQuest_Event);
-    ArrayDataQuest.AddUnique(NewDataQuest);
+    if (NewDataQuest.ActiveQuest->InitQuest(OwnerPC, this))
+    {
+        ArrayDataQuest.AddUnique(NewDataQuest);
+        NewDataQuest.ActiveQuest->OnUpdateStateQuest.BindUObject(this, &ThisClass::RegisterUpdateQuest_Event);
+        NewDataQuest.ActiveQuest->RunQuest();
+    }
+    NotifyUpdateQuest(NewQuest);
 }
 
 FRPG_DataQuest* URPG_QuestManagerBase::FindDataQuestByName(const FName& CheckQuest)
@@ -173,6 +214,11 @@ void URPG_QuestManagerBase::OnRep_ArrayDataQuest()
 void URPG_QuestManagerBase::RegisterUpdateQuest_Event(URPG_QuestObjectBase* QuestObject)
 {
     if (QUEST_MANAGER_CLOG(!QuestObject, Error, TEXT("Quest object is not valid"))) return;
+
+    if (QuestObject->GetStateQuest() == ERPG_StateEntity::Complete)
+    {
+        QuestObject->OnUpdateStateQuest.Unbind();
+    }
 
     const FRPG_DataQuest& DataQuest = FindDataQuestByQuestObject(QuestObject);
     const FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &ThisClass::NotifyUpdateQuest, DataQuest.QuestRowNameTable);

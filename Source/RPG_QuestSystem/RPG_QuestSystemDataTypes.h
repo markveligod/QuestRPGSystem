@@ -6,6 +6,8 @@
 #include "Engine/DataTable.h"
 #include "RPG_QuestSystemDataTypes.generated.h"
 
+class URPG_QuestObjectBase;
+
 /** @enum The general state of the entity **/
 UENUM(BlueprintType)
 enum class ERPG_StateEntity : uint8
@@ -56,7 +58,7 @@ struct FRPG_DataQuest
     FName QuestRowNameTable{NAME_None};
 
     UPROPERTY()
-    class URPG_QuestObjectBase* ActiveQuest{nullptr};
+    URPG_QuestObjectBase* ActiveQuest{nullptr};
 
     bool IsValidQuest() const { return QuestRowNameTable != NAME_None && ActiveQuest != nullptr; }
 

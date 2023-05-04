@@ -165,12 +165,12 @@ protected:
 
 protected:
     /** @protected The state of the entity according to the work of the class QuestObject **/
-    UPROPERTY()
+    UPROPERTY(Replicated)
     ERPG_StateEntity StateQuestObject{ERPG_StateEntity::None};
 
 #define EMPTY_TASK_NODE_DATA FRPG_TaskNodeData()
     /** @protected A set of sequential task nodes **/
-    UPROPERTY(SaveGame)
+    UPROPERTY(SaveGame, Replicated)
     TArray<FRPG_TaskNodeData> ArrayTaskNodes;
 
     /** @protected The owner of the quest is the quest manager **/
@@ -182,6 +182,7 @@ protected:
     APlayerController* OwnerPC{nullptr};
 
     /** @protected Target index task **/
+    UPROPERTY(Replicated)
     int32 TargetIndexTask{INDEX_NONE};
 
 #pragma endregion

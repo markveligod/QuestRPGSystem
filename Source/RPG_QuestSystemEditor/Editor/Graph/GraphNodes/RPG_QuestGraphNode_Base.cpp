@@ -59,8 +59,7 @@ FText URPG_QuestGraphNode_Base::GetTooltipText() const
 
     if (TaskNodeElem && TaskNodeElem->TypeNode == ERPG_TypeNode::StandardNode && TaskNodeElem->TaskNodeBase)
     {
-        return FText::FromString(FString::Printf(TEXT("#%i | %s | X=%i Y=%i\nDesc: [%s]"), TaskNodeElem->IndexNode, *TaskNodeElem->TaskNodeBase->GetDesc(), NodePosX, NodePosY,
-            *TaskNodeElem->TaskNodeBase->GetDescriptionTask().ToString()));
+        return FText::FromString(FString::Printf(TEXT("#%i | %s | X=%i Y=%i\n"), TaskNodeElem->IndexNode, *TaskNodeElem->TaskNodeBase->GetDesc(), NodePosX, NodePosY));
     }
 
     return Super::GetTooltipText();

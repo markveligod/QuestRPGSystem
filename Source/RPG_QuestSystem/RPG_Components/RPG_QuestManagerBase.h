@@ -40,7 +40,6 @@ public:
     // @public Defining rules for replication
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-    // @public Allows a component to replicate other subobject on the actor
     virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 
 protected:
@@ -68,6 +67,10 @@ public:
     /** @public Search for quest data by quest object **/
     const FRPG_DataQuest& FindDataQuestByQuestObject(URPG_QuestObjectBase* QuestObject);
 
+    /** @public Get quest list table **/
+    UFUNCTION(BlueprintCallable)
+    UDataTable* GetDataQuestTable() const { return DataQuestTable; }
+    
 protected:
     /** @protected Validation check for adding a quest**/
     virtual bool IsValidationRequestAddQuest(const FName& CheckQuest);
@@ -94,6 +97,10 @@ protected:
     /** @protected The owner of the component **/
     UPROPERTY()
     APlayerController* OwnerPC{nullptr};
+
+    /** @protected Data quest table **/
+    UPROPERTY(EditAnywhere)
+    UDataTable* DataQuestTable{nullptr};
 
     /** @protected Empty quest data **/
     const FRPG_DataQuest EmptyDataQuest;

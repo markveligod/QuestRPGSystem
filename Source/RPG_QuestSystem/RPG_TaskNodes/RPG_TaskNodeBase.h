@@ -108,9 +108,6 @@ public:
 #pragma region ActionTaskNode
 
 public:
-    /** @public Getting a description of the current task **/
-    UFUNCTION(BlueprintCallable)
-    const FText& GetDescriptionTask() { return DescriptionTask; }
 
     /** @public Getting the current state of the task entity **/
     UFUNCTION(BlueprintCallable)
@@ -126,9 +123,6 @@ private:
 #pragma region DataTask
 
 protected:
-    /** @protected Description of the current task **/
-    UPROPERTY(EditAnywhere, meta = (MultiLine = true))
-    FText DescriptionTask;
 
     /** @protected The controller that owns this task **/
     UPROPERTY(BlueprintReadOnly)
@@ -140,6 +134,7 @@ protected:
 
 private:
     /** @private Current status of the node task **/
+    UPROPERTY(Replicated)
     ERPG_StateEntity StateTaskNode{ERPG_StateEntity::None};
 
 #pragma endregion

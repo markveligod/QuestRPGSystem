@@ -2,6 +2,7 @@
 
 #include "RPG_QuestObjectBase.h"
 #include "JsonObjectConverter.h"
+#include "Net/UnrealNetwork.h"
 #include "RPG_Components/RPG_QuestManagerBase.h"
 #include "RPG_Librarys/RPG_QuestSystemLibrary.h"
 #include "RPG_TaskNodes/RPG_TaskNodeBase.h"
@@ -106,6 +107,10 @@ void URPG_QuestObjectBase::Serialize(FArchive& Ar)
 
 int32 URPG_QuestObjectBase::GetFunctionCallspace(UFunction* Function, FFrame* Stack)
 {
+    if (!OwnerPC && GetWorld()->GetNetMode() == NM_Client)
+    {
+        OwnerPC = GetWorld()->GetFirstPlayerController();
+    }
     return (OwnerPC ? OwnerPC->GetFunctionCallspace(Function, Stack) : FunctionCallspace::Local);
 }
 
@@ -125,6 +130,10 @@ bool URPG_QuestObjectBase::CallRemoteFunction(UFunction* Function, void* Parms, 
 void URPG_QuestObjectBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME_CONDITION(URPG_QuestObjectBase, StateQuestObject, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(URPG_QuestObjectBase, ArrayTaskNodes, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(URPG_QuestObjectBase, TargetIndexTask, COND_OwnerOnly);
 }
 
 #pragma endregion
@@ -160,6 +169,7 @@ void URPG_QuestObjectBase::StartTask(int32 Index)
     if (!TaskNodeData) return;
     TargetIndexTask = Index;
 
+    TaskNodeData->TaskNodeBase->ResetTask();
     if (TaskNodeData->TaskNodeBase->InitTask(OwnerPC, this))
     {
         TaskNodeData->TaskNodeBase->OnUpdateTaskNode.BindUObject(this, &ThisClass::RegisterUpdateStateTask_Event);
@@ -181,7 +191,6 @@ void URPG_QuestObjectBase::StopTask(int32 Index)
     if (QUEST_OBJECT_CLOG(TaskNodeData->TaskNodeBase == nullptr, Display, TEXT("TaskNodeBase is nullptr"))) return;
 
     TaskNodeData->TaskNodeBase->OnUpdateTaskNode.Unbind();
-    TaskNodeData->TaskNodeBase->ResetTask();
 }
 
 void URPG_QuestObjectBase::RegisterUpdateStateTask_Event(URPG_TaskNodeBase* TaskNode)

@@ -41,8 +41,8 @@ protected:
 #pragma region ActionTask
 
 private:
-    /** @private Action on printing a line on the screen**/
-    UFUNCTION(Client, Unreliable)
+    /** @private Action on printing a line on the screen **/
+    UFUNCTION(Client, Reliable)
     void ActionPrintString();
 
     /** @private Call back complete task on Server side **/
