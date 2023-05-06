@@ -83,8 +83,8 @@ void URPG_QuestManagerBase::TickComponent(float DeltaTime, ELevelTick TickType, 
             FString NetMode = URPG_QuestSystemLibrary::GetNetModeToString(OwnerPC);
             FString Result = FString::Printf(TEXT("NetMode: [%s] | Quest Table Name: [%s] | Quest State: [%s]"),
                 *NetMode, *Data.QuestRowNameTable.ToString(), *UEnum::GetValueAsString(Data.ActiveQuest->GetStateQuest()));
-            TArray<URPG_TaskNodeBase*> AllTasks = Data.ActiveQuest->GetArrayInstanceTaskNodes();
-            for (URPG_TaskNodeBase* Task : AllTasks)
+            TArray<URPG_TaskNodeBase*> AllActiveTasks = Data.ActiveQuest->GetArrayActiveTaskNodes();
+            for (URPG_TaskNodeBase* Task : AllActiveTasks)
             {
                 if (!Task) continue;
                 FString DescTask = FString::Printf(TEXT("Desc Task: [%s] | State task: [%s]"), *Task->GetDesc(), *UEnum::GetValueAsString(Task->GetStateTaskNode()));

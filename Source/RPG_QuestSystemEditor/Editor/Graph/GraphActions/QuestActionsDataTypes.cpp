@@ -18,9 +18,10 @@ FEdGraphSchemaAction_Task::FEdGraphSchemaAction_Task(FText InNodeCategory, FText
 
 UEdGraphNode* FEdGraphSchemaAction_Task::PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode)
 {
-    if (ParentGraph && TypeNode == ERPG_TypeNode::StandardNode)
+    if (ParentGraph)
     {
-        return CastChecked<URPG_QuestGraphSchema>(ParentGraph->GetSchema())->CreateStandardNodeForGraph(ParentGraph, NodeClass->GetClass(), Location, TypeNode);
+        UClass* Class = NodeClass ? NodeClass->GetClass() : nullptr;
+        return CastChecked<URPG_QuestGraphSchema>(ParentGraph->GetSchema())->CreateStandardNodeForGraph(ParentGraph, Class, Location, TypeNode);
     }
     return nullptr;
 }

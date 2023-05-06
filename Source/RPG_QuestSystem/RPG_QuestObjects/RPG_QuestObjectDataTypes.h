@@ -11,38 +11,7 @@ enum class ERPG_TypeNode : uint8
 {
     StartNode,
     StandardNode,
-};
-
-UENUM()
-enum class ERPG_TypeConnectNode : uint8
-{
-    In,
-    Out,
-};
-
-USTRUCT()
-struct FRPG_StartConnectNodeData
-{
-    GENERATED_USTRUCT_BODY()
-
-    UPROPERTY()
-    int32 OutConnectNode{INDEX_NONE};
-
-    friend FArchive& operator<<(FArchive& Ar, FRPG_StartConnectNodeData& InstanceData) { return Ar << InstanceData.OutConnectNode; }
-};
-
-USTRUCT()
-struct FRPG_StandardConnectNodeData
-{
-    GENERATED_USTRUCT_BODY()
-
-    UPROPERTY()
-    int32 InConnectNode{INDEX_NONE};
-
-    UPROPERTY()
-    int32 OutConnectNode{INDEX_NONE};
-
-    friend FArchive& operator<<(FArchive& Ar, FRPG_StandardConnectNodeData& InstanceData) { return Ar << InstanceData.InConnectNode << InstanceData.OutConnectNode; }
+    FinishNode,
 };
 
 USTRUCT()
@@ -63,10 +32,7 @@ struct FRPG_TaskNodeData
     class URPG_TaskNodeBase* TaskNodeBase{nullptr};
 
     UPROPERTY()
-    FRPG_StartConnectNodeData StartConnectNode;
-
-    UPROPERTY()
-    FRPG_StandardConnectNodeData StandardConnectNode;
+    TArray<int32> OutNodes;
 
     void ClearData()
     {
@@ -81,6 +47,6 @@ struct FRPG_TaskNodeData
 
     friend FArchive& operator<<(FArchive& Ar, FRPG_TaskNodeData& InstanceData)
     {
-        return Ar << InstanceData.IndexNode << InstanceData.TypeNode << InstanceData.NodePosition << InstanceData.TaskNodeBase << InstanceData.StartConnectNode << InstanceData.StandardConnectNode;
+        return Ar << InstanceData.IndexNode << InstanceData.TypeNode << InstanceData.NodePosition << InstanceData.TaskNodeBase << InstanceData.OutNodes;
     }
 };

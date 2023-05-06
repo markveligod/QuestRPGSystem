@@ -74,36 +74,11 @@ void URPG_QuestGraphSchema::AutoConnectNodeByDefault(UEdGraph& Graph) const
             FRPG_TaskNodeData* TaskNodeData = QuestNode->GetTaskNodeData();
             if (!TaskNodeData) continue;
 
-            if (TaskNodeData->TypeNode == ERPG_TypeNode::StartNode)
+            for (int32 IndexNode : TaskNodeData->OutNodes)
             {
-                if (TaskNodeData->StartConnectNode.OutConnectNode != INDEX_NONE)
-                {
-                    if (URPG_QuestGraphNode_Base* TargetNode = FindQuestGraphNodeByIndex(Graph, TaskNodeData->StartConnectNode.OutConnectNode))
-                    {
-                        UEdGraphPin* OutPin = QuestNode->FindPin(FName(PIN_TASK_OUT), EGPD_Output);
-                        UEdGraphPin* InPin = TargetNode->FindPin(FName(PIN_TASK_IN), EGPD_Input);
-                        if (OutPin && InPin)
-                        {
-                            OutPin->MakeLinkTo(InPin);
-                        }
-                    }
-                }
-            }
-
-            if (TaskNodeData->TypeNode == ERPG_TypeNode::StandardNode)
-            {
-                if (TaskNodeData->StandardConnectNode.OutConnectNode != INDEX_NONE)
-                {
-                    if (URPG_QuestGraphNode_Base* TargetNode = FindQuestGraphNodeByIndex(Graph, TaskNodeData->StandardConnectNode.OutConnectNode))
-                    {
-                        UEdGraphPin* OutPin = QuestNode->FindPin(FName(PIN_TASK_OUT), EGPD_Output);
-                        UEdGraphPin* InPin = TargetNode->FindPin(FName(PIN_TASK_IN), EGPD_Input);
-                        if (OutPin && InPin)
-                        {
-                            OutPin->MakeLinkTo(InPin);
-                        }
-                    }
-                }
+                URPG_QuestGraphNode_Base* QuestGraphNode = FindQuestGraphNodeByIndex(Graph, IndexNode);
+                if (!QuestGraphNode) continue;
+                QuestNode->OutputPin->MakeLinkTo(QuestGraphNode->InPin);
             }
         }
     }
@@ -142,9 +117,7 @@ const FPinConnectionResponse URPG_QuestGraphSchema::CanCreateConnection(const UE
     URPG_QuestGraphNode_Base* B_GraphNode = Cast<URPG_QuestGraphNode_Base>(B->GetOwningNode());
     if (!A_GraphNode || !B_GraphNode) return DISALLOW_CONNECT;
 
-    if (A_GraphNode->GetIndexFromTaskNode(A->PinName) == INDEX_NONE && B_GraphNode->GetIndexFromTaskNode(B->PinName) == INDEX_NONE) return ALLOW_CONNECT;
-
-    return DISALLOW_CONNECT;
+    return ALLOW_CONNECT;
 }
 
 bool URPG_QuestGraphSchema::TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const
@@ -159,40 +132,8 @@ bool URPG_QuestGraphSchema::TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) 
             FRPG_TaskNodeData* B_TaskNodeData = B_GraphNode->GetTaskNodeData();
             if (A_TaskNodeData && B_TaskNodeData)
             {
-                if (A_TaskNodeData->TypeNode == ERPG_TypeNode::StartNode && B_TaskNodeData->TypeNode == ERPG_TypeNode::StandardNode)
-                {
-                    A_TaskNodeData->StartConnectNode.OutConnectNode = B_TaskNodeData->IndexNode;
-                    B_TaskNodeData->StandardConnectNode.InConnectNode = A_TaskNodeData->IndexNode;
-                }
-
-                if (A_TaskNodeData->TypeNode == ERPG_TypeNode::StandardNode && B_TaskNodeData->TypeNode == ERPG_TypeNode::StartNode)
-                {
-                    B_TaskNodeData->StartConnectNode.OutConnectNode = A_TaskNodeData->IndexNode;
-                    A_TaskNodeData->StandardConnectNode.InConnectNode = B_TaskNodeData->IndexNode;
-                }
-
-                if (A_TaskNodeData->TypeNode == ERPG_TypeNode::StandardNode && B_TaskNodeData->TypeNode == ERPG_TypeNode::StandardNode)
-                {
-                    if (A->PinName.ToString() == FString(PIN_TASK_IN))
-                    {
-                        A_TaskNodeData->StandardConnectNode.InConnectNode = B_TaskNodeData->IndexNode;
-                    }
-
-                    if (A->PinName.ToString() == FString(PIN_TASK_OUT))
-                    {
-                        A_TaskNodeData->StandardConnectNode.OutConnectNode = B_TaskNodeData->IndexNode;
-                    }
-
-                    if (B->PinName.ToString() == FString(PIN_TASK_IN))
-                    {
-                        B_TaskNodeData->StandardConnectNode.InConnectNode = A_TaskNodeData->IndexNode;
-                    }
-
-                    if (B->PinName.ToString() == FString(PIN_TASK_OUT))
-                    {
-                        B_TaskNodeData->StandardConnectNode.OutConnectNode = A_TaskNodeData->IndexNode;
-                    }
-                }
+                A_GraphNode->NodeConnectionListChanged();
+                B_GraphNode->NodeConnectionListChanged();
                 return true;
             }
         }

@@ -62,16 +62,19 @@ void SEditorPaletteTasks::CollectAllActions(FGraphActionListBuilderBase& OutAllA
     GetDerivedClasses(URPG_TaskNodeBase::StaticClass(), TaskNodes);
 
     FGraphActionMenuBuilder ActionMenuBuilder;
-    for (UClass* NodeClass : TaskNodes)
+    for (const UClass* NodeClass : TaskNodes)
     {
         if (URPG_TaskNodeBase* Task = Cast<URPG_TaskNodeBase>(NodeClass->GetDefaultObject()))
         {
-            FText NameCategoryTask = FText::FromString(Editor.Pin()->GetQuestBeingEdited()->GetCategoryNameByTypeNode(ERPG_TypeNode::StandardNode));
+            const FText NameCategoryTask = FText::FromString(Editor.Pin()->GetQuestBeingEdited()->GetCategoryNameByTypeNode(ERPG_TypeNode::StandardNode));
             TSharedPtr<FEdGraphSchemaAction_Task> NewNodeActionTask(new FEdGraphSchemaAction_Task(NameCategoryTask, Task, ERPG_TypeNode::StandardNode));
             ActionMenuBuilder.AddAction(NewNodeActionTask);
         }
     }
 
+    const FText NameCategoryFinishNode = FText::FromString(Editor.Pin()->GetQuestBeingEdited()->GetCategoryNameByTypeNode(ERPG_TypeNode::FinishNode));
+    const TSharedPtr<FEdGraphSchemaAction_Task> NewNodeActionFinishNode(new FEdGraphSchemaAction_Task(NameCategoryFinishNode, FText::FromString("Finish Node"), FText::FromString("Finish Node"), ERPG_TypeNode::FinishNode));
+    ActionMenuBuilder.AddAction(NewNodeActionFinishNode);
     OutAllActions.Append(ActionMenuBuilder);
 }
 

@@ -15,14 +15,19 @@ void URPG_QuestGraphNode_Base::AllocateDefaultPins()
     if (!TaskNodeElem) return;
     if (TaskNodeElem->TypeNode == ERPG_TypeNode::StartNode)
     {
-        CreatePin(EGPD_Output, TEXT("StartNode"), TEXT(""), PIN_TASK_OUT);
+        OutputPin = CreatePin(EGPD_Output, TEXT("StartNode"), TEXT(""), PIN_TASK_OUT);
     }
 
     if (TaskNodeElem->TaskNodeBase && TaskNodeElem->TypeNode == ERPG_TypeNode::StandardNode)
     {
         FName PinCategory = *TaskNodeElem->TaskNodeBase->GetName();
-        CreatePin(EGPD_Input, PinCategory, TEXT(""), PIN_TASK_IN);
-        CreatePin(EGPD_Output, PinCategory, TEXT(""), PIN_TASK_OUT);
+        InPin = CreatePin(EGPD_Input, PinCategory, TEXT(""), PIN_TASK_IN);
+        OutputPin = CreatePin(EGPD_Output, PinCategory, TEXT(""), PIN_TASK_OUT);
+    }
+
+    if (TaskNodeElem->TypeNode == ERPG_TypeNode::FinishNode)
+    {
+        InPin = CreatePin(EGPD_Input, TEXT("FinishNode"), TEXT(""), PIN_TASK_IN);
     }
 }
 
@@ -45,6 +50,11 @@ FText URPG_QuestGraphNode_Base::GetNodeTitle(ENodeTitleType::Type TitleType) con
         return FText::FromString(FString::Printf(TEXT("#%i | %s"), TaskNodeElem->IndexNode, *TaskNodeElem->TaskNodeBase->GetDesc()));
     }
 
+    if (TaskNodeElem && TaskNodeElem->TypeNode == ERPG_TypeNode::FinishNode)
+    {
+        return FText::FromString(FString::Printf(TEXT("#%i | FINISH"), TaskNodeElem->IndexNode));
+    }
+    
     return Super::GetNodeTitle(TitleType);
 }
 
@@ -60,6 +70,11 @@ FText URPG_QuestGraphNode_Base::GetTooltipText() const
     if (TaskNodeElem && TaskNodeElem->TypeNode == ERPG_TypeNode::StandardNode && TaskNodeElem->TaskNodeBase)
     {
         return FText::FromString(FString::Printf(TEXT("#%i | %s | X=%i Y=%i\n"), TaskNodeElem->IndexNode, *TaskNodeElem->TaskNodeBase->GetDesc(), NodePosX, NodePosY));
+    }
+
+    if (TaskNodeElem && TaskNodeElem->TypeNode == ERPG_TypeNode::FinishNode)
+    {
+        return FText::FromString(FString::Printf(TEXT("#%i | FINISH | X=%i Y=%i"), TaskNodeElem->IndexNode, NodePosX, NodePosY));
     }
 
     return Super::GetTooltipText();
@@ -98,69 +113,23 @@ void URPG_QuestGraphNode_Base::NodeConnectionListChanged()
 
     FRPG_TaskNodeData* TaskNodeElem = GetTaskNodeData();
     if (!TaskNodeElem) return;
+    if (!OutputPin) return;
 
-    if (TaskNodeElem->TypeNode == ERPG_TypeNode::StartNode)
+    TArray<int32> OutTargetNodes;
+    for (UEdGraphPin* Pin : OutputPin->LinkedTo)
     {
-        if (const UEdGraphPin* PinOut = FindPin(FName(PIN_TASK_OUT), EGPD_Output))
+        if (!Pin) continue;
+        if (URPG_QuestGraphNode_Base* QuestGraphNode = Cast<URPG_QuestGraphNode_Base>(Pin->GetOwningNode()))
         {
-            if (!PinOut->HasAnyConnections())
-            {
-                TaskNodeElem->StartConnectNode.OutConnectNode = INDEX_NONE;
-            }
+            OutTargetNodes.Add(QuestGraphNode->TargetIndexTaskNode);
         }
     }
-
-    if (TaskNodeElem->TypeNode == ERPG_TypeNode::StandardNode)
-    {
-        if (const UEdGraphPin* PinIn = FindPin(FName(PIN_TASK_IN), EGPD_Input))
-        {
-            if (!PinIn->HasAnyConnections())
-            {
-                TaskNodeElem->StandardConnectNode.InConnectNode = INDEX_NONE;
-            }
-        }
-
-        if (const UEdGraphPin* PinOut = FindPin(FName(PIN_TASK_OUT), EGPD_Output))
-        {
-            if (!PinOut->HasAnyConnections())
-            {
-                TaskNodeElem->StandardConnectNode.OutConnectNode = INDEX_NONE;
-            }
-        }
-    }
+    TaskNodeElem->OutNodes = OutTargetNodes;
 }
 
 #pragma endregion
 
 #pragma region ActionNode
-
-int32 URPG_QuestGraphNode_Base::GetIndexFromTaskNode(FName PinName) const
-{
-    FRPG_TaskNodeData* TaskNodeElem = GetTaskNodeData();
-    if (TaskNodeElem)
-    {
-        if (TaskNodeElem->TypeNode == ERPG_TypeNode::StartNode)
-        {
-            if (PinName.ToString() == FString(PIN_TASK_OUT))
-            {
-                return TaskNodeElem->StartConnectNode.OutConnectNode;
-            }
-        }
-
-        if (TaskNodeElem->TypeNode == ERPG_TypeNode::StandardNode)
-        {
-            if (PinName.ToString() == FString(PIN_TASK_IN))
-            {
-                return TaskNodeElem->StandardConnectNode.InConnectNode;
-            }
-            if (PinName.ToString() == FString(PIN_TASK_OUT))
-            {
-                return TaskNodeElem->StandardConnectNode.OutConnectNode;
-            }
-        }
-    }
-    return 0;
-}
 
 URPG_QuestObjectBase* URPG_QuestGraphNode_Base::GetQuestObject() const
 {

@@ -68,8 +68,11 @@ void URPG_QuestObjectBase::RunQuest()
 
     ChangeStateQuestObject(ERPG_StateEntity::Run);
 
-    const FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &ThisClass::StartTask, StartNode->StartConnectNode.OutConnectNode);
-    GetWorld()->GetTimerManager().SetTimerForNextTick(TimerDelegate);
+    for (int32 IndexNode : StartNode->OutNodes)
+    {
+        const FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &ThisClass::StartTask, IndexNode);
+        GetWorld()->GetTimerManager().SetTimerForNextTick(TimerDelegate);
+    }
 }
 
 void URPG_QuestObjectBase::CompleteQuest()
@@ -77,7 +80,13 @@ void URPG_QuestObjectBase::CompleteQuest()
     if (QUEST_OBJECT_CLOG(StateQuestObject != ERPG_StateEntity::Run, Error, FString::Printf(TEXT("Quest is not state INIT | Quest current state: [%s]"), *UEnum::GetValueAsString(StateQuestObject))))
         return;
 
-    ChangeStateQuestObject(ERPG_StateEntity::Complete);
+    for (const int32 IndexNode : ArrayActiveIndexTask)
+    {
+        FTimerDelegate StopTaskTimerDelegate = FTimerDelegate::CreateUObject(this, &ThisClass::StopTask, IndexNode, true);
+        GetWorld()->GetTimerManager().SetTimerForNextTick(StopTaskTimerDelegate);
+    }
+    const FTimerDelegate ChangeStateTimerDelegate = FTimerDelegate::CreateUObject(this, &ThisClass::ChangeStateQuestObject, ERPG_StateEntity::Complete);
+    GetWorld()->GetTimerManager().SetTimerForNextTick(ChangeStateTimerDelegate);
 }
 
 void URPG_QuestObjectBase::ResetQuest()
@@ -133,7 +142,7 @@ void URPG_QuestObjectBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 
     DOREPLIFETIME_CONDITION(URPG_QuestObjectBase, StateQuestObject, COND_OwnerOnly);
     DOREPLIFETIME_CONDITION(URPG_QuestObjectBase, ArrayTaskNodes, COND_OwnerOnly);
-    DOREPLIFETIME_CONDITION(URPG_QuestObjectBase, TargetIndexTask, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(URPG_QuestObjectBase, ArrayActiveIndexTask, COND_OwnerOnly);
 }
 
 #pragma endregion
@@ -154,35 +163,33 @@ void URPG_QuestObjectBase::StartTask(int32 Index)
     if (QUEST_OBJECT_CLOG(StateQuestObject != ERPG_StateEntity::Run, Error, TEXT("StateQuestObject is not Running"))) return;
 
     FRPG_TaskNodeData* TaskNodeData = FindTaskNodeByElem(Index);
-    if (QUEST_OBJECT_CLOG(TaskNodeData == nullptr, Display, TEXT("TaskNodeData is not found")))
+    if (QUEST_OBJECT_CLOG(TaskNodeData == nullptr, Display, TEXT("TaskNodeData is not found"))) return;
+    if (TaskNodeData->TypeNode == ERPG_TypeNode::FinishNode)
     {
-        CompleteQuest();
+        GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ThisClass::CompleteQuest);
         return;
     }
 
-    if (QUEST_OBJECT_CLOG(TaskNodeData->TaskNodeBase == nullptr, Display, TEXT("TaskNodeBase is nullptr")))
-    {
-        CompleteQuest();
-        return;
-    }
-
-    if (!TaskNodeData) return;
-    TargetIndexTask = Index;
-
+    if (QUEST_OBJECT_CLOG(TaskNodeData->TaskNodeBase == nullptr, Display, TEXT("TaskNodeBase is nullptr"))) return;
     TaskNodeData->TaskNodeBase->ResetTask();
     if (TaskNodeData->TaskNodeBase->InitTask(OwnerPC, this))
     {
+        ArrayActiveIndexTask.AddUnique(Index);
         TaskNodeData->TaskNodeBase->OnUpdateTaskNode.BindUObject(this, &ThisClass::RegisterUpdateStateTask_Event);
         TaskNodeData->TaskNodeBase->RunTask();
     }
     else
     {
-        const FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &ThisClass::StartTask, TaskNodeData->StandardConnectNode.OutConnectNode);
-        GetWorld()->GetTimerManager().SetTimerForNextTick(TimerDelegate);
+        StopTask(Index);
+        for (int32 IndexNode : TaskNodeData->OutNodes)
+        {
+            const FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &ThisClass::StartTask, IndexNode);
+            GetWorld()->GetTimerManager().SetTimerForNextTick(TimerDelegate);
+        }
     }
 }
 
-void URPG_QuestObjectBase::StopTask(int32 Index)
+void URPG_QuestObjectBase::StopTask(int32 Index, bool WithResetTask)
 {
     if (QUEST_OBJECT_CLOG(StateQuestObject != ERPG_StateEntity::Run, Error, TEXT("StateQuestObject is not Running"))) return;
 
@@ -191,6 +198,11 @@ void URPG_QuestObjectBase::StopTask(int32 Index)
     if (QUEST_OBJECT_CLOG(TaskNodeData->TaskNodeBase == nullptr, Display, TEXT("TaskNodeBase is nullptr"))) return;
 
     TaskNodeData->TaskNodeBase->OnUpdateTaskNode.Unbind();
+    if (WithResetTask)
+    {
+        TaskNodeData->TaskNodeBase->ResetTask();
+    }
+    ArrayActiveIndexTask.Remove(TaskNodeData->IndexNode);
 }
 
 void URPG_QuestObjectBase::RegisterUpdateStateTask_Event(URPG_TaskNodeBase* TaskNode)
@@ -199,10 +211,14 @@ void URPG_QuestObjectBase::RegisterUpdateStateTask_Event(URPG_TaskNodeBase* Task
 
     if (TaskNode->GetStateTaskNode() == ERPG_StateEntity::Complete)
     {
-        StopTask(TargetIndexTask);
         FRPG_TaskNodeData* TaskNodeData = FindTaskNodeByTask(TaskNode);
-        const FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &ThisClass::StartTask, TaskNodeData->StandardConnectNode.OutConnectNode);
-        GetWorld()->GetTimerManager().SetTimerForNextTick(TimerDelegate);
+        if (!TaskNodeData) return;
+        StopTask(TaskNodeData->IndexNode);
+        for (int32 IndexNode : TaskNodeData->OutNodes)
+        {
+            const FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &ThisClass::StartTask, IndexNode);
+            GetWorld()->GetTimerManager().SetTimerForNextTick(TimerDelegate);
+        }
     }
     GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ThisClass::NotifyUpdateStateQuest);
 }
@@ -215,6 +231,20 @@ TArray<URPG_TaskNodeBase*> URPG_QuestObjectBase::GetArrayInstanceTaskNodes()
     {
         if (!Data.TaskNodeBase) continue;
         Results.Append(Data.TaskNodeBase->GetAllInstanced());
+    }
+    return Results;
+}
+
+TArray<URPG_TaskNodeBase*> URPG_QuestObjectBase::GetArrayActiveTaskNodes()
+{
+    TArray<URPG_TaskNodeBase*> Results;
+
+    for (int32 IndexNode : ArrayActiveIndexTask)
+    {
+        FRPG_TaskNodeData* Node = FindTaskNodeByElem(IndexNode);
+        if (!Node) continue;
+        if (!Node->TaskNodeBase) continue;
+        Results.Add(Node->TaskNodeBase);
     }
     return Results;
 }
@@ -320,6 +350,11 @@ FLinearColor URPG_QuestObjectBase::GetNodeTitleColor(int32 TargetIndexNode) cons
         return QuestSystemSettings->StandardTaskNodeEditorColor.NodeTitleColor;
     }
 
+    if (ArrayTaskNodes[IndexTaskNodeData].TypeNode == ERPG_TypeNode::FinishNode)
+    {
+        return QuestSystemSettings->FinishTaskNodeEditorColor.NodeTitleColor;
+    }
+
     return FLinearColor();
 }
 
@@ -340,6 +375,11 @@ FLinearColor URPG_QuestObjectBase::GetNodeCommentColor(int32 TargetIndexNode) co
         return QuestSystemSettings->StandardTaskNodeEditorColor.NodeCommentColor;
     }
 
+    if (ArrayTaskNodes[IndexTaskNodeData].TypeNode == ERPG_TypeNode::FinishNode)
+    {
+        return QuestSystemSettings->FinishTaskNodeEditorColor.NodeCommentColor;
+    }
+
     return FLinearColor();
 }
 
@@ -358,6 +398,11 @@ FLinearColor URPG_QuestObjectBase::GetNodeBodyTintColor(int32 TargetIndexNode) c
     if (ArrayTaskNodes[IndexTaskNodeData].TypeNode == ERPG_TypeNode::StandardNode)
     {
         return QuestSystemSettings->StandardTaskNodeEditorColor.NodeBodyTintColor;
+    }
+
+    if (ArrayTaskNodes[IndexTaskNodeData].TypeNode == ERPG_TypeNode::FinishNode)
+    {
+        return QuestSystemSettings->FinishTaskNodeEditorColor.NodeBodyTintColor;
     }
 
     return FLinearColor();

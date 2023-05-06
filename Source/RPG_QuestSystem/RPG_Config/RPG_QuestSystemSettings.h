@@ -27,6 +27,10 @@ public:
     UPROPERTY(Config, EditAnywhere, Category = "Settings Editor Quest")
     FRPG_TaskNodeEditorColor StandardTaskNodeEditorColor;
 
+    /** @public Configuring finish nodes **/
+    UPROPERTY(Config, EditAnywhere, Category = "Settings Editor Quest")
+    FRPG_TaskNodeEditorColor FinishTaskNodeEditorColor;
+
     /** @public Pin Color Settings **/
     UPROPERTY(Config, EditAnywhere, Category = "Settings Editor Quest")
     FRPG_SchemePinColor SchemePinColor;

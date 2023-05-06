@@ -99,6 +99,9 @@ public:
     /** @public Getting all instance task nodes **/
     TArray<URPG_TaskNodeBase*> GetArrayInstanceTaskNodes();
 
+    /** @public Getting all Active task nodes **/
+    TArray<URPG_TaskNodeBase*> GetArrayActiveTaskNodes();
+
     /** @public Finding a task node element by index **/
     FRPG_TaskNodeData* FindTaskNodeByElem(int32 IndexNode);
 
@@ -154,7 +157,7 @@ protected:
     virtual void StartTask(int32 Index);
 
     /** @protected Stop task **/
-    virtual void StopTask(int32 Index);
+    virtual void StopTask(int32 Index, bool WithResetTask = false);
 
     /** @protected Registration receiving notification from task update event**/
     virtual void RegisterUpdateStateTask_Event(URPG_TaskNodeBase* TaskNode);
@@ -183,7 +186,7 @@ protected:
 
     /** @protected Target index task **/
     UPROPERTY(Replicated)
-    int32 TargetIndexTask{INDEX_NONE};
+    TArray<int32> ArrayActiveIndexTask;
 
 #pragma endregion
 
