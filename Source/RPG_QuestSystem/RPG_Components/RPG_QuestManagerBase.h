@@ -70,6 +70,10 @@ public:
     /** @public Get quest list table **/
     UFUNCTION(BlueprintCallable)
     UDataTable* GetDataQuestTable() const { return DataQuestTable; }
+
+    /** @public Get Status quest by name **/
+    UFUNCTION(BlueprintCallable)
+    ERPG_StateEntity GetStateQuestByName(FName QuestName);
     
 protected:
     /** @protected Validation check for adding a quest**/

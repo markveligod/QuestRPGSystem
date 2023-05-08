@@ -198,6 +198,16 @@ const FRPG_DataQuest& URPG_QuestManagerBase::FindDataQuestByQuestObject(URPG_Que
     return ArrayDataQuest[ElemIndex];
 }
 
+ERPG_StateEntity URPG_QuestManagerBase::GetStateQuestByName(FName QuestName)
+{
+    const FRPG_DataQuest* DataQuest = FindDataQuestByName(QuestName);
+    if (DataQuest && DataQuest->IsValidQuest())
+    {
+        return DataQuest->StateEntity;
+    }
+    return ERPG_StateEntity::None;
+}
+
 bool URPG_QuestManagerBase::IsValidationRequestAddQuest(const FName& CheckQuest)
 {
     return CheckQuest != NAME_None && !FindDataQuestByName(CheckQuest);
@@ -228,12 +238,14 @@ void URPG_QuestManagerBase::RegisterUpdateQuest_Event(URPG_QuestObjectBase* Ques
 
 void URPG_QuestManagerBase::NotifyUpdateQuest(const FName NameQuest)
 {
-    const FRPG_DataQuest* DataQuest = FindDataQuestByName(NameQuest);
+    FRPG_DataQuest* DataQuest = FindDataQuestByName(NameQuest);
     if (QUEST_MANAGER_CLOG(!DataQuest, Error, TEXT("DataQuest is nullptr"))) return;
     if (QUEST_MANAGER_CLOG(!DataQuest->IsValidQuest(), Error, TEXT("DataQuest is not valid"))) return;
+    if (QUEST_MANAGER_CLOG(DataQuest->ActiveQuest == nullptr, Error, TEXT("ActiveQuest is nullptr"))) return;
 
+    DataQuest->StateEntity = DataQuest->ActiveQuest->GetStateQuest();
     APlayerController* LocalOwner = IsNetMode(NM_Client) ? GetWorld()->GetFirstPlayerController() : OwnerPC;
-    OnUpdateDataQuest.Broadcast(LocalOwner, DataQuest->QuestRowNameTable, DataQuest->ActiveQuest->GetStateQuest());
+    OnUpdateDataQuest.Broadcast(LocalOwner, DataQuest->QuestRowNameTable, DataQuest->StateEntity);
 }
 
 #pragma endregion

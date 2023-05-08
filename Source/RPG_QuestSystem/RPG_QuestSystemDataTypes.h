@@ -58,9 +58,12 @@ struct FRPG_DataQuest
     FName QuestRowNameTable{NAME_None};
 
     UPROPERTY()
+    ERPG_StateEntity StateEntity = ERPG_StateEntity::None;
+    
+    UPROPERTY()
     URPG_QuestObjectBase* ActiveQuest{nullptr};
 
-    bool IsValidQuest() const { return QuestRowNameTable != NAME_None && ActiveQuest != nullptr; }
+    bool IsValidQuest() const { return QuestRowNameTable != NAME_None; }
 
     bool operator==(const FRPG_DataQuest& Data) const { return Data.QuestRowNameTable.IsEqual(QuestRowNameTable); }
 };
