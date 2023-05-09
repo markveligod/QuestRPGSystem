@@ -60,6 +60,7 @@ protected:
 
 #pragma region NetworkInterface
 
+public:
     /**
      * @public Return the space this function should be called. Checks to see if this function should
      * be called locally, remotely, or simply absorbed under the given conditions
@@ -132,12 +133,16 @@ public:
     /** @public Cleaning all nodes **/
     void RemoveAllTaskNode();
 
+    /** @public Getting node title color **/
     FLinearColor GetNodeTitleColor(int32 TargetIndexNode) const;
 
+    /** @public Getting node comment color **/
     FLinearColor GetNodeCommentColor(int32 TargetIndexNode) const;
 
+    /** @public Getting node body tint color **/
     FLinearColor GetNodeBodyTintColor(int32 TargetIndexNode) const;
 
+    /** @public Getting category name by type node **/
     FString GetCategoryNameByTypeNode(const ERPG_TypeNode& TypeNode) const;
 
 private:

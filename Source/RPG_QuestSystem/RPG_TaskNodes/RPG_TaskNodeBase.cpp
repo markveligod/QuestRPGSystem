@@ -111,7 +111,7 @@ void URPG_TaskNodeBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-   DOREPLIFETIME_CONDITION(URPG_TaskNodeBase, StateTaskNode, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(URPG_TaskNodeBase, StateTaskNode, COND_OwnerOnly);
 }
 
 #pragma endregion

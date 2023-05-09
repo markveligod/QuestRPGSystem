@@ -42,7 +42,6 @@ public:
 #pragma region DataNode
 
 public:
-
     int32 TargetIndexTaskNode{INDEX_NONE};
 
     UEdGraphPin* OutputPin{nullptr};
@@ -53,7 +52,6 @@ public:
 #pragma region ActionNode
 
 public:
-
     FRPG_TaskNodeData* GetTaskNodeData() const;
     ERPG_TypeNode GetTypeTaskNode() const;
     UEdGraphPin* GetGraphPinByName(FString NamePin);

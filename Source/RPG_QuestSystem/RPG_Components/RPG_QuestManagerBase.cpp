@@ -11,21 +11,19 @@
 
 static TAutoConsoleVariable<bool> EnableD_ShowStateQuest(TEXT("RPGQuestSystem.ShowStateQuest"), false, TEXT("RPGQuestSystem.ShowStateQuest [true/false]"), ECVF_Cheat);
 
-static FAutoConsoleCommandWithWorldAndArgs EnableD_ToDistance(
-    TEXT("RPGQuestSystem.AddQuest"),
-    TEXT("RPGQuestSystem.AddQuest [QuestTableName]"),
-    FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray<FString>& Args, UWorld* World)
-    {
-        if (!World) return;
-        if (!Args.IsValidIndex(0)) return;
-        FName QuestName = FName(Args[0]);
-        APlayerController* PC = World->GetFirstPlayerController();
-        if (!PC) return;
-        URPG_QuestManagerBase* QM = PC->FindComponentByClass<URPG_QuestManagerBase>();
-        if (!QM) return;
-        QM->ServerAddQuest(QuestName);
-    })
-);
+static FAutoConsoleCommandWithWorldAndArgs EnableD_ToDistance(TEXT("RPGQuestSystem.AddQuest"), TEXT("RPGQuestSystem.AddQuest [QuestTableName]"),
+    FConsoleCommandWithWorldAndArgsDelegate::CreateLambda(
+        [](const TArray<FString>& Args, UWorld* World)
+        {
+            if (!World) return;
+            if (!Args.IsValidIndex(0)) return;
+            FName QuestName = FName(Args[0]);
+            APlayerController* PC = World->GetFirstPlayerController();
+            if (!PC) return;
+            URPG_QuestManagerBase* QM = PC->FindComponentByClass<URPG_QuestManagerBase>();
+            if (!QM) return;
+            QM->ServerAddQuest(QuestName);
+        }));
 
 #pragma endregion
 
@@ -81,8 +79,8 @@ void URPG_QuestManagerBase::TickComponent(float DeltaTime, ELevelTick TickType, 
         {
             if (!Data.IsValidQuest()) continue;
             FString NetMode = URPG_QuestSystemLibrary::GetNetModeToString(OwnerPC);
-            FString Result = FString::Printf(TEXT("NetMode: [%s] | Quest Table Name: [%s] | Quest State: [%s]"),
-                *NetMode, *Data.QuestRowNameTable.ToString(), *UEnum::GetValueAsString(Data.ActiveQuest->GetStateQuest()));
+            FString Result = FString::Printf(
+                TEXT("NetMode: [%s] | Quest Table Name: [%s] | Quest State: [%s]"), *NetMode, *Data.QuestRowNameTable.ToString(), *UEnum::GetValueAsString(Data.ActiveQuest->GetStateQuest()));
             TArray<URPG_TaskNodeBase*> AllActiveTasks = Data.ActiveQuest->GetArrayActiveTaskNodes();
             for (URPG_TaskNodeBase* Task : AllActiveTasks)
             {

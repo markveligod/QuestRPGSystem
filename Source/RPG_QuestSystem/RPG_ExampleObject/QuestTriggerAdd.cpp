@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+/** Copyright Mark Veligod. Published in 2023. **/
 
 #include "RPG_ExampleObject/QuestTriggerAdd.h"
 #include "Components/TextRenderComponent.h"

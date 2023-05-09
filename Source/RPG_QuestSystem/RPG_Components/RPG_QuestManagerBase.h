@@ -31,15 +31,20 @@ class RPG_QUESTSYSTEM_API URPG_QuestManagerBase : public UActorComponent
 #pragma region DefaultInterface
 
 public:
-    // Sets default values for this component's properties
     URPG_QuestManagerBase();
 
-    // Called every frame
+    /** @public Called every frame **/
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-    // @public Defining rules for replication
+    /** @public Defining rules for replication **/
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+    /**
+     * Allows a component to replicate other subobject on the actor.
+     * Must return true if any data gets serialized into the bunch.
+     * This method is used only when bReplicateUsingRegisteredSubObjectList is false.
+     * Otherwise this function is not called and only the ReplicatedSubObjects list is used.
+     */
     virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 
 protected:
@@ -74,7 +79,7 @@ public:
     /** @public Get Status quest by name **/
     UFUNCTION(BlueprintCallable)
     ERPG_StateEntity GetStateQuestByName(FName QuestName);
-    
+
 protected:
     /** @protected Validation check for adding a quest**/
     virtual bool IsValidationRequestAddQuest(const FName& CheckQuest);

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "RPG_QuestSystemSettingsDataTypes.generated.h"
 
+/** @struct Data on task nodes for color display **/
 USTRUCT()
 struct FRPG_TaskNodeEditorColor
 {
@@ -20,6 +21,7 @@ struct FRPG_TaskNodeEditorColor
     FLinearColor NodeBodyTintColor{FLinearColor::Blue};
 };
 
+/** @struct Pin color display **/
 USTRUCT()
 struct FRPG_SchemePinColor
 {

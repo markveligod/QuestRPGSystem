@@ -39,6 +39,7 @@ public:
     UPROPERTY(Config, EditAnywhere, Category = "Settings Editor Quest")
     TMap<ERPG_TypeNode, FString> NameCategoryByTypeNode;
 
+    /** @public Type of the supported sub class of the quest object **/
     UPROPERTY(Config, EditAnywhere, NoClear, Category = "Settings Editor Quest", meta = (ConfigRestartRequired = true))
     TSubclassOf<URPG_QuestObjectBase> SupportQuestClass;
 };

@@ -59,7 +59,7 @@ struct FRPG_DataQuest
 
     UPROPERTY()
     ERPG_StateEntity StateEntity = ERPG_StateEntity::None;
-    
+
     UPROPERTY()
     URPG_QuestObjectBase* ActiveQuest{nullptr};
 

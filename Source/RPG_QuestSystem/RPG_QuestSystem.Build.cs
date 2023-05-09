@@ -22,7 +22,7 @@ public class RPG_QuestSystem : ModuleRules
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] {
-            "CoreUObject", "Engine", "Slate", "SlateCore", "JsonUtilities", "DeveloperSettings",
+            "CoreUObject", "Engine", "Slate", "SlateCore", "JsonUtilities", "DeveloperSettings", "GameplayTags",
             // ... add private dependencies that you statically link with here ...
         });
 

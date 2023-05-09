@@ -4,10 +4,6 @@
 
 #pragma region DefaultInterface
 
-void URPG_QuestHandleSubsystem::BeginPlay()
-{
-}
-
 void URPG_QuestHandleSubsystem::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);

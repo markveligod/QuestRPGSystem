@@ -54,7 +54,7 @@ FText URPG_QuestGraphNode_Base::GetNodeTitle(ENodeTitleType::Type TitleType) con
     {
         return FText::FromString(FString::Printf(TEXT("#%i | FINISH"), TaskNodeElem->IndexNode));
     }
-    
+
     return Super::GetNodeTitle(TitleType);
 }
 

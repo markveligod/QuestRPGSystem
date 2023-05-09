@@ -73,7 +73,8 @@ void SEditorPaletteTasks::CollectAllActions(FGraphActionListBuilderBase& OutAllA
     }
 
     const FText NameCategoryFinishNode = FText::FromString(Editor.Pin()->GetQuestBeingEdited()->GetCategoryNameByTypeNode(ERPG_TypeNode::FinishNode));
-    const TSharedPtr<FEdGraphSchemaAction_Task> NewNodeActionFinishNode(new FEdGraphSchemaAction_Task(NameCategoryFinishNode, FText::FromString("Finish Node"), FText::FromString("Finish Node"), ERPG_TypeNode::FinishNode));
+    const TSharedPtr<FEdGraphSchemaAction_Task> NewNodeActionFinishNode(
+        new FEdGraphSchemaAction_Task(NameCategoryFinishNode, FText::FromString("Finish Node"), FText::FromString("Finish Node"), ERPG_TypeNode::FinishNode));
     ActionMenuBuilder.AddAction(NewNodeActionFinishNode);
     OutAllActions.Append(ActionMenuBuilder);
 }

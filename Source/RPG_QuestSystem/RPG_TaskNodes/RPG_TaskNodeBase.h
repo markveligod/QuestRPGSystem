@@ -108,7 +108,6 @@ public:
 #pragma region ActionTaskNode
 
 public:
-
     /** @public Getting the current state of the task entity **/
     UFUNCTION(BlueprintCallable)
     const ERPG_StateEntity& GetStateTaskNode() { return StateTaskNode; }
@@ -123,7 +122,6 @@ private:
 #pragma region DataTask
 
 protected:
-
     /** @protected The controller that owns this task **/
     UPROPERTY(BlueprintReadOnly)
     APlayerController* OwnerPC{nullptr};
