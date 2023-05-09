@@ -42,4 +42,8 @@ public:
     /** @public Type of the supported sub class of the quest object **/
     UPROPERTY(Config, EditAnywhere, NoClear, Category = "Settings Editor Quest", meta = (ConfigRestartRequired = true))
     TSubclassOf<URPG_QuestObjectBase> SupportQuestClass;
+
+    /** @public Time until the complete destruction of the quest object **/
+    UPROPERTY(Config, EditAnywhere, Category = "Settings Editor Quest", meta = (ClampMin = "1.0", ForceUnits = "s"))
+    float DelayToQuestDestroy{10.0f};
 };

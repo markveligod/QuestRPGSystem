@@ -26,28 +26,6 @@ enum ERPG_QSLogVerb
     Error
 };
 
-/** @struct Data for saving the current state of the quest **/
-USTRUCT()
-struct FRPG_DataSaveQuest
-{
-    GENERATED_USTRUCT_BODY()
-
-    UPROPERTY(SaveGame)
-    FName QuestRowNameTable{NAME_None};
-
-    UPROPERTY(SaveGame)
-    FString DataQuestJSON{""};
-
-    void Serialize(FArchive& Ar) { Ar << QuestRowNameTable << DataQuestJSON; }
-
-    friend FArchive& operator<<(FArchive& Ar, FRPG_DataSaveQuest& InstanceData)
-    {
-        Ar << InstanceData.QuestRowNameTable;
-        Ar << InstanceData.DataQuestJSON;
-        return Ar;
-    }
-};
-
 /** @struct Data structure for storing information about the quest and for replicating to the client **/
 USTRUCT()
 struct FRPG_DataQuest

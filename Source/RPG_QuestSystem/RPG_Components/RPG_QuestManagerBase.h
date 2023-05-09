@@ -70,7 +70,10 @@ public:
     int32 FindIndexDataQuestByName(const FName& CheckQuest) const;
 
     /** @public Search for quest data by quest object **/
-    const FRPG_DataQuest& FindDataQuestByQuestObject(URPG_QuestObjectBase* QuestObject);
+    FRPG_DataQuest& FindDataQuestByQuestObject(URPG_QuestObjectBase* QuestObject);
+
+    /** @public Search for quest data by quest object **/
+    const FRPG_DataQuest& FindFreezeDataQuestByQuestObject(URPG_QuestObjectBase* QuestObject);
 
     /** @public Get quest list table **/
     UFUNCTION(BlueprintCallable)
@@ -94,13 +97,16 @@ protected:
     /** @protected Notification about updating the quest data **/
     virtual void NotifyUpdateQuest(FName NameQuest);
 
+    /** @protected Destroy active quest **/
+    virtual void DestroyActiveQuestByName(FName NameQuest);
+
 #pragma endregion
 
 #pragma region DataQuestManager
 
 protected:
     /** @protected A set of quests**/
-    UPROPERTY(SaveGame, ReplicatedUsing = OnRep_ArrayDataQuest)
+    UPROPERTY(ReplicatedUsing = OnRep_ArrayDataQuest)
     TArray<FRPG_DataQuest> ArrayDataQuest;
 
     /** @protected The owner of the component **/
@@ -112,7 +118,7 @@ protected:
     UDataTable* DataQuestTable{nullptr};
 
     /** @protected Empty quest data **/
-    const FRPG_DataQuest EmptyDataQuest;
+    FRPG_DataQuest EmptyDataQuest;
 #define EMPTY_DATA_QUEST EmptyDataQuest;
 
 private:

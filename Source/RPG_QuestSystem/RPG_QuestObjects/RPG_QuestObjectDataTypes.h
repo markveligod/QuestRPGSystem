@@ -56,4 +56,15 @@ struct FRPG_TaskNodeData
     {
         return Ar << InstanceData.IndexNode << InstanceData.TypeNode << InstanceData.NodePosition << InstanceData.TaskNodeBase << InstanceData.OutNodes;
     }
+
+    FString ToString() const
+    {
+        if (TaskNodeBase)
+        {
+            return FString::Printf(TEXT("Index node: [%i] | TypeNode: [%s]\nDesc Task: [%s] | State task: [%s]"),
+            IndexNode, *UEnum::GetValueAsString(TypeNode), *TaskNodeBase->GetDesc(), *UEnum::GetValueAsString(TaskNodeBase->GetStateTaskNode()));
+        }
+        return FString::Printf(TEXT("Index node: [%i] | TypeNode: [%s]\nDesc Task: [NONE] | State task: [NONE]"),
+            IndexNode, *UEnum::GetValueAsString(TypeNode));
+    }
 };

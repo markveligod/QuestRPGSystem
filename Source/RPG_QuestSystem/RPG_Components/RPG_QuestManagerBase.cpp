@@ -79,14 +79,22 @@ void URPG_QuestManagerBase::TickComponent(float DeltaTime, ELevelTick TickType, 
         {
             if (!Data.IsValidQuest()) continue;
             FString NetMode = URPG_QuestSystemLibrary::GetNetModeToString(OwnerPC);
-            FString Result = FString::Printf(
-                TEXT("NetMode: [%s] | Quest Table Name: [%s] | Quest State: [%s]"), *NetMode, *Data.QuestRowNameTable.ToString(), *UEnum::GetValueAsString(Data.ActiveQuest->GetStateQuest()));
-            TArray<URPG_TaskNodeBase*> AllActiveTasks = Data.ActiveQuest->GetArrayActiveTaskNodes();
-            for (URPG_TaskNodeBase* Task : AllActiveTasks)
+            FString IsActiveQuest = Data.ActiveQuest ? "TRUE" : "FALSE";
+            FString Result = FString::Printf(TEXT("NetMode: [%s] | Quest Table Name: [%s] | IsActiveQuest: [%s] | Quest State: [%s]"),
+                *NetMode, *Data.QuestRowNameTable.ToString(),
+                *IsActiveQuest, *UEnum::GetValueAsString(Data.StateEntity));
+
+            if (Data.ActiveQuest)
             {
-                if (!Task) continue;
-                FString DescTask = FString::Printf(TEXT("Desc Task: [%s] | State task: [%s]"), *Task->GetDesc(), *UEnum::GetValueAsString(Task->GetStateTaskNode()));
-                GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Orange, DescTask);
+                const TArray<FRPG_TaskNodeData>& AllTaskNodes = Data.ActiveQuest->GetArrayTaskNodes();
+                for (auto& TaskNode : AllTaskNodes)
+                {
+                    if (TaskNode.TypeNode != ERPG_TypeNode::StandardNode) continue;
+                    if (!TaskNode.TaskNodeBase) continue;
+                    if (TaskNode.TaskNodeBase->GetStateTaskNode() != ERPG_StateEntity::Run) continue;
+
+                    GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Orange, TaskNode.ToString());
+                }
             }
             GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Orange, Result);
             GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Orange, "--- | --- | --- | ---");
@@ -188,7 +196,15 @@ int32 URPG_QuestManagerBase::FindIndexDataQuestByName(const FName& CheckQuest) c
     return ArrayDataQuest.IndexOfByPredicate([CheckQuest](const FRPG_DataQuest& Data) { return Data.QuestRowNameTable.IsEqual(CheckQuest); });
 }
 
-const FRPG_DataQuest& URPG_QuestManagerBase::FindDataQuestByQuestObject(URPG_QuestObjectBase* QuestObject)
+FRPG_DataQuest& URPG_QuestManagerBase::FindDataQuestByQuestObject(URPG_QuestObjectBase* QuestObject)
+{
+    const int32 ElemIndex = ArrayDataQuest.IndexOfByPredicate([QuestObject](const FRPG_DataQuest& Data) { return Data.ActiveQuest == QuestObject; });
+    if (ElemIndex == INDEX_NONE) return EMPTY_DATA_QUEST;
+
+    return ArrayDataQuest[ElemIndex];
+}
+
+const FRPG_DataQuest& URPG_QuestManagerBase::FindFreezeDataQuestByQuestObject(URPG_QuestObjectBase* QuestObject)
 {
     const int32 ElemIndex = ArrayDataQuest.IndexOfByPredicate([QuestObject](const FRPG_DataQuest& Data) { return Data.ActiveQuest == QuestObject; });
     if (ElemIndex == INDEX_NONE) return EMPTY_DATA_QUEST;
@@ -223,15 +239,25 @@ void URPG_QuestManagerBase::RegisterUpdateQuest_Event(URPG_QuestObjectBase* Ques
 {
     if (QUEST_MANAGER_CLOG(!QuestObject, Error, TEXT("Quest object is not valid"))) return;
 
+    FRPG_DataQuest& DataQuest = FindDataQuestByQuestObject(QuestObject);
+    if (QUEST_MANAGER_CLOG(!DataQuest.IsValidQuest(), Error, TEXT("Quest is not valid"))) return;
+
+    DataQuest.StateEntity = QuestObject->GetStateQuest();
+    const FTimerDelegate NotifyUpdateQuestTimerDelegate = FTimerDelegate::CreateUObject(this, &ThisClass::NotifyUpdateQuest, DataQuest.QuestRowNameTable);
+    GetWorld()->GetTimerManager().SetTimerForNextTick(NotifyUpdateQuestTimerDelegate);
+    QueueRepQuest.Enqueue(DataQuest.QuestRowNameTable);
+
     if (QuestObject->GetStateQuest() == ERPG_StateEntity::Complete)
     {
         QuestObject->OnUpdateStateQuest.Unbind();
-    }
 
-    const FRPG_DataQuest& DataQuest = FindDataQuestByQuestObject(QuestObject);
-    const FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &ThisClass::NotifyUpdateQuest, DataQuest.QuestRowNameTable);
-    GetWorld()->GetTimerManager().SetTimerForNextTick(TimerDelegate);
-    QueueRepQuest.Enqueue(DataQuest.QuestRowNameTable);
+        if (const URPG_QuestSystemSettings* QuestSystemSettings = GetDefault<URPG_QuestSystemSettings>())
+        {
+            FTimerHandle DestroyActiveQuestTimerHandle;
+            const FTimerDelegate DestroyActiveQuestTimerDelegate = FTimerDelegate::CreateUObject(this, &ThisClass::DestroyActiveQuestByName, DataQuest.QuestRowNameTable);
+            GetWorld()->GetTimerManager().SetTimer(DestroyActiveQuestTimerHandle, DestroyActiveQuestTimerDelegate, QuestSystemSettings->DelayToQuestDestroy, false);
+        }
+    }
 }
 
 void URPG_QuestManagerBase::NotifyUpdateQuest(const FName NameQuest)
@@ -239,11 +265,20 @@ void URPG_QuestManagerBase::NotifyUpdateQuest(const FName NameQuest)
     FRPG_DataQuest* DataQuest = FindDataQuestByName(NameQuest);
     if (QUEST_MANAGER_CLOG(!DataQuest, Error, TEXT("DataQuest is nullptr"))) return;
     if (QUEST_MANAGER_CLOG(!DataQuest->IsValidQuest(), Error, TEXT("DataQuest is not valid"))) return;
-    if (QUEST_MANAGER_CLOG(DataQuest->ActiveQuest == nullptr, Error, TEXT("ActiveQuest is nullptr"))) return;
+    if (QUEST_MANAGER_CLOG(DataQuest->ActiveQuest == nullptr, Warning, TEXT("ActiveQuest is nullptr"))) return;
 
-    DataQuest->StateEntity = DataQuest->ActiveQuest->GetStateQuest();
     APlayerController* LocalOwner = IsNetMode(NM_Client) ? GetWorld()->GetFirstPlayerController() : OwnerPC;
     OnUpdateDataQuest.Broadcast(LocalOwner, DataQuest->QuestRowNameTable, DataQuest->StateEntity);
+}
+
+void URPG_QuestManagerBase::DestroyActiveQuestByName(FName NameQuest)
+{
+    FRPG_DataQuest* DataQuest = FindDataQuestByName(NameQuest);
+    if (QUEST_MANAGER_CLOG(!DataQuest, Error, TEXT("DataQuest is nullptr"))) return;
+    if (QUEST_MANAGER_CLOG(!DataQuest->ActiveQuest, Warning, TEXT("ActiveQuest is nullptr"))) return;
+    DataQuest->ActiveQuest->ResetQuest();
+    DataQuest->ActiveQuest->MarkAsGarbage();
+    DataQuest->ActiveQuest = nullptr;
 }
 
 #pragma endregion

@@ -91,6 +91,13 @@ void URPG_QuestObjectBase::CompleteQuest()
 
 void URPG_QuestObjectBase::ResetQuest()
 {
+    TArray<URPG_TaskNodeBase*> TaskNodes = GetArrayInstanceTaskNodes();
+    for (URPG_TaskNodeBase* Task : TaskNodes)
+    {
+        if (!Task) continue;
+        if (Task->GetStateTaskNode() != ERPG_StateEntity::Complete) continue;
+        Task->ResetTask();
+    }
     ChangeStateQuestObject(ERPG_StateEntity::None);
 }
 
