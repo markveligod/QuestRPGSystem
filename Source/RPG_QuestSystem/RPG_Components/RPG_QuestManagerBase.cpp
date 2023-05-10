@@ -11,7 +11,7 @@
 
 static TAutoConsoleVariable<bool> EnableD_ShowStateQuest(TEXT("RPGQuestSystem.ShowStateQuest"), false, TEXT("RPGQuestSystem.ShowStateQuest [true/false]"), ECVF_Cheat);
 
-static FAutoConsoleCommandWithWorldAndArgs EnableD_ToDistance(TEXT("RPGQuestSystem.AddQuest"), TEXT("RPGQuestSystem.AddQuest [QuestTableName]"),
+static FAutoConsoleCommandWithWorldAndArgs EnableD_AddQuest(TEXT("RPGQuestSystem.AddQuest"), TEXT("RPGQuestSystem.AddQuest [QuestTableName]"),
     FConsoleCommandWithWorldAndArgsDelegate::CreateLambda(
         [](const TArray<FString>& Args, UWorld* World)
         {
@@ -23,6 +23,20 @@ static FAutoConsoleCommandWithWorldAndArgs EnableD_ToDistance(TEXT("RPGQuestSyst
             URPG_QuestManagerBase* QM = PC->FindComponentByClass<URPG_QuestManagerBase>();
             if (!QM) return;
             QM->ServerAddQuest(QuestName);
+        }));
+
+static FAutoConsoleCommandWithWorldAndArgs EnableD_RemoveQuest(TEXT("RPGQuestSystem.RemoveQuest"), TEXT("RPGQuestSystem.RemoveQuest [QuestTableName]"),
+    FConsoleCommandWithWorldAndArgsDelegate::CreateLambda(
+        [](const TArray<FString>& Args, UWorld* World)
+        {
+            if (!World) return;
+            if (!Args.IsValidIndex(0)) return;
+            FName QuestName = FName(Args[0]);
+            APlayerController* PC = World->GetFirstPlayerController();
+            if (!PC) return;
+            URPG_QuestManagerBase* QM = PC->FindComponentByClass<URPG_QuestManagerBase>();
+            if (!QM) return;
+            QM->ServerRemoveQuest(QuestName);
         }));
 
 #pragma endregion
@@ -186,6 +200,32 @@ void URPG_QuestManagerBase::AddQuest(FName NewQuest)
     NotifyUpdateQuest(NewQuest);
 }
 
+void URPG_QuestManagerBase::ServerRemoveQuest_Implementation(const FName& QuestName)
+{
+    RemoveQuest(QuestName);
+}
+
+bool URPG_QuestManagerBase::ServerRemoveQuest_Validate(const FName& QuestName)
+{
+    return IsValidationRequestRemoveQuest(QuestName);
+}
+
+void URPG_QuestManagerBase::RemoveQuest(FName QuestName)
+{
+    if (QUEST_MANAGER_CLOG(!OwnerPC, Error, TEXT("Owner is nullptr"))) return;
+    if (QUEST_MANAGER_CLOG(!OwnerPC->HasAuthority(), Error, TEXT("Owner is not Authority"))) return;
+    if (QUEST_MANAGER_CLOG(QuestName == NAME_None, Error, TEXT("Name quest is none"))) return;
+
+    FRPG_DataQuest* DataQuest = FindDataQuestByName(QuestName);
+    if (QUEST_MANAGER_CLOG(DataQuest == nullptr, Warning, TEXT("DataQuest is nullptr"))) return;
+    
+    DestroyActiveQuestByName(QuestName);
+    ArrayDataQuest.RemoveAll([QuestName](const FRPG_DataQuest& Data)
+    {
+        return Data.QuestRowNameTable.IsEqual(QuestName);
+    });
+}
+
 FRPG_DataQuest* URPG_QuestManagerBase::FindDataQuestByName(const FName& CheckQuest)
 {
     return ArrayDataQuest.FindByPredicate([CheckQuest](const FRPG_DataQuest& Data) { return Data.QuestRowNameTable.IsEqual(CheckQuest); });
@@ -225,6 +265,11 @@ ERPG_StateEntity URPG_QuestManagerBase::GetStateQuestByName(FName QuestName)
 bool URPG_QuestManagerBase::IsValidationRequestAddQuest(const FName& CheckQuest)
 {
     return CheckQuest != NAME_None && !FindDataQuestByName(CheckQuest);
+}
+
+bool URPG_QuestManagerBase::IsValidationRequestRemoveQuest(const FName& CheckQuest)
+{
+    return FindDataQuestByName(CheckQuest) != nullptr;
 }
 
 void URPG_QuestManagerBase::OnRep_ArrayDataQuest()
@@ -276,6 +321,7 @@ void URPG_QuestManagerBase::DestroyActiveQuestByName(FName NameQuest)
     FRPG_DataQuest* DataQuest = FindDataQuestByName(NameQuest);
     if (QUEST_MANAGER_CLOG(!DataQuest, Error, TEXT("DataQuest is nullptr"))) return;
     if (QUEST_MANAGER_CLOG(!DataQuest->ActiveQuest, Warning, TEXT("ActiveQuest is nullptr"))) return;
+    DataQuest->ActiveQuest->OnUpdateStateQuest.Unbind();
     DataQuest->ActiveQuest->ResetQuest();
     DataQuest->ActiveQuest->MarkAsGarbage();
     DataQuest->ActiveQuest = nullptr;

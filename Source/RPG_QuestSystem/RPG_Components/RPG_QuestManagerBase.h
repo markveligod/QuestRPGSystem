@@ -63,6 +63,13 @@ public:
     /** @public Adding a new quest **/
     virtual void AddQuest(FName NewQuest);
 
+    /** @public Request to the server about adding a new quest **/
+    UFUNCTION(Server, Reliable, WithValidation, Category = "ActionQuestManager")
+    void ServerRemoveQuest(const FName& QuestName);
+
+    /** @public Adding a new quest **/
+    virtual void RemoveQuest(FName QuestName);
+    
     /** @public Search for quest data by its name **/
     FRPG_DataQuest* FindDataQuestByName(const FName& CheckQuest);
 
@@ -86,6 +93,9 @@ public:
 protected:
     /** @protected Validation check for adding a quest**/
     virtual bool IsValidationRequestAddQuest(const FName& CheckQuest);
+
+    /** @protected Validation check for remove a quest**/
+    virtual bool IsValidationRequestRemoveQuest(const FName& CheckQuest);
 
     /** @protected Notification of data replication on the client **/
     UFUNCTION()
