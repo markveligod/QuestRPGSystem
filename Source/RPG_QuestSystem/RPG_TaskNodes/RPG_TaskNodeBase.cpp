@@ -6,6 +6,11 @@
 #include "RPG_Librarys/RPG_QuestSystemLibrary.h"
 #include "RPG_QuestObjects/RPG_QuestObjectBase.h"
 
+DECLARE_CYCLE_STAT(TEXT("InitTask"), STAT_InitTask, STATGROUP_RPG_QUEST_SYSTEM);
+DECLARE_CYCLE_STAT(TEXT("RunTask"), STAT_RunTask, STATGROUP_RPG_QUEST_SYSTEM);
+DECLARE_CYCLE_STAT(TEXT("CompleteTask"), STAT_CompleteTask, STATGROUP_RPG_QUEST_SYSTEM);
+DECLARE_CYCLE_STAT(TEXT("ResetTask"), STAT_ResetTask, STATGROUP_RPG_QUEST_SYSTEM);
+
 #pragma region Log
 
 void URPG_TaskNodeBase::Print_LogTask(const TEnumAsByte<ERPG_QSLogVerb> LogVerb, const FString& Text, const int Line, const char* Function) const
@@ -30,6 +35,8 @@ URPG_TaskNodeBase::URPG_TaskNodeBase() {}
 
 bool URPG_TaskNodeBase::InitTask(APlayerController* PlayerController, URPG_QuestObjectBase* ParentQuest)
 {
+    SCOPE_CYCLE_COUNTER(STAT_InitTask);
+
     if (TASK_NODE_CLOG(StateTaskNode != ERPG_StateEntity::None, Error, FString::Printf(TEXT("Task is not state NONE | Task current state: [%s]"), *UEnum::GetValueAsString(StateTaskNode))))
         return false;
 
@@ -50,6 +57,8 @@ bool URPG_TaskNodeBase::InitTask_Event_Implementation()
 
 void URPG_TaskNodeBase::RunTask()
 {
+    SCOPE_CYCLE_COUNTER(STAT_RunTask);
+
     if (TASK_NODE_CLOG(StateTaskNode != ERPG_StateEntity::Init, Error, FString::Printf(TEXT("Task is not state INIT | Task current state: [%s]"), *UEnum::GetValueAsString(StateTaskNode)))) return;
 
     ChangeStateTaskNode(ERPG_StateEntity::Run);
@@ -60,6 +69,8 @@ void URPG_TaskNodeBase::RunTask_Event_Implementation() {}
 
 void URPG_TaskNodeBase::CompleteTask()
 {
+    SCOPE_CYCLE_COUNTER(STAT_CompleteTask);
+
     if (TASK_NODE_CLOG(StateTaskNode != ERPG_StateEntity::Run, Error, FString::Printf(TEXT("Task is not state RUN | Task current state: [%s]"), *UEnum::GetValueAsString(StateTaskNode)))) return;
 
     ChangeStateTaskNode(ERPG_StateEntity::Complete);
@@ -70,6 +81,8 @@ void URPG_TaskNodeBase::CompleteTask_Event_Implementation() {}
 
 void URPG_TaskNodeBase::ResetTask()
 {
+    SCOPE_CYCLE_COUNTER(STAT_ResetTask);
+
     ChangeStateTaskNode(ERPG_StateEntity::None);
     return ResetTask_Event();
 }
@@ -120,7 +133,7 @@ void URPG_TaskNodeBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
 void URPG_TaskNodeBase::ChangeStateTaskNode(ERPG_StateEntity NewState)
 {
-    if (TASK_NODE_CLOG(StateTaskNode == NewState, Warning, FString::Printf(TEXT("StateTaskNode equal New state: [%s]"), *UEnum::GetValueAsString(StateTaskNode)))) return;
+    if (TASK_NODE_CLOG(StateTaskNode == NewState, Display, FString::Printf(TEXT("StateTaskNode equal New state: [%s]"), *UEnum::GetValueAsString(StateTaskNode)))) return;
 
     StateTaskNode = NewState;
     TASK_NODE_LOG(Display, FString::Printf(TEXT("StateTaskNode changed to: [%s]"), *UEnum::GetValueAsString(StateTaskNode)));

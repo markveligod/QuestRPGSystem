@@ -8,6 +8,14 @@
 #include "RPG_TaskNodes/RPG_TaskNodeBase.h"
 #include "RPG_QuestSystem/RPG_Config/RPG_QuestSystemSettings.h"
 
+DECLARE_CYCLE_STAT(TEXT("InitQuest"), STAT_InitQuest, STATGROUP_RPG_QUEST_SYSTEM);
+DECLARE_CYCLE_STAT(TEXT("RunQuest"), STAT_RunQuest, STATGROUP_RPG_QUEST_SYSTEM);
+DECLARE_CYCLE_STAT(TEXT("CompleteQuest"), STAT_CompleteQuest, STATGROUP_RPG_QUEST_SYSTEM);
+DECLARE_CYCLE_STAT(TEXT("ResetQuest"), STAT_ResetQuest, STATGROUP_RPG_QUEST_SYSTEM);
+DECLARE_CYCLE_STAT(TEXT("RegisterUpdateStateTask"), STAT_RegisterUpdateStateTask, STATGROUP_RPG_QUEST_SYSTEM);
+DECLARE_CYCLE_STAT(TEXT("StartTask"), STAT_StartTask, STATGROUP_RPG_QUEST_SYSTEM);
+DECLARE_CYCLE_STAT(TEXT("StopTask"), STAT_StopTask, STATGROUP_RPG_QUEST_SYSTEM);
+
 #pragma region Log
 
 void URPG_QuestObjectBase::Print_LogQuest(const TEnumAsByte<ERPG_QSLogVerb> LogVerb, const FString& Text, const int Line, const char* Function) const
@@ -45,6 +53,8 @@ URPG_QuestObjectBase::URPG_QuestObjectBase()
 
 bool URPG_QuestObjectBase::InitQuest(APlayerController* PlayerController, URPG_QuestManagerBase* ParentQuestManager)
 {
+    SCOPE_CYCLE_COUNTER(STAT_InitQuest);
+
     if (QUEST_OBJECT_CLOG(StateQuestObject != ERPG_StateEntity::None, Error, FString::Printf(TEXT("Quest is not state NONE | Quest current state: [%s]"), *UEnum::GetValueAsString(StateQuestObject))))
         return false;
 
@@ -60,6 +70,8 @@ bool URPG_QuestObjectBase::InitQuest(APlayerController* PlayerController, URPG_Q
 
 void URPG_QuestObjectBase::RunQuest()
 {
+    SCOPE_CYCLE_COUNTER(STAT_RunQuest);
+
     if (QUEST_OBJECT_CLOG(StateQuestObject != ERPG_StateEntity::Init, Error, FString::Printf(TEXT("Quest is not state INIT | Quest current state: [%s]"), *UEnum::GetValueAsString(StateQuestObject))))
         return;
 
@@ -77,6 +89,8 @@ void URPG_QuestObjectBase::RunQuest()
 
 void URPG_QuestObjectBase::CompleteQuest()
 {
+    SCOPE_CYCLE_COUNTER(STAT_CompleteQuest);
+
     if (QUEST_OBJECT_CLOG(StateQuestObject != ERPG_StateEntity::Run, Error, FString::Printf(TEXT("Quest is not state INIT | Quest current state: [%s]"), *UEnum::GetValueAsString(StateQuestObject))))
         return;
 
@@ -91,6 +105,8 @@ void URPG_QuestObjectBase::CompleteQuest()
 
 void URPG_QuestObjectBase::ResetQuest()
 {
+    SCOPE_CYCLE_COUNTER(STAT_ResetQuest);
+
     TArray<URPG_TaskNodeBase*> TaskNodes = GetArrayInstanceTaskNodes();
     for (URPG_TaskNodeBase* Task : TaskNodes)
     {
@@ -113,7 +129,9 @@ void URPG_QuestObjectBase::Serialize(FArchive& Ar)
     {
         QUEST_OBJECT_LOG(Display, FString::Printf(TEXT("----| SERIALIZE LOAD QUEST: [%s] |----"), *GetName()));
     }
+#if UE_EDITOR
     PrintTaskNodes();
+#endif
     QUEST_OBJECT_LOG(Display, FString::Printf(TEXT("----| END SERIALIZE QUEST: [%s] |----"), *GetName()));
 }
 
@@ -167,7 +185,7 @@ void URPG_QuestObjectBase::ChangeStateQuestObject(ERPG_StateEntity NewState)
 
 void URPG_QuestObjectBase::StartTask(int32 Index)
 {
-    if (QUEST_OBJECT_CLOG(StateQuestObject != ERPG_StateEntity::Run, Error, TEXT("StateQuestObject is not Running"))) return;
+    SCOPE_CYCLE_COUNTER(STAT_StartTask);
 
     FRPG_TaskNodeData* TaskNodeData = FindTaskNodeByElem(Index);
     if (QUEST_OBJECT_CLOG(TaskNodeData == nullptr, Display, TEXT("TaskNodeData is not found"))) return;
@@ -198,7 +216,7 @@ void URPG_QuestObjectBase::StartTask(int32 Index)
 
 void URPG_QuestObjectBase::StopTask(int32 Index, bool WithResetTask)
 {
-    if (QUEST_OBJECT_CLOG(StateQuestObject != ERPG_StateEntity::Run, Error, TEXT("StateQuestObject is not Running"))) return;
+    SCOPE_CYCLE_COUNTER(STAT_StopTask);
 
     FRPG_TaskNodeData* TaskNodeData = FindTaskNodeByElem(Index);
     if (QUEST_OBJECT_CLOG(TaskNodeData == nullptr, Display, TEXT("TaskNodeData is not found"))) return;
@@ -214,6 +232,8 @@ void URPG_QuestObjectBase::StopTask(int32 Index, bool WithResetTask)
 
 void URPG_QuestObjectBase::RegisterUpdateStateTask_Event(URPG_TaskNodeBase* TaskNode)
 {
+    SCOPE_CYCLE_COUNTER(STAT_RegisterUpdateStateTask);
+
     if (QUEST_OBJECT_CLOG(TaskNode == nullptr, Error, TEXT("TaskNode is nullptr"))) return;
 
     if (TaskNode->GetStateTaskNode() == ERPG_StateEntity::Complete)

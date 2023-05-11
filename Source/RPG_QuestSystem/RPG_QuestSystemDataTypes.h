@@ -59,5 +59,7 @@ struct FRPG_DataQuestTable : public FTableRowBase
     FText DescriptionQuest;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    TSoftObjectPtr<URPG_QuestObjectBase> QuestObjectPath;
+    TObjectPtr<URPG_QuestObjectBase> QuestObject{nullptr};
 };
+
+DECLARE_STATS_GROUP(TEXT("RPG_QuestSystem"), STATGROUP_RPG_QUEST_SYSTEM, STATCAT_Advanced);

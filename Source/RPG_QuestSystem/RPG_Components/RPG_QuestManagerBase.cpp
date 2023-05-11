@@ -7,7 +7,14 @@
 #include "RPG_Librarys/RPG_QuestSystemLibrary.h"
 #include "RPG_QuestObjects/RPG_QuestObjectBase.h"
 
+DECLARE_CYCLE_STAT(TEXT("AddQuest"), STAT_AddQuest, STATGROUP_RPG_QUEST_SYSTEM);
+DECLARE_CYCLE_STAT(TEXT("RemoveQuest"), STAT_RemoveQuest, STATGROUP_RPG_QUEST_SYSTEM);
+DECLARE_CYCLE_STAT(TEXT("RegisterUpdateQuest"), STAT_RegisterUpdateQuest, STATGROUP_RPG_QUEST_SYSTEM);
+DECLARE_CYCLE_STAT(TEXT("NotifyUpdateQuest"), STAT_NotifyUpdateQuest, STATGROUP_RPG_QUEST_SYSTEM);
+
 #pragma region ConsoleAction
+
+#if !UE_BUILD_SHIPPING
 
 static TAutoConsoleVariable<bool> EnableD_ShowStateQuest(TEXT("RPGQuestSystem.ShowStateQuest"), false, TEXT("RPGQuestSystem.ShowStateQuest [true/false]"), ECVF_Cheat);
 
@@ -38,6 +45,8 @@ static FAutoConsoleCommandWithWorldAndArgs EnableD_RemoveQuest(TEXT("RPGQuestSys
             if (!QM) return;
             QM->ServerRemoveQuest(QuestName);
         }));
+
+#endif
 
 #pragma endregion
 
@@ -87,6 +96,8 @@ void URPG_QuestManagerBase::TickComponent(float DeltaTime, ELevelTick TickType, 
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+#if !UE_BUILD_SHIPPING
+
     if (EnableD_ShowStateQuest.GetValueOnGameThread())
     {
         for (auto& Data : ArrayDataQuest)
@@ -114,6 +125,8 @@ void URPG_QuestManagerBase::TickComponent(float DeltaTime, ELevelTick TickType, 
             GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Orange, "--- | --- | --- | ---");
         }
     }
+#endif
+    
 }
 
 void URPG_QuestManagerBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -154,7 +167,6 @@ void URPG_QuestManagerBase::BeginPlay()
 
     OwnerPC = Cast<APlayerController>(GetOwner());
     if (QUEST_MANAGER_CLOG(!OwnerPC, Error, TEXT("Owner is nullptr"))) return;
-    OwnerPC->SetReplicates(true);
 }
 
 #pragma endregion
@@ -173,6 +185,8 @@ bool URPG_QuestManagerBase::ServerAddQuest_Validate(const FName& NewQuest)
 
 void URPG_QuestManagerBase::AddQuest(FName NewQuest)
 {
+    SCOPE_CYCLE_COUNTER(STAT_AddQuest);
+    
     if (QUEST_MANAGER_CLOG(!OwnerPC, Error, TEXT("Owner is nullptr"))) return;
     if (QUEST_MANAGER_CLOG(!OwnerPC->HasAuthority(), Error, TEXT("Owner is not Authority"))) return;
     if (QUEST_MANAGER_CLOG(!DataQuestTable, Error, TEXT("Data quest table is nullptr"))) return;
@@ -185,7 +199,7 @@ void URPG_QuestManagerBase::AddQuest(FName NewQuest)
 
     FRPG_DataQuest NewDataQuest;
     NewDataQuest.QuestRowNameTable = NewQuest;
-    URPG_QuestObjectBase* RefQuestObject = FindDataQuestTable->QuestObjectPath.LoadSynchronous();
+    URPG_QuestObjectBase* RefQuestObject = FindDataQuestTable->QuestObject.Get();
     if (!RefQuestObject) return;
     NewDataQuest.ActiveQuest = NewObject<URPG_QuestObjectBase>(this, RefQuestObject->GetClass(), NAME_None, RF_NoFlags, RefQuestObject);
     if (QUEST_MANAGER_CLOG(!NewDataQuest.IsValidQuest(), Error, TEXT("Quest is not valid"))) return;
@@ -212,6 +226,8 @@ bool URPG_QuestManagerBase::ServerRemoveQuest_Validate(const FName& QuestName)
 
 void URPG_QuestManagerBase::RemoveQuest(FName QuestName)
 {
+    SCOPE_CYCLE_COUNTER(STAT_RemoveQuest);
+
     if (QUEST_MANAGER_CLOG(!OwnerPC, Error, TEXT("Owner is nullptr"))) return;
     if (QUEST_MANAGER_CLOG(!OwnerPC->HasAuthority(), Error, TEXT("Owner is not Authority"))) return;
     if (QUEST_MANAGER_CLOG(QuestName == NAME_None, Error, TEXT("Name quest is none"))) return;
@@ -282,6 +298,8 @@ void URPG_QuestManagerBase::OnRep_ArrayDataQuest()
 
 void URPG_QuestManagerBase::RegisterUpdateQuest_Event(URPG_QuestObjectBase* QuestObject)
 {
+    SCOPE_CYCLE_COUNTER(STAT_RegisterUpdateQuest);
+
     if (QUEST_MANAGER_CLOG(!QuestObject, Error, TEXT("Quest object is not valid"))) return;
 
     FRPG_DataQuest& DataQuest = FindDataQuestByQuestObject(QuestObject);
@@ -307,10 +325,12 @@ void URPG_QuestManagerBase::RegisterUpdateQuest_Event(URPG_QuestObjectBase* Ques
 
 void URPG_QuestManagerBase::NotifyUpdateQuest(const FName NameQuest)
 {
+    SCOPE_CYCLE_COUNTER(STAT_NotifyUpdateQuest);
+
     FRPG_DataQuest* DataQuest = FindDataQuestByName(NameQuest);
     if (QUEST_MANAGER_CLOG(!DataQuest, Error, TEXT("DataQuest is nullptr"))) return;
     if (QUEST_MANAGER_CLOG(!DataQuest->IsValidQuest(), Error, TEXT("DataQuest is not valid"))) return;
-    if (QUEST_MANAGER_CLOG(DataQuest->ActiveQuest == nullptr, Warning, TEXT("ActiveQuest is nullptr"))) return;
+    if (QUEST_MANAGER_CLOG(DataQuest->ActiveQuest == nullptr, Display, TEXT("ActiveQuest is nullptr"))) return;
 
     APlayerController* LocalOwner = IsNetMode(NM_Client) ? GetWorld()->GetFirstPlayerController() : OwnerPC;
     OnUpdateDataQuest.Broadcast(LocalOwner, DataQuest->QuestRowNameTable, DataQuest->StateEntity);
