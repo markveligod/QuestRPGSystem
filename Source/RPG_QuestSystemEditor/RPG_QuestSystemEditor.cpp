@@ -4,6 +4,7 @@
 #include "AssetToolsModule.h"
 #include "IAssetTools.h"
 #include "Actions/FRPG_QuestAssetTypeActions.h"
+#include "AssetStyle/RPG_QuestSystemStyle.h"
 
 #define LOCTEXT_NAMESPACE "FRPG_QuestSystemEditorModule"
 
@@ -12,9 +13,13 @@ EAssetTypeCategories::Type FRPG_QuestSystemEditorModule::AssetCategory = static_
 void FRPG_QuestSystemEditorModule::StartupModule()
 {
     RegisterAssetCategoryAndActions();
+    FRPG_QuestSystemStyle::Initialize();
 }
 
-void FRPG_QuestSystemEditorModule::ShutdownModule() {}
+void FRPG_QuestSystemEditorModule::ShutdownModule()
+{
+    FRPG_QuestSystemStyle::Shutdown();
+}
 
 void FRPG_QuestSystemEditorModule::RegisterAssetCategoryAndActions() const
 {

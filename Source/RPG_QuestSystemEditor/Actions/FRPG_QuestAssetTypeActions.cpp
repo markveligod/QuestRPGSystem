@@ -1,6 +1,7 @@
 ﻿/** Copyright Mark Veligod. Published in 2023. **/
 
 #include "FRPG_QuestAssetTypeActions.h"
+#include "RPG_QuestSystem/RPG_Config/RPG_QuestSystemSettings.h"
 #include "RPG_QuestSystem/RPG_QuestObjects/RPG_QuestObjectBase.h"
 #include "RPG_QuestSystemEditor/RPG_QuestSystemEditor.h"
 #include "RPG_QuestSystemEditor/Editor/FRPG_QuestAssetEditor.h"
@@ -21,7 +22,8 @@ FColor FRPG_QuestAssetTypeActions::GetTypeColor() const
 
 UClass* FRPG_QuestAssetTypeActions::GetSupportedClass() const
 {
-    return URPG_QuestObjectBase::StaticClass();
+    const URPG_QuestSystemSettings* QuestSystemSettings = GetDefault<URPG_QuestSystemSettings>();
+    return QuestSystemSettings ? QuestSystemSettings->SupportQuestClass : URPG_QuestObjectBase::StaticClass();
 }
 
 void FRPG_QuestAssetTypeActions::OpenAssetEditor(const TArray<UObject*>& InObjects, TSharedPtr<IToolkitHost> EditWithinLevelEditor)

@@ -10,7 +10,7 @@
 /**
  * @class Quest management system
  **/
-UCLASS(ClassGroup = (Managers), meta = (BlueprintSpawnableComponent))
+UCLASS(DisplayName = "Quest Manager", ClassGroup = (Managers), meta = (BlueprintSpawnableComponent))
 class RPG_QUESTSYSTEM_API URPG_QuestManagerBase : public UActorComponent
 {
     GENERATED_BODY()
